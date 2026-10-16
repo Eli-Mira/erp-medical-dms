@@ -51,6 +51,19 @@ def test_sources_match_frozen_hashes():
         assert hashlib.sha256(SOURCES[name].read_bytes()).hexdigest() == digest, name
 
 
+def test_sources_are_full_size_real_workbooks():
+    # Guard (Eli): reconciliation must run against the REAL source workbooks,
+    # not sample/empty fixtures. Asserts the actual sheets are full-size.
+    wb = openpyxl.load_workbook(SOURCES[FINANCE], read_only=True)
+    ws = wb["العملاء"]
+    assert ws.max_row >= 40 and ws.max_column >= 700, (ws.max_row, ws.max_column)
+    wb.close()
+    wb = openpyxl.load_workbook(SOURCES[SALES_6OCT], read_only=True)
+    ws = wb["مخزن الزهراء اكتوبر"]
+    assert ws.max_row >= 3000, ws.max_row
+    wb.close()
+
+
 def test_ar_row1_total_is_2_200_000():
     # MIGRATION_RECONCILIATION_PLAN + D23: AR ledger row-1 total = 2,200,000
     wb, ws = _sheet(FINANCE, "العملاء")

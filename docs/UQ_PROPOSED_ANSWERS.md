@@ -4,6 +4,17 @@
 
 ---
 
+## Decided by Eli (2026-10-16)
+
+| UQ | Decision |
+|----|----------|
+| UQ-1 | Roles = Owner, Admin, Finance, Sales Manager, District Manager, Medical Rep, Warehouse Staff, Read-Only Auditor. Restrict by responsibility + assigned territory. |
+| UQ-2 | AR = transaction-level ledger + monthly summaries. Preserve opening balances + historical transactions. |
+| UQ-8 | VAT = 14% VAT-inclusive for applicable products; configurable per product; verify exceptions before production. |
+| UQ-11 | Stack = FastAPI + PostgreSQL + psycopg3 + existing vanilla JS/PWA (no React rewrite unless complexity justifies). Hosting OS deferred until server PC inspected. |
+
+All other UQs remain as proposed (see table below).
+
 ## Proposed Answers Table
 
 | UQ | Question | Proposed Answer | Basis (Citation) | MVP-blocker? | Needs Approval? |
@@ -26,17 +37,17 @@
 
 ---
 
-## MVP Blockers Summary
+## MVP Blockers Summary — RESOLVED (2026-10-16)
 
-These UQs block the first vertical slice (Invoice → Warehouse Stock → Customer Balance → Collection):
+All three blockers are decided by Eli (D34–D37; see "Decided by Eli" above):
 
-| UQ | Reason |
-|----|--------|
-| **UQ-1** | RBAC roles must be confirmed before Phase 2 auth platform build (P2.5 already started with placeholder roles) |
-| **UQ-8** | VAT rate is required to implement invoice creation and line-level VAT calculation (V2 §2B.5) |
-| **UQ-11** | Tech stack decision gates Phase 2 repository initialization and all Phase 3 build work |
+| UQ | Decision |
+|----|----------|
+| **UQ-1** | 8 roles; restrict by responsibility + assigned territory |
+| **UQ-8** | 14% VAT-inclusive; configurable per product; verify exceptions first |
+| **UQ-11** | FastAPI + PostgreSQL + psycopg3 + vanilla JS/PWA; hosting OS deferred |
 
-Note: UQ-2 (AR granularity) is resolved by D23 — no approval needed; the normalized AR model replaces the wide-column assumption.
+Note: UQ-2 (AR granularity) is resolved by D23 + Eli's confirmation — transaction-level ledger + monthly summaries, preserving opening balances and history.
 
 ---
 
