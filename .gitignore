@@ -25,3 +25,19 @@ db.sqlite3*
 .vscode/
 .idea/
 *.swp
+
+# --- Project sources: source workbooks are READ-ONLY inputs (D25).
+#     Never commit or modify. Verify with: sha256sum -c SOURCE_HASHES.txt
+*.xlsx
+*.xls
+*.xlsm
+*.pdf
+
+# --- Credentials: never commit.
+.env
+.env.*
+*.key
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db

@@ -7,6 +7,9 @@ from fastapi import FastAPI
 
 app = FastAPI(title="Medical Company System", version="0.1.0")
 
+from app.auth.router import router as auth_router  # noqa: E402  (import after app)
+app.include_router(auth_router)
+
 
 @app.get("/health")
 def health() -> dict:
