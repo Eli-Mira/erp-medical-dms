@@ -11,7 +11,7 @@
 | 1 | PRD defines MVP features and priorities | ⚠️ PARTIAL | `PRD.md` §3 features (A-01…H-05), §9 priorities (P0–P5 + build order A→H), §8 out-of-scope, §7 acceptance. **Gap:** PRD §10 lists **UQ-1…UQ-15 OPEN**; header = "Draft — awaiting Eli approval". |
 | 2 | Database schema matches actual Excel workflows | ✅ VALIDATED (2 corrections) | `DATABASE_SCHEMA.md` (25 entities, 14 schemas). **Validated against real data** (see Reconciliation below): net price `E=C×(1−D)` ✓, AR normalized (D23) ✓, running balance ✓, HQ rollup `E=C−D` ✓. **Corrections:** (a) net-price rule lives in the per-warehouse **transaction sheets**, not `كامل الكمية` (which computes `E=C×D`); (b) payroll `المرتبات` layout is basic/due/received/dubai — the mapping's `net E=B−C−D` does **not** match (flagged, not asserted). |
 | 3 | Excel→System mapping complete for MVP | ⚠️ MOSTLY | `EXCEL_TO_SYSTEM_MAPPING.md` + `MODULE_MAP.md` cover the slice: invoice→`sales.sales_invoice`, stock→`inventory.inventory_stock`, AR→`finance.finance_ar_ledger`, collection→`finance.finance_payment`. **Gap:** no single end-to-end slice mapping; AR granularity open. |
-| 4 | Critical questions resolved | ❌ NOT MET | `OPEN_QUESTIONS.md`: 8 Phase-0 questions resolved ✅. **Gap:** `PRD.md` §10 — **UQ-1…UQ-15 OPEN** (roles, VAT, stack, compliance, 2FA, backup, localization, AR granularity, thresholds). Draft proposed answers in progress (`docs/UQ_PROPOSED_ANSWERS.md`). |
+| 4 | Critical questions resolved | ⚠️ DRAFT READY | `OPEN_QUESTIONS.md`: 8 Phase-0 questions resolved ✅. `docs/UQ_PROPOSED_ANSWERS.md`: **UQ-1…UQ-15 drafted** (evidence-based, approvals marked). **Gap:** awaiting Eli's approval on UQ-1 / UQ-8 / UQ-11 (+ UQ-2 confirm). |
 | 5 | Reconciliation tests have expected results | ✅ MET | `tests/test_reconciliation.py` — **8/8 PASS** against the actual workbooks. Run: `uv run --with openpyxl --with pytest python -m pytest tests/test_reconciliation.py -v`. Full suite: **18/18 pass** (auth 6, pwa 4, reconciliation 8). |
 
 ## Reconciliation results (evidence)
@@ -49,7 +49,7 @@ Tests in `tests/test_reconciliation.py`, run against the 7 real `.xlsx` (git-ign
 **Defer to the right phase (not lost):** UQ-3/4/5 stock thresholds · payroll formula · UQ-11 stack (FastAPI + React chosen) · UQ-12 compliance · UQ-13 2FA · UQ-14 backup · UQ-15 localization.
 
 ## Verdict
-**Gate: 3/5 ✅ (checks 2, 5 + partial 1/3), 1/5 ❌ (check 4 — open questions).** Reconciliation is done and green. **Do not start the production vertical slice** until UQ-1, UQ-2, UQ-8 are confirmed (rule 7).
+**Gate: 3/5 ✅ (checks 2, 5 + partial 1/3), 1/5 ⚠️ (check 4 — UQ draft ready, awaiting approval).** Reconciliation is done and green; UQ-1…UQ-15 drafted. **Do not start the production vertical slice** until UQ-1, UQ-8, UQ-11 are approved (rule 7).
 
 ## Next action
 You pick: (a) review `docs/UQ_PROPOSED_ANSWERS.md` (draft ready) and answer UQ-1/UQ-2/UQ-8 · (b) I fix the mapping citation + clean the `#REF!` sheet · (c) both.
