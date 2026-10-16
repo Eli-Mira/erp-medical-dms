@@ -6,6 +6,7 @@ Money/datetime types and the is_owner owner-boundary flag (D10) preserved.
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import INET
 
 revision = "0001_platform"
 down_revision = None
@@ -42,7 +43,7 @@ def upgrade() -> None:
                   sa.ForeignKey("platform.platform_user.id", ondelete="CASCADE"),
                   nullable=False),
         sa.Column("device_info", sa.Text),
-        sa.Column("ip_address", sa.INET()),
+        sa.Column("ip_address", INET()),
         sa.Column("created_at", sa.DateTime(timezone=True),
                   server_default=sa.func.now(), nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
