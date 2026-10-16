@@ -32,10 +32,11 @@ Legend: ⬜ todo · 🔄 in progress · ✅ done · ⛔ blocked · ⏭️ gated/
 - [✅] Build-start gate: Eli approved 2026-10-16; stack = FastAPI/React/PostgreSQL/CF (pending swap).
 
 ## Phase 2 — Platform Foundation  [gate: 🔒 platform readiness]
-- [✅] P2.1 Initialize git repo + CI pipeline → `_todo_`
-- [✅] P2.2 docker-compose.yml (postgres:16 + app) + Dockerfile → `docker-compose.yml`, `Dockerfile`, `.env.dev`
-- [✅] P2.2b Services bootstrap: db healthy + app /health returns 200 → verify via `docker compose up` + `curl :8000/health`
-- [✅] P2.3 Alembic migrations dir + initial schema → `alembic/`, `alembic.ini`
+- [✅] P2.1 Initialize git repo → commit `c5feebb` (binaries excluded); CI pipeline ⏳ (next, with first tests)
+- [✅] P2.2 docker-compose.yml (postgres:16 + app) + Dockerfile + .env.dev → `docker-compose.yml`, `Dockerfile`, `.env.dev`
+- [✅] P2.2b App boots: FastAPI `/health` → HTTP 200 {status:ok, phase:platform-foundation} (TestClient smoke, in-process)
+- [⏳] P2.2c DB reachable: postgres:16 up + `pg_isready` (pending background check)
+- [⬜] P2.3 Alembic migrations dir + initial schema
 - [⬜] P2.4 Auth module (login/session/logout) + tests
 - [⬜] P2.5 RBAC module (role matrix, permission checks) + private/owner boundary test (D10)
 - [⬜] P2.6 Audit logger (immutable audit_log; creates/edits/approves/voids) + tests
