@@ -12,6 +12,9 @@ app.include_router(auth_router)
 from app.auth.rbac import rbac_router  # noqa: E402
 app.include_router(rbac_router)
 
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+app.mount("/app", StaticFiles(directory="web", html=True), name="pwa")
+
 
 @app.get("/health")
 def health() -> dict:

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="app_name">نظام الشركة الطبية</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; font-family: system-ui, "Segoe UI", Tahoma, sans-serif; background: #0f172a; color: #e2e8f0; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-bottom: 1px solid #1e293b; }
+    main { padding: 1.5rem; }
+    button { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: .5rem; padding: .5rem .75rem; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong data-i18n="app_name">نظام الشركة الطبية</strong>
+    <button id="lang" data-i18n="lang_toggle">English</button>
+  </header>
+  <main>
+    <h1 data-i18n="welcome">مرحبًا</h1>
+    <p data-i18n="dashboard">لوحة التحكم</p>
+  </main>
+  <script>
+    // i18n: fetch the dictionary, flip document dir, paint [data-i18n] nodes.
+    const current = () => (localStorage.getItem("lang") === "en" ? "en" : "ar");
+    async function apply(l) {
+      const dict = await (await fetch(`i18n/${l}.json`)).json();
+      document.documentElement.lang = l;
+      document.documentElement.dir = l === "ar" ? "rtl" : "ltr";
+      for (const el of document.querySelectorAll("[data-i18n]")) {
+        const v = dict[el.dataset.i18n];
+        if (v) el.textContent = v;
+      }
+      localStorage.setItem("lang", l);
+    }
+    document.getElementById("lang").addEventListener("click", () => apply(current() === "ar" ? "en" : "ar"));
+    apply(current());
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+  </script>
+</body>
+</html>
