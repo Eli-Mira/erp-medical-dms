@@ -39,12 +39,12 @@ Legend: ⬜ todo · 🔄 in progress · ✅ done · ⛔ blocked · ⏭️ gated/
 - [✅] P2.2d Initial platform schema applied: alembic rev `0001_platform` (head); tables `platform_user`/`platform_session`/`platform_setting` verified via `psql \d platform.platform_user` (uuid PK gen_random_uuid(), username UNIQUE, is_owner/is_active, timestamptz now()) — matches DATABASE_SCHEMA §2
 - [✅] P2.3 Alembic scaffold + initial schema → `alembic/`, `alembic.ini`, `alembic/versions/0001_platform.py`
 - [✅] P2.12 README local-dev setup → `README.md` (committed)
-- [⬜] P2.4 Auth module (login/session/logout) + tests
-- [⬜] P2.5 RBAC module (role matrix, permission checks) + private/owner boundary test (D10)
-- [⬜] P2.6 Audit logger (immutable audit_log; creates/edits/approves/voids) + tests
+- [✅] P2.4 Auth module: login/me/logout + bearer sessions (24h TTL), INET-validated IP (TestClient "testclient"→NULL). 4/4 tests pass (438205b). app/auth/{router,repo,security,db}.py + tests/test_auth.py
+- [✅] P2.5 RBAC: private/owner boundary — /owner/panel via require_owner; non-owner → 403, owner → 200. 6/6 tests pass. app/auth/rbac.py + tests/test_auth.py (D10).
+- [✅] P2.6 Audit logger: immutable audit_log + log_audit(); login/logout audited. psql \dt audit.* → audit_log,reason_code; 2 rows (login+logout) verified (438205b). repo.log_audit; alembic 0002_audit_log
 - [⬜] P2.7 PWA shell (manifest, service worker, RTL scaffold) + i18n
 - [⬜] P2.8 System settings scaffold (fiscal year, VAT, currency, numbering)
-- [⬜] P2.9 Posting status (Draft→Posted→Voided) + reason codes + import validation scaffold
+- [🔄] P2.9 Reason codes: audit.reason_code scaffold created + verified (psql \dt audit.* → reason_code; 438205b). Posting-status enum + import-validation scaffold deferred to Module C (sales_invoice).
 - [⬜] P2.10 Global search scaffold
 - [⬜] P2.11 Dev fixture loader (seed data matching Excel structure)
 - [⬜] P2.12 README with local-dev setup → `README.md`

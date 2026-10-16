@@ -9,6 +9,8 @@ app = FastAPI(title="Medical Company System", version="0.1.0")
 
 from app.auth.router import router as auth_router  # noqa: E402  (import after app)
 app.include_router(auth_router)
+from app.auth.rbac import rbac_router  # noqa: E402
+app.include_router(rbac_router)
 
 
 @app.get("/health")
