@@ -40,6 +40,13 @@ The migration CLI uses `alembic.ini`; the app uses `DATABASE_URL`. Match their
 targets explicitly if not using the default local development database.
 These are local-development commands, not a production deployment procedure.
 
+## Inventory Slice 1 — stock ledger and balances
+
+Movement types `sale`, `return` and `transfer_*` are rejected here; they belong
+to the posting and transfer flows. Balance cannot go below zero (API 409,
+database `ck_stock_balance_nonneg`). Contract, roles and the deferred
+branch-scoping item: `docs/INVENTORY_SLICE.md`.
+
 ## Phases
 Phase 0 (Discovery) ✅ · Phase 1 (Planning) ✅ · Phase 2 (Platform) in progress.
 See `docs/PROGRESS_CHECKLIST.md` and `docs/IMPLEMENTATION_PLAN.md`.
