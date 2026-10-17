@@ -1,0 +1,585 @@
+--- a/app/inventory/router.py
++++ b/app/inventory/router.py
+@@ -24,15 +24,10 @@
+ Db = Annotated[Session, Depends(get_db)]
+ CurrentUser = Annotated[dict, Depends(get_current_user)]
+ 
+-# PRD §2: Owner is unrestricted. Branch-scoped sales_manager/district_manager
+-# are scoped through platform.user_branch (0006) and
+-# inventory.branch_warehouse (0008) - a warehouse is granted only to a branch
+-# a user is assigned to, never to an entire warehouse because another
+-# territory uses it.
++# Explicit user_branch grants cover owned warehouses, never fulfillment routes.
+ READ_ROLES = {"owner", "finance", "warehouse_staff", "read_only_auditor",
+               "sales_manager", "district_manager"}
+-WRITE_ROLES = {"owner", "finance", "warehouse_staff",
+-               "sales_manager", "district_manager"}
++WRITE_ROLES = {"owner", "finance", "warehouse_staff"}
+ 
+ # Roles granted access to ALL warehouses (no per-warehouse filtering).
+ GLOBAL_WAREHOUSE_ROLES = {"owner", "finance", "warehouse_staff", "read_only_auditor"}
+@@ -46,34 +41,22 @@
+ 
+ 
+ def _scope_warehouses(db, user):
+-    """Warehouse ids a user may touch; None = all warehouses.
+-    
+-    Deny by default: no user_branch assignment, or an empty assignment, means
+-    the role sees nothing (not everything). Warehouse sharing (Sharqia and
+-    Dakahlia serve the same warehouse, etc.) is data in branch_warehouse, not a
+-    reason to widen access.
+-    """
++    """Active warehouses owned by explicit branch grants; None means global."""
+     role = user["role"]
+     if role in GLOBAL_WAREHOUSE_ROLES:
+         return None
+     if role not in READ_ROLES:
+         raise HTTPException(403, "Inventory access denied")
+     rows = db.execute(
+-        text("SELECT branch_id FROM platform.user_branch WHERE user_id = :uid"),
++        text("SELECT w.id FROM platform.user_branch ub "
++             "JOIN master_data.master_warehouse w ON w.branch_id = ub.branch_id "
++             "WHERE ub.user_id = :uid AND w.is_active"),
+         {"uid": user["id"]},
+     ).fetchall()
+     warehouses = {r[0] for r in rows}
+     if not warehouses:
+         raise HTTPException(403, "Inventory access denied")
+     return warehouses
+-
+-
+-
+-def _role(user, allowed):
+-    role = user["role"]
+-    if not user["is_active"] or role not in allowed or (role == "owner" and not user["is_owner"]):
+-        raise HTTPException(403, "Inventory access denied")
+-    return role
+ 
+ 
+ def _host(request):
+@@ -90,7 +73,7 @@
+     _role(current, READ_ROLES)
+     scope = _scope_warehouses(db, current)
+     if scope is not None and warehouse_id is not None and warehouse_id not in scope:
+-        raise HTTPException(403, "Warehouse is outside your branch scope")
++        raise HTTPException(404, "Warehouse not found")
+     warehouse_ids = list(scope) if scope is not None else None
+     return [BalanceOut.model_validate(row)
+             for row in service.list_balances(db, warehouse_id=warehouse_id,
+@@ -107,11 +90,12 @@
+     scope = _scope_warehouses(db, current)
+     warehouse_ids = list(scope) if scope is not None else None
+     if scope is not None and warehouse_id is not None and warehouse_id not in scope:
+-        raise HTTPException(403, "Warehouse is outside your branch scope")
++        raise HTTPException(404, "Warehouse not found")
+     rows = service.list_movements(db, warehouse_id=warehouse_id, product_id=product_id,
+                                   batch_id=batch_id, movement_type=movement_type,
+                                   date_from=date_from, date_to=date_to,
+-                                  warehouse_ids=warehouse_ids)
++                                  warehouse_ids=warehouse_ids,
++                                  scoped_user_id=current["id"] if scope is not None else None)
+     return [MovementOut.model_validate(row) for row in rows]
+ 
+ 
+@@ -120,7 +104,7 @@
+     _role(current, WRITE_ROLES)
+     scope = _scope_warehouses(db, current)
+     if scope is not None and payload.warehouse_id not in scope:
+-        raise HTTPException(403, "Warehouse is outside your branch scope")
++        raise HTTPException(404, "Warehouse not found")
+     if payload.movement_type == "adjustment":
+         reason = db.execute(text(
+             "SELECT 1 FROM audit.reason_code WHERE id=:id AND is_active AND category='adjustment' FOR SHARE"),
+--- a/app/inventory/service.py
++++ b/app/inventory/service.py
+@@ -70,7 +70,7 @@
+     clauses, params = [], {}
+     if warehouse_ids is not None:
+         if warehouse_ids:
+-            clauses.append("warehouse_id = ANY(:warehouse_ids)")
++            clauses.append("warehouse_id = ANY(CAST(:warehouse_ids AS uuid[]))")
+             params["warehouse_ids"] = [str(w) for w in warehouse_ids]
+         else:
+             clauses.append("1 = 0")
+@@ -100,9 +100,23 @@
+ 
+ def list_movements(db, warehouse_id=None, product_id=None, batch_id=None,
+                    movement_type=None, date_from=None, date_to=None,
+-                   warehouse_ids=None):
++                   warehouse_ids=None, scoped_user_id=None):
+     where, params = _filters(warehouse_id, product_id, batch_id, movement_type,
+                              date_from, date_to, warehouse_ids=warehouse_ids)
++    if scoped_user_id is not None:
++        # A shared stock pool is not permission to read every source invoice.
++        where += (" AND " if where else " WHERE ") + """(
++            (source_type = 'manual' AND source_id IS NULL)
++            OR (source_type = 'invoice' AND EXISTS (
++                SELECT 1 FROM sales.sales_invoice i
++                JOIN platform.user_branch ub ON ub.branch_id = i.branch_id
++                JOIN platform.user_territory ut ON ut.territory_id = i.territory_id
++                WHERE i.id = stock_movement.source_id
++                  AND i.warehouse_id = stock_movement.warehouse_id
++                  AND ub.user_id = :scoped_user_id AND ut.user_id = :scoped_user_id
++            ))
++        )"""
++        params["scoped_user_id"] = scoped_user_id
+     rows = db.execute(text(
+         "SELECT * FROM inventory.stock_movement" + where +
+         " ORDER BY created_at DESC, id"), params).mappings()
+--- a/alembic/versions/0008_branch_warehouse.py
++++ b/alembic/versions/0008_branch_warehouse.py
+@@ -1,11 +1,10 @@
+-"""Add the branch -> warehouse access mapping used for least-privilege inventory
+-authorization. A warehouse can serve multiple branches (Sharqia and Dakahlia
+-share the Dakahlia warehouse; Gharbia can use the Dakahlia or Gharbia
+-warehouse). master_warehouse.branch_id stays the canonical ownership and is
+-unambiguously *not* used to scope access - scoping is done through this table
+-plus platform.user_branch."""
++"""Branch -> warehouse fulfillment compatibility (not an inventory access grant).
++
++Dakahlia and Sharqia use Dakahlia; Gharbia may use Dakahlia or Gharbia.
++Inventory access instead follows explicit platform.user_branch grants joined to
++master_warehouse.branch_id. Routing alone must never widen that scope.
++"""
+ from alembic import op
+-
+ 
+ revision = "0008_branch_warehouse"
+ down_revision = "0007_ar_ledger"
+--- a/tests/test_inventory_api.py
++++ b/tests/test_inventory_api.py
+@@ -242,9 +242,8 @@
+ 
+ 
+ @pytest.mark.parametrize("role", ["sales_manager", "district_manager", "medical_rep"])
+-def test_branch_scoped_roles_are_deferred_not_over_granted(stock_env, role):
+-    # PRD grants these branch-scoped inventory; no user->branch table exists yet,
+-    # so access is denied rather than widened to every warehouse.
++def test_branch_scoped_roles_without_assignment_are_denied(stock_env, role):
++    # An available assignment table is not itself an access grant.
+     client, db, ids, headers, movement = stock_env
+     db.execute(text("UPDATE platform.platform_user SET role=:role WHERE id=:id"), {"role": role, "id": ids["other"]})
+     db.commit()
+--- a/tests/test_inventory_authorization.py
++++ b/tests/test_inventory_authorization.py
+@@ -0,0 +1,395 @@
++"""Real-PostgreSQL controls for explicit branch grants, not fulfillment routes."""
++
++from datetime import date
++from uuid import UUID, uuid4
++
++import pytest
++from sqlalchemy import text
++
++pytest_plugins = ["test_inventory_api"]
++
++
++@pytest.mark.parametrize("role", ["sales_manager", "district_manager"])
++def test_assigned_branch_resolves_real_warehouse_ids(stock_env, role):
++    client, db, ids, headers, movement = stock_env
++    auth = headers()
++    assert (
++        client.post("/inventory/movements", json=movement(), headers=auth).status_code
++        == 201
++    )
++    db.execute(
++        text("UPDATE platform.platform_user SET role=:role WHERE id=:id"),
++        {"role": role, "id": ids["other"]},
++    )
++    db.execute(
++        text("INSERT INTO platform.user_branch VALUES (:u,:b)"),
++        {"u": ids["other"], "b": ids["branch"]},
++    )
++    db.commit()
++    scoped = headers("other")
++    for path in ("stock", "movements"):
++        response = client.get(f"/inventory/{path}", headers=scoped)
++        assert response.status_code == 200, response.text
++        assert {row["warehouse_id"] for row in response.json()} == {
++            str(ids["warehouse"])
++        }
++        response = client.get(
++            f"/inventory/{path}?warehouse_id={ids['warehouse']}", headers=scoped
++        )
++        assert response.status_code == 200, response.text
++        assert len(response.json()) == 1
++
++
++@pytest.mark.parametrize("role", ["sales_manager", "district_manager"])
++@pytest.mark.parametrize("kind", ["opening", "adjustment"])
++def test_branch_read_grant_does_not_grant_manual_stock_writes(stock_env, role, kind):
++    client, db, ids, headers, movement = stock_env
++    db.execute(
++        text("UPDATE platform.platform_user SET role=:r WHERE id=:u"),
++        {"r": role, "u": ids["other"]},
++    )
++    db.execute(
++        text("INSERT INTO platform.user_branch VALUES (:u,:b)"),
++        {"u": ids["other"], "b": ids["branch"]},
++    )
++    db.commit()
++    payload = movement(movement_type=kind)
++    if kind == "adjustment":
++        payload["reason_id"] = str(ids["reason"])
++    response = client.post(
++        "/inventory/movements", json=payload, headers=headers("other")
++    )
++    assert response.status_code == 403, response.text
++    for table in ("stock_balance", "stock_movement"):
++        assert (
++            db.execute(text(f"SELECT count(*) FROM inventory.{table}")).scalar_one()
++            == 0
++        )
++
++
++@pytest.mark.parametrize("role", ["sales_manager", "district_manager"])
++def test_shared_warehouse_movements_do_not_leak_other_territories(stock_env, role):
++    from app.sales.service import post_invoice_atomic
++
++    client, db, ids, headers, movement = stock_env
++    auth = headers()
++    assert (
++        client.post(
++            "/inventory/movements", json=movement(quantity="20"), headers=auth
++        ).status_code
++        == 201
++    )
++    invoices = []
++    territories = []
++    # All three territories use one physical warehouse. Distinct territory ids
++    # must survive in sales, not be inferred from that source warehouse.
++    for name in ("Dakahlia", "Sharqia", "Gharbia"):
++        territory, customer = uuid4(), uuid4()
++        territories.append(territory)
++        db.execute(
++            text(
++                "INSERT INTO master_data.master_territory(id,code,name_ar) VALUES (:t,:c,:n)"
++            ),
++            {"t": territory, "c": territory.hex[:20], "n": name},
++        )
++        db.execute(
++            text(
++                "INSERT INTO master_data.master_customer(id,code,name_ar,branch_id,territory_id) "
++                "VALUES (:c,:code,:n,:b,:t)"
++            ),
++            {
++                "c": customer,
++                "code": customer.hex[:30],
++                "n": name,
++                "b": ids["branch"],
++                "t": territory,
++            },
++        )
++        db.commit()
++        response = client.post(
++            "/invoices",
++            headers=auth,
++            json={
++                "invoice_no": uuid4().hex[:20],
++                "branch_id": str(ids["branch"]),
++                "warehouse_id": str(ids["warehouse"]),
++                "customer_id": str(customer),
++                "invoice_date": date(2026, 1, 15).isoformat(),
++                "lines": [
++                    {
++                        "product_id": str(ids["product"]),
++                        "quantity": "1",
++                        "discount_pct": "0",
++                    }
++                ],
++            },
++        )
++        assert response.status_code == 201, response.text
++        invoice = response.json()
++        assert invoice["territory_id"] == str(territory)
++        assert (
++            client.post(f"/invoices/{invoice['id']}/post", headers=auth).status_code
++            == 409
++        )
++        # Exercise existing transaction directly; never open the HTTP gate.
++        post_invoice_atomic(db, UUID(invoice["id"]), ids["owner"])
++        db.commit()
++        invoices.append(invoice)
++    db.execute(
++        text("UPDATE platform.platform_user SET role=:r WHERE id=:u"),
++        {"r": role, "u": ids["other"]},
++    )
++    db.execute(
++        text("INSERT INTO platform.user_branch VALUES (:u,:b)"),
++        {"u": ids["other"], "b": ids["branch"]},
++    )
++    db.execute(
++        text("INSERT INTO platform.user_territory VALUES (:u,:t)"),
++        {"u": ids["other"], "t": territories[0]},
++    )
++    db.commit()
++    scoped = headers("other")
++    for query in (
++        "",
++        f"?warehouse_id={ids['warehouse']}",
++        "?movement_type=sale",
++        f"?product_id={ids['product']}",
++    ):
++        response = client.get("/inventory/movements" + query, headers=scoped)
++        assert response.status_code == 200, response.text
++        sales = [row for row in response.json() if row["source_type"] == "invoice"]
++        assert {row["source_id"] for row in sales} == {invoices[0]["id"]}
++    for invoice in invoices[1:]:
++        assert (
++            client.get(f"/invoices/{invoice['id']}", headers=scoped).status_code == 404
++        )
++    # Removing territory authority removes sale-detail access, not branch stock.
++    db.execute(
++        text("DELETE FROM platform.user_territory WHERE user_id=:u"),
++        {"u": ids["other"]},
++    )
++    db.commit()
++    response = client.get("/inventory/movements?movement_type=sale", headers=scoped)
++    assert response.status_code == 200 and response.json() == []
++    assert client.get("/inventory/stock", headers=scoped).status_code == 200
++
++
++@pytest.mark.parametrize("role", ["sales_manager", "district_manager"])
++@pytest.mark.parametrize("home", ["Sharqia", "Gharbia"])
++def test_fulfillment_routes_and_territory_do_not_grant_shared_stock(
++    stock_env, role, home
++):
++    client, db, ids, headers, movement = stock_env
++    branches = {"Dakahlia": ids["branch"], "Sharqia": uuid4(), "Gharbia": uuid4()}
++    for name in ("Sharqia", "Gharbia"):
++        db.execute(
++            text(
++                "INSERT INTO master_data.master_branch(id,code,name_ar) VALUES (:id,:c,:n)"
++            ),
++            {"id": branches[name], "c": branches[name].hex[:20], "n": name},
++        )
++    db.execute(
++        text("UPDATE master_data.master_warehouse SET branch_id=:g WHERE id=:w"),
++        {"g": branches["Gharbia"], "w": ids["other_warehouse"]},
++    )
++    # Compatibility only: D + S use D; G may use D or G. No access grants.
++    for name, key in (
++        ("Dakahlia", "warehouse"),
++        ("Sharqia", "warehouse"),
++        ("Gharbia", "warehouse"),
++        ("Gharbia", "other_warehouse"),
++    ):
++        db.execute(
++            text("INSERT INTO inventory.branch_warehouse VALUES (:b,:w)"),
++            {"b": branches[name], "w": ids[key]},
++        )
++    territory = uuid4()
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_territory(id,code,name_ar) VALUES (:t,:c,:n)"
++        ),
++        {"t": territory, "c": territory.hex[:20], "n": home},
++    )
++    db.execute(
++        text("INSERT INTO platform.user_territory VALUES (:u,:t)"),
++        {"u": ids["other"], "t": territory},
++    )
++    db.execute(
++        text("UPDATE platform.platform_user SET role=:r WHERE id=:u"),
++        {"r": role, "u": ids["other"]},
++    )
++    db.execute(
++        text("INSERT INTO platform.user_branch VALUES (:u,:b)"),
++        {"u": ids["other"], "b": branches[home]},
++    )
++    db.commit()
++    owner = headers()
++    for key in ("warehouse", "other_warehouse"):
++        assert (
++            client.post(
++                "/inventory/movements",
++                json=movement(warehouse_id=str(ids[key])),
++                headers=owner,
++            ).status_code
++            == 201
++        )
++    scoped = headers("other")
++    for path in ("stock", "movements"):
++        response = client.get(f"/inventory/{path}", headers=scoped)
++        if home == "Sharqia":
++            assert response.status_code == 403
++        else:
++            assert response.status_code == 200, response.text
++            assert {r["warehouse_id"] for r in response.json()} == {
++                str(ids["other_warehouse"])
++            }
++        assert client.get(
++            f"/inventory/{path}?warehouse_id={ids['warehouse']}", headers=scoped
++        ).status_code in (403, 404)
++    assert (
++        client.post("/inventory/movements", json=movement(), headers=scoped).status_code
++        == 403
++    )
++    # Only an explicit D branch assignment can expose its stock pool.
++    db.execute(
++        text("INSERT INTO platform.user_branch VALUES (:u,:b)"),
++        {"u": ids["other"], "b": branches["Dakahlia"]},
++    )
++    db.commit()
++    expected = {str(ids["warehouse"])}
++    if home == "Gharbia":
++        expected.add(str(ids["other_warehouse"]))
++    for path in ("stock", "movements"):
++        response = client.get(f"/inventory/{path}", headers=scoped)
++        assert response.status_code == 200, response.text
++        assert {r["warehouse_id"] for r in response.json()} == expected
++
++
++@pytest.mark.parametrize("role", ["sales_manager", "district_manager"])
++def test_foreign_warehouse_cannot_be_queried_or_leak_through_filters(stock_env, role):
++    client, db, ids, headers, movement = stock_env
++    foreign = uuid4()
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_branch(id,code,name_ar) VALUES (:b,:c,'Foreign')"
++        ),
++        {"b": foreign, "c": foreign.hex[:20]},
++    )
++    db.execute(
++        text("UPDATE master_data.master_warehouse SET branch_id=:b WHERE id=:w"),
++        {"b": foreign, "w": ids["other_warehouse"]},
++    )
++    db.execute(
++        text("UPDATE platform.platform_user SET role=:r WHERE id=:u"),
++        {"r": role, "u": ids["other"]},
++    )
++    db.execute(
++        text("INSERT INTO platform.user_branch VALUES (:u,:b)"),
++        {"u": ids["other"], "b": ids["branch"]},
++    )
++    db.commit()
++    auth = headers()
++    for key in ("warehouse", "other_warehouse"):
++        assert (
++            client.post(
++                "/inventory/movements",
++                headers=auth,
++                json=movement(warehouse_id=str(ids[key])),
++            ).status_code
++            == 201
++        )
++    scoped = headers("other")
++    for path in ("stock", "movements"):
++        for query in ("", f"?product_id={ids['product']}"):
++            response = client.get(f"/inventory/{path}{query}", headers=scoped)
++            assert response.status_code == 200, response.text
++            assert {r["warehouse_id"] for r in response.json()} == {
++                str(ids["warehouse"])
++            }
++        for w in (ids["other_warehouse"], uuid4()):
++            response = client.get(f"/inventory/{path}?warehouse_id={w}", headers=scoped)
++            assert response.status_code == 404, response.text
++    # Existing sessions must lose access when the branch grant is removed.
++    db.execute(
++        text("DELETE FROM platform.user_branch WHERE user_id=:u"), {"u": ids["other"]}
++    )
++    db.commit()
++    for path in ("stock", "movements"):
++        assert client.get(f"/inventory/{path}", headers=scoped).status_code == 403
++
++
++@pytest.mark.parametrize(
++    "role", ["sales_manager", "district_manager", "medical_rep", "admin", "user"]
++)
++def test_branch_assignment_is_not_a_role_or_active_user_bypass(stock_env, role):
++    client, db, ids, headers, movement = stock_env
++    db.execute(
++        text("UPDATE platform.platform_user SET role=:r WHERE id=:u"),
++        {"r": role, "u": ids["other"]},
++    )
++    db.execute(
++        text("INSERT INTO platform.user_branch VALUES (:u,:b)"),
++        {"u": ids["other"], "b": ids["branch"]},
++    )
++    db.commit()
++    scoped = headers("other")
++    expected = 200 if role in {"sales_manager", "district_manager"} else 403
++    for path in ("stock", "movements"):
++        assert client.get(f"/inventory/{path}", headers=scoped).status_code == expected
++    db.execute(
++        text("UPDATE platform.platform_user SET is_active=false WHERE id=:u"),
++        {"u": ids["other"]},
++    )
++    db.commit()
++    for path in ("stock", "movements"):
++        assert client.get(f"/inventory/{path}", headers=scoped).status_code == 401
++    assert (
++        client.post("/inventory/movements", json=movement(), headers=scoped).status_code
++        == 401
++    )
++
++
++def test_branch_uuid_collision_cannot_grant_foreign_warehouse(stock_env):
++    client, db, ids, headers, movement = stock_env
++    foreign = uuid4()
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_branch(id,code,name_ar) VALUES (:b,:c,'Foreign')"
++        ),
++        {"b": foreign, "c": foreign.hex[:20]},
++    )
++    # Deliberate cross-table UUID collision; FK types do not confer authority.
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_warehouse(id,branch_id,code,name_ar) "
++            "VALUES (:w,:b,:c,'Foreign warehouse')"
++        ),
++        {"w": ids["branch"], "b": foreign, "c": foreign.hex[:20]},
++    )
++    db.execute(
++        text("UPDATE platform.platform_user SET role='district_manager' WHERE id=:u"),
++        {"u": ids["other"]},
++    )
++    db.execute(
++        text("INSERT INTO platform.user_branch VALUES (:u,:b)"),
++        {"u": ids["other"], "b": ids["branch"]},
++    )
++    db.commit()
++    assert (
++        client.post(
++            "/inventory/movements",
++            headers=headers(),
++            json=movement(warehouse_id=str(ids["branch"])),
++        ).status_code
++        == 201
++    )
++    scoped = headers("other")
++    for path in ("stock", "movements"):
++        response = client.get(f"/inventory/{path}", headers=scoped)
++        assert response.status_code == 200 and response.json() == []
++        assert (
++            client.get(
++                f"/inventory/{path}?warehouse_id={ids['branch']}", headers=scoped
++            ).status_code
++            == 404
++        )
+--- a/docs/INVENTORY_SLICE.md
++++ b/docs/INVENTORY_SLICE.md
+@@ -1,4 +1,22 @@
+ # Inventory Slice 1 — stock ledger and balances
++
++## Current authorization checkpoint — 2026-10-17
++
++This section supersedes the historical slice report below. The previous `893a0d9` completion report was incorrect: branch IDs were used as warehouse IDs; assigned managers were over-granted manual writes; shared-warehouse authorization was not covered by its 162 passing tests.
++
++- `sales_manager` / `district_manager`: **read only**, from explicit `platform.user_branch` joined to active `master_warehouse.branch_id`, returning actual warehouse IDs. No applicable grant → 403; foreign/missing warehouse filters → identical 404. Manual opening/adjustment writes stay denied, even when assigned. Existing owner/finance/warehouse_staff/auditor permissions are unchanged.
++- Fulfillment is not authority: Dakahlia + Sharqia use Dakahlia; Gharbia may use Dakahlia or Gharbia. `inventory.branch_warehouse` records compatibility only. Territory/route assignments alone never grant a whole warehouse. Explicit assignment to the warehouse-owning branch is required to see its physical stock pool; no per-territory stock balances are invented.
++- Invoice-backed ledger details additionally require the invoice's assigned branch **and** `platform.user_territory`, with a matching source warehouse. Other territories' invoice IDs, actors and quantities are excluded in SQL. Unknown/orphan sources are hidden; warehouse-level manual movements remain visible within explicit warehouse grants. Revocations and disabled accounts affect existing sessions.
++- Verification: `docs/evidence/inventory-authorization/` retains desired-behavior RED/GREEN logs, final native/disposable-database runs, source/workbook hash bindings and the scoped review/report. The 20 new regression cases cover allowed IDs, assigned write denial, shared routes, territory isolation, foreign warehouse filters, revocation, disabled accounts and deliberate cross-table UUID collision.
++- **Posting remains HTTP 409.** AR and the direct atomic transaction were already implemented after the historical report below. PostgreSQL has permitted valid Posted records since `0006`; it is no longer a second disabled-feature gate. No posting flag was added or activated here.
++
++**Next uncompleted prerequisite:** `app/sales/router.py::_prepare` and `fk_invoice_warehouse_branch` still require invoice branch = source warehouse owner branch. Separate Sharqia/Gharbia sales branches cannot yet use every required shared source. Wire and test fulfillment compatibility without widening inventory authority; then implement the requested default-OFF posting flag. Activation still requires Eli's explicit approval.
++
++No live assignments, source workbooks, production deployment or GitHub push were changed. The five-document security workflow (Security, Auth, Data Security, Threat Model, Security Checklist) remains release work; scoped inventory verification is not whole-system sign-off.
++
++---
++
++## Historical first-slice report (superseded where noted above)
+ 
+ **Updated:** 2026-10-17. **Scope:** the stock half of the eventual atomic invoice posting. Invoice posting is still disabled in both the API and PostgreSQL.
+ 

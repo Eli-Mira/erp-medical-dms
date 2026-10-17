@@ -70,7 +70,7 @@ def _filters(warehouse_id=None, product_id=None, batch_id=None, movement_type=No
     clauses, params = [], {}
     if warehouse_ids is not None:
         if warehouse_ids:
-            clauses.append("warehouse_id = ANY(:warehouse_ids)")
+            clauses.append("warehouse_id = ANY(CAST(:warehouse_ids AS uuid[]))")
             params["warehouse_ids"] = [str(w) for w in warehouse_ids]
         else:
             clauses.append("1 = 0")
@@ -100,9 +100,23 @@ def list_balances(db, warehouse_id=None, product_id=None, batch_id=None,
 
 def list_movements(db, warehouse_id=None, product_id=None, batch_id=None,
                    movement_type=None, date_from=None, date_to=None,
-                   warehouse_ids=None):
+                   warehouse_ids=None, scoped_user_id=None):
     where, params = _filters(warehouse_id, product_id, batch_id, movement_type,
                              date_from, date_to, warehouse_ids=warehouse_ids)
+    if scoped_user_id is not None:
+        # A shared stock pool is not permission to read every source invoice.
+        where += (" AND " if where else " WHERE ") + """(
+            (source_type = 'manual' AND source_id IS NULL)
+            OR (source_type = 'invoice' AND EXISTS (
+                SELECT 1 FROM sales.sales_invoice i
+                JOIN platform.user_branch ub ON ub.branch_id = i.branch_id
+                JOIN platform.user_territory ut ON ut.territory_id = i.territory_id
+                WHERE i.id = stock_movement.source_id
+                  AND i.warehouse_id = stock_movement.warehouse_id
+                  AND ub.user_id = :scoped_user_id AND ut.user_id = :scoped_user_id
+            ))
+        )"""
+        params["scoped_user_id"] = scoped_user_id
     rows = db.execute(text(
         "SELECT * FROM inventory.stock_movement" + where +
         " ORDER BY created_at DESC, id"), params).mappings()

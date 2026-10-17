@@ -1,0 +1,3 @@
+# Preserve raw verification inputs, logs and hashes through Git checkout.
+# Whitespace in captured bytes is evidence, not source formatting.
+** -text -whitespace

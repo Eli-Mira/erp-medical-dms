@@ -1,0 +1,20 @@
+--- a/alembic/versions/0008_branch_warehouse.py
++++ b/alembic/versions/0008_branch_warehouse.py
+@@ -1,11 +1,10 @@
+-"""Add the branch -> warehouse access mapping used for least-privilege inventory
+-authorization. A warehouse can serve multiple branches (Sharqia and Dakahlia
+-share the Dakahlia warehouse; Gharbia can use the Dakahlia or Gharbia
+-warehouse). master_warehouse.branch_id stays the canonical ownership and is
+-unambiguously *not* used to scope access - scoping is done through this table
+-plus platform.user_branch."""
++"""Branch -> warehouse fulfillment compatibility (not an inventory access grant).
++
++Dakahlia and Sharqia use Dakahlia; Gharbia may use Dakahlia or Gharbia.
++Inventory access instead follows explicit platform.user_branch grants joined to
++master_warehouse.branch_id. Routing alone must never widen that scope.
++"""
+ from alembic import op
+-
+ 
+ revision = "0008_branch_warehouse"
+ down_revision = "0007_ar_ledger"

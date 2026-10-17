@@ -24,15 +24,10 @@ router = APIRouter(prefix="/inventory", tags=["inventory"])
 Db = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[dict, Depends(get_current_user)]
 
-# PRD §2: Owner is unrestricted. Branch-scoped sales_manager/district_manager
-# are scoped through platform.user_branch (0006) and
-# inventory.branch_warehouse (0008) - a warehouse is granted only to a branch
-# a user is assigned to, never to an entire warehouse because another
-# territory uses it.
+# Explicit user_branch grants cover owned warehouses, never fulfillment routes.
 READ_ROLES = {"owner", "finance", "warehouse_staff", "read_only_auditor",
               "sales_manager", "district_manager"}
-WRITE_ROLES = {"owner", "finance", "warehouse_staff",
-               "sales_manager", "district_manager"}
+WRITE_ROLES = {"owner", "finance", "warehouse_staff"}
 
 # Roles granted access to ALL warehouses (no per-warehouse filtering).
 GLOBAL_WAREHOUSE_ROLES = {"owner", "finance", "warehouse_staff", "read_only_auditor"}
@@ -46,34 +41,22 @@ def _role(user, allowed):
 
 
 def _scope_warehouses(db, user):
-    """Warehouse ids a user may touch; None = all warehouses.
-    
-    Deny by default: no user_branch assignment, or an empty assignment, means
-    the role sees nothing (not everything). Warehouse sharing (Sharqia and
-    Dakahlia serve the same warehouse, etc.) is data in branch_warehouse, not a
-    reason to widen access.
-    """
+    """Active warehouses owned by explicit branch grants; None means global."""
     role = user["role"]
     if role in GLOBAL_WAREHOUSE_ROLES:
         return None
     if role not in READ_ROLES:
         raise HTTPException(403, "Inventory access denied")
     rows = db.execute(
-        text("SELECT branch_id FROM platform.user_branch WHERE user_id = :uid"),
+        text("SELECT w.id FROM platform.user_branch ub "
+             "JOIN master_data.master_warehouse w ON w.branch_id = ub.branch_id "
+             "WHERE ub.user_id = :uid AND w.is_active"),
         {"uid": user["id"]},
     ).fetchall()
     warehouses = {r[0] for r in rows}
     if not warehouses:
         raise HTTPException(403, "Inventory access denied")
     return warehouses
-
-
-
-def _role(user, allowed):
-    role = user["role"]
-    if not user["is_active"] or role not in allowed or (role == "owner" and not user["is_owner"]):
-        raise HTTPException(403, "Inventory access denied")
-    return role
 
 
 def _host(request):
@@ -90,7 +73,7 @@ def list_stock(db: Db, current: CurrentUser, warehouse_id: UUID | None = None,
     _role(current, READ_ROLES)
     scope = _scope_warehouses(db, current)
     if scope is not None and warehouse_id is not None and warehouse_id not in scope:
-        raise HTTPException(403, "Warehouse is outside your branch scope")
+        raise HTTPException(404, "Warehouse not found")
     warehouse_ids = list(scope) if scope is not None else None
     return [BalanceOut.model_validate(row)
             for row in service.list_balances(db, warehouse_id=warehouse_id,
@@ -107,11 +90,12 @@ def list_movements(db: Db, current: CurrentUser, warehouse_id: UUID | None = Non
     scope = _scope_warehouses(db, current)
     warehouse_ids = list(scope) if scope is not None else None
     if scope is not None and warehouse_id is not None and warehouse_id not in scope:
-        raise HTTPException(403, "Warehouse is outside your branch scope")
+        raise HTTPException(404, "Warehouse not found")
     rows = service.list_movements(db, warehouse_id=warehouse_id, product_id=product_id,
                                   batch_id=batch_id, movement_type=movement_type,
                                   date_from=date_from, date_to=date_to,
-                                  warehouse_ids=warehouse_ids)
+                                  warehouse_ids=warehouse_ids,
+                                  scoped_user_id=current["id"] if scope is not None else None)
     return [MovementOut.model_validate(row) for row in rows]
 
 
@@ -120,7 +104,7 @@ def record_movement(payload: MovementIn, request: Request, db: Db, current: Curr
     _role(current, WRITE_ROLES)
     scope = _scope_warehouses(db, current)
     if scope is not None and payload.warehouse_id not in scope:
-        raise HTTPException(403, "Warehouse is outside your branch scope")
+        raise HTTPException(404, "Warehouse not found")
     if payload.movement_type == "adjustment":
         reason = db.execute(text(
             "SELECT 1 FROM audit.reason_code WHERE id=:id AND is_active AND category='adjustment' FOR SHARE"),

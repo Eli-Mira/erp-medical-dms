@@ -1,0 +1,22 @@
+FF                                                                       [100%]
+================================== FAILURES ===================================
+_______ test_assigned_branch_resolves_real_warehouse_ids[sales_manager] _______
+tests\test_inventory_authorization.py:24: in test_assigned_branch_resolves_real_warehouse_ids
+    assert {row["warehouse_id"] for row in response.json()} == {str(ids["warehouse"])}
+E   AssertionError: assert set() == {'e17ad838-bd...9f5d39a38716'}
+E     
+E     Extra items in the right set:
+E     'e17ad838-bd19-4590-a41e-9f5d39a38716'
+E     Use -v to get more diff
+_____ test_assigned_branch_resolves_real_warehouse_ids[district_manager] ______
+tests\test_inventory_authorization.py:24: in test_assigned_branch_resolves_real_warehouse_ids
+    assert {row["warehouse_id"] for row in response.json()} == {str(ids["warehouse"])}
+E   AssertionError: assert set() == {'01913db2-1a...417bd2e67994'}
+E     
+E     Extra items in the right set:
+E     '01913db2-1ac4-4b37-afb3-417bd2e67994'
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED tests/test_inventory_authorization.py::test_assigned_branch_resolves_real_warehouse_ids[sales_manager]
+FAILED tests/test_inventory_authorization.py::test_assigned_branch_resolves_real_warehouse_ids[district_manager]
+2 failed in 1.35s

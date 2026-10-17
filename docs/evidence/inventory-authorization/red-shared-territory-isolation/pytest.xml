@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="8" time="1.658" timestamp="2026-10-17T13:16:01.960305+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_inventory_authorization" name="test_assigned_branch_resolves_real_warehouse_ids[sales_manager]" time="0.139" /><testcase classname="tests.test_inventory_authorization" name="test_assigned_branch_resolves_real_warehouse_ids[district_manager]" time="0.070" /><testcase classname="tests.test_inventory_authorization" name="test_branch_read_grant_does_not_grant_manual_stock_writes[opening-sales_manager]" time="0.035" /><testcase classname="tests.test_inventory_authorization" name="test_branch_read_grant_does_not_grant_manual_stock_writes[opening-district_manager]" time="0.036" /><testcase classname="tests.test_inventory_authorization" name="test_branch_read_grant_does_not_grant_manual_stock_writes[adjustment-sales_manager]" time="0.035" /><testcase classname="tests.test_inventory_authorization" name="test_branch_read_grant_does_not_grant_manual_stock_writes[adjustment-district_manager]" time="0.030" /><testcase classname="tests.test_inventory_authorization" name="test_shared_warehouse_movements_do_not_leak_other_territories[sales_manager]" time="0.158"><failure message="AssertionError: assert {'a872e77f-dc...9be7b838923e'} == {'fea07374-1f...9be7b838923e'}&#10;  &#10;  Extra items in the left set:&#10;  'fa8be04c-b2f6-47d9-80cf-583327e54030'&#10;  'a872e77f-dc3f-4353-bff3-dfac6edf3745'&#10;  Use -v to get more diff">tests\test_inventory_authorization.py:97: in test_shared_warehouse_movements_do_not_leak_other_territories
+    assert {row["source_id"] for row in sales} == {invoices[0]["id"]}
+E   AssertionError: assert {'a872e77f-dc...9be7b838923e'} == {'fea07374-1f...9be7b838923e'}
+E     
+E     Extra items in the left set:
+E     'fa8be04c-b2f6-47d9-80cf-583327e54030'
+E     'a872e77f-dc3f-4353-bff3-dfac6edf3745'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.test_inventory_authorization" name="test_shared_warehouse_movements_do_not_leak_other_territories[district_manager]" time="0.136"><failure message="AssertionError: assert {'39632a97-ad...bc7bae9b8629'} == {'ce94f6d0-f9...d67a21e388c4'}&#10;  &#10;  Extra items in the left set:&#10;  'f4f72f10-572b-400a-ba32-bc7bae9b8629'&#10;  '39632a97-ade9-4a0e-803c-e97e44b41b38'&#10;  Use -v to get more diff">tests\test_inventory_authorization.py:97: in test_shared_warehouse_movements_do_not_leak_other_territories
+    assert {row["source_id"] for row in sales} == {invoices[0]["id"]}
+E   AssertionError: assert {'39632a97-ad...bc7bae9b8629'} == {'ce94f6d0-f9...d67a21e388c4'}
+E     
+E     Extra items in the left set:
+E     'f4f72f10-572b-400a-ba32-bc7bae9b8629'
+E     '39632a97-ade9-4a0e-803c-e97e44b41b38'
+E     Use -v to get more diff</failure></testcase></testsuite></testsuites>

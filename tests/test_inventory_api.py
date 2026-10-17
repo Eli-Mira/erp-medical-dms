@@ -242,9 +242,8 @@ def test_read_roles_can_view_stock(stock_env, role):
 
 
 @pytest.mark.parametrize("role", ["sales_manager", "district_manager", "medical_rep"])
-def test_branch_scoped_roles_are_deferred_not_over_granted(stock_env, role):
-    # PRD grants these branch-scoped inventory; no user->branch table exists yet,
-    # so access is denied rather than widened to every warehouse.
+def test_branch_scoped_roles_without_assignment_are_denied(stock_env, role):
+    # An available assignment table is not itself an access grant.
     client, db, ids, headers, movement = stock_env
     db.execute(text("UPDATE platform.platform_user SET role=:role WHERE id=:id"), {"role": role, "id": ids["other"]})
     db.commit()

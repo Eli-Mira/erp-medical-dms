@@ -1,0 +1,32 @@
+..FFFF                                                                   [100%]
+================================== FAILURES ===================================
+_ test_branch_read_grant_does_not_grant_manual_stock_writes[opening-sales_manager] _
+tests\test_inventory_authorization.py:43: in test_branch_read_grant_does_not_grant_manual_stock_writes
+    assert response.status_code == 403, response.text
+E   AssertionError: {"movement":{"id":"1f8e731c-00b5-4610-8cc0-22376fbb5cc0","warehouse_id":"c7619492-debd-4e13-bb52-af564ce52fcc","product_id":"18b60953-5923-4def-8b1c-48a71a17b557","batch_id":null,"movement_type":"opening","quantity":"10.000","unit_cost":null,"source_type":"manual","source_id":null,"note":null,"created_by":"2e6ebc92-6e70-4bcb-a26d-bbdff676b7ea","created_at":"2026-10-17T10:14:41.994396Z"},"balance_quantity":"10.000"}
+E   assert 201 == 403
+E    +  where 201 = <Response [201 Created]>.status_code
+_ test_branch_read_grant_does_not_grant_manual_stock_writes[opening-district_manager] _
+tests\test_inventory_authorization.py:43: in test_branch_read_grant_does_not_grant_manual_stock_writes
+    assert response.status_code == 403, response.text
+E   AssertionError: {"movement":{"id":"3a75f88c-50c6-42a9-947a-edfbf408a534","warehouse_id":"61dc8b3d-0196-404d-a8e1-17465082f161","product_id":"9e7743e8-6cab-44cc-807f-900c4d8b8fbc","batch_id":null,"movement_type":"opening","quantity":"10.000","unit_cost":null,"source_type":"manual","source_id":null,"note":null,"created_by":"63bd2e2c-445e-40a7-8b83-6c3e594bc7ac","created_at":"2026-10-17T10:14:42.212199Z"},"balance_quantity":"10.000"}
+E   assert 201 == 403
+E    +  where 201 = <Response [201 Created]>.status_code
+_ test_branch_read_grant_does_not_grant_manual_stock_writes[adjustment-sales_manager] _
+tests\test_inventory_authorization.py:43: in test_branch_read_grant_does_not_grant_manual_stock_writes
+    assert response.status_code == 403, response.text
+E   AssertionError: {"movement":{"id":"65aebc50-7d3a-4761-87ee-e9c6b34ad5ee","warehouse_id":"b10a3279-27e5-4c42-8cef-a63caa52178d","product_id":"2127ff22-b3fd-41ce-a378-2e5717234c93","batch_id":null,"movement_type":"adjustment","quantity":"10.000","unit_cost":null,"source_type":"manual","source_id":null,"note":null,"created_by":"39566d87-e4c2-4011-b921-dedc9abfcb2a","created_at":"2026-10-17T10:14:42.248933Z"},"balance_quantity":"10.000"}
+E   assert 201 == 403
+E    +  where 201 = <Response [201 Created]>.status_code
+_ test_branch_read_grant_does_not_grant_manual_stock_writes[adjustment-district_manager] _
+tests\test_inventory_authorization.py:43: in test_branch_read_grant_does_not_grant_manual_stock_writes
+    assert response.status_code == 403, response.text
+E   AssertionError: {"movement":{"id":"882ddfab-dec6-462f-888a-f31397fb20aa","warehouse_id":"e2e60fce-fc72-45be-b408-62780806ad8d","product_id":"8e8a195d-14a0-44a4-a8ee-0eddb98a8acd","batch_id":null,"movement_type":"adjustment","quantity":"10.000","unit_cost":null,"source_type":"manual","source_id":null,"note":null,"created_by":"fc322a1c-a08c-498a-9d62-0cc05f349c39","created_at":"2026-10-17T10:14:42.295480Z"},"balance_quantity":"10.000"}
+E   assert 201 == 403
+E    +  where 201 = <Response [201 Created]>.status_code
+=========================== short test summary info ===========================
+FAILED tests/test_inventory_authorization.py::test_branch_read_grant_does_not_grant_manual_stock_writes[opening-sales_manager]
+FAILED tests/test_inventory_authorization.py::test_branch_read_grant_does_not_grant_manual_stock_writes[opening-district_manager]
+FAILED tests/test_inventory_authorization.py::test_branch_read_grant_does_not_grant_manual_stock_writes[adjustment-sales_manager]
+FAILED tests/test_inventory_authorization.py::test_branch_read_grant_does_not_grant_manual_stock_writes[adjustment-district_manager]
+4 failed, 2 passed in 1.24s

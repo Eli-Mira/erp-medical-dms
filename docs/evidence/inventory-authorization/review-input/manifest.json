@@ -1,0 +1,58 @@
+{
+  "base": "893a0d997cd2e1ddc3f80bb1a77f7640433aacde",
+  "files": {
+    "app/inventory/router.py": {
+      "raw_sha256": "babeea1c38fb2094f017d316631b0ea27e3d9fbbec5a96c231be532a518d6624",
+      "bytes": 7112,
+      "diff_sha256": "1f9e417a62d8cffc7d30cf62a68c2988a6fc447ab491b10fb83ff5ab21e8499b",
+      "hunks": 5,
+      "normalized_replay": true
+    },
+    "app/inventory/service.py": {
+      "raw_sha256": "23e618900fe01e5248b6d3edb545b8e5d7504da99a7609bc3fbbf474c1dcbf0b",
+      "bytes": 5811,
+      "diff_sha256": "28f82b131f7b80faccb80f38676d4720069dc0c0ac80fdbae6363a031ae47c48",
+      "hunks": 2,
+      "normalized_replay": true
+    },
+    "alembic/versions/0008_branch_warehouse.py": {
+      "raw_sha256": "17d822acbfb5042c145b3fe2b71b42b3bb297ba84ea15247cde71afb45eda891",
+      "bytes": 1338,
+      "diff_sha256": "da9b6069dcb4598e184c4e1102c8018de9a6f4e59b9fea3f94407c23556e9356",
+      "hunks": 1,
+      "normalized_replay": true
+    },
+    "tests/test_inventory_api.py": {
+      "raw_sha256": "9b021b79704974211e0218dfefd34490c2649b204616f4165be793297d6bc71f",
+      "bytes": 14787,
+      "diff_sha256": "7f363f0325ad948143c6f25c4242438393b3b7d65c0b1c533cc42ac468571fd6",
+      "hunks": 1,
+      "normalized_replay": true
+    },
+    "tests/test_inventory_authorization.py": {
+      "raw_sha256": "938e111fedbe072136b99dc23089c733372749503c6f4b7612bb46a6b0b57212",
+      "bytes": 14611,
+      "diff_sha256": "6ebd0bc253b979cc6e4729026a6af406c10f8b163923688892993963d9f1f76e",
+      "hunks": 1,
+      "normalized_replay": true
+    },
+    "docs/INVENTORY_SLICE.md": {
+      "raw_sha256": "633f11870efc56059e517654b184765cd7c8b7824faaed878c86e4c204c79c58",
+      "bytes": 7316,
+      "diff_sha256": "b48b9bcfae78ae7f0078148b73e9cedaf56e24e9843ef39ac534ec795bf693ac",
+      "hunks": 1,
+      "normalized_replay": true
+    }
+  },
+  "proof": "Each complete normalized-LF patch replayed against the exact HEAD blob; destination raw bytes independently hashed. No external diff/textconv.",
+  "complete_diff_sha256": "08b9f5f4c3a0209d35148b941000ae946b5a69ff74405285b507632e4ec46500",
+  "static_scan_findings": [],
+  "context": {
+    "app/sales/router.py": "b73f1b712dfe49921a1041f1be36465ac421df6c884249e347e7b346cfd08ecb",
+    "app/sales/service.py": "a54c09bbdcd6c0e380b33169af83a288bad1825a8b09c9ef1d4d7df93109b916",
+    "app/auth/router.py": "d7dbe8017252256eaa197ed1585782ee47a247de3e29ca7391f36e41708c5f67",
+    "tests/test_posting.py": "f3a64da4029780829c44c24fe4b2114caf7d5354e2b8dcf0ac891064f0e82904",
+    "alembic/versions/0004_invoice_drafts.py": "b8011385c67e990cdc5703be01dfb6303b22414a788bae1a5295ab4df6df184f",
+    "alembic/versions/0006_inventory_ar_gate.py": "ea7b2e089df5f5265818350cd7a57723785e90ba0bb2263dd19db50c97e6230a"
+  }
+}

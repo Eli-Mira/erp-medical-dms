@@ -1,0 +1,24 @@
+......FF                                                                 [100%]
+================================== FAILURES ===================================
+_ test_shared_warehouse_movements_do_not_leak_other_territories[sales_manager] _
+tests\test_inventory_authorization.py:97: in test_shared_warehouse_movements_do_not_leak_other_territories
+    assert {row["source_id"] for row in sales} == {invoices[0]["id"]}
+E   AssertionError: assert {'a872e77f-dc...9be7b838923e'} == {'fea07374-1f...9be7b838923e'}
+E     
+E     Extra items in the left set:
+E     'fa8be04c-b2f6-47d9-80cf-583327e54030'
+E     'a872e77f-dc3f-4353-bff3-dfac6edf3745'
+E     Use -v to get more diff
+_ test_shared_warehouse_movements_do_not_leak_other_territories[district_manager] _
+tests\test_inventory_authorization.py:97: in test_shared_warehouse_movements_do_not_leak_other_territories
+    assert {row["source_id"] for row in sales} == {invoices[0]["id"]}
+E   AssertionError: assert {'39632a97-ad...bc7bae9b8629'} == {'ce94f6d0-f9...d67a21e388c4'}
+E     
+E     Extra items in the left set:
+E     'f4f72f10-572b-400a-ba32-bc7bae9b8629'
+E     '39632a97-ade9-4a0e-803c-e97e44b41b38'
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED tests/test_inventory_authorization.py::test_shared_warehouse_movements_do_not_leak_other_territories[sales_manager]
+FAILED tests/test_inventory_authorization.py::test_shared_warehouse_movements_do_not_leak_other_territories[district_manager]
+2 failed, 6 passed in 1.67s
