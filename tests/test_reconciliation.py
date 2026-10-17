@@ -90,6 +90,26 @@ def test_ar_balance_opening_and_running():
     wb.close()
 
 
+def test_ar_customer_balance_is_debits_minus_credits():
+    # AR ledger formula: balance = Σ(debit) − Σ(credit) per customer.
+    # Excel العملاء: the first customer block is rows 4-5 (row 4 carries the
+    # customer, row 5 continues it). Debit 22476, credit 12185+10291=22476 -> 0.
+    wb, ws = _sheet(FINANCE, "العملاء")
+    debit_total = credit_total = 0.0
+    last_balance = None
+    checked = 0
+    for bal, deb, cred in ws.iter_rows(min_row=4, max_row=5, min_col=4, max_col=6, values_only=True):
+        if bal is None:
+            continue
+        debit_total += deb or 0
+        credit_total += cred or 0
+        last_balance = bal
+        checked += 1
+    assert checked == 2, checked
+    assert abs((debit_total - credit_total) - last_balance) < TOL, (debit_total, credit_total, last_balance)
+    wb.close()
+
+
 def test_net_price_rule_in_transaction_sheet():
     # EXCEL_TO_SYSTEM_MAPPING: E = C * (1 - D)   (C=price, D=الخصم, E=Net price)
     wb, ws = _sheet(SALES_6OCT, "مخزن الزهراء اكتوبر")

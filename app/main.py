@@ -15,6 +15,8 @@ from app.sales.router import router as invoice_router  # noqa: E402
 app.include_router(invoice_router)
 from app.inventory.router import router as inventory_router  # noqa: E402
 app.include_router(inventory_router)
+from app.finance.router import router as ar_router  # noqa: E402
+app.include_router(ar_router)
 
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 app.mount("/app", StaticFiles(directory="web", html=True), name="pwa")

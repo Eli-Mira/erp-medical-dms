@@ -1,5 +1,16 @@
 # DATABASE_SCHEMA.md — Medical Company System
 
+## Implemented overlay — AR / Inventory / mapping, 2026-10-17
+
+Migrations `0001`–`0007` are authoritative for the current local database. Planning tables below that are not in this overlay remain unimplemented.
+
+- `inventory.stock_movement` (append-only ledger) and `inventory.stock_balance` (running total per `(warehouse, product, batch)`, `CHECK quantity >= 0`). `inventory.batch_record` gained `UNIQUE (id, warehouse_id)` so a movement cannot move a batch into the wrong warehouse.
+- `platform.user_branch(user_id, branch_id)` — the minimum user→branch mapping. Branches own warehouses, so a branch assignment scopes warehouse access. Territories (`user_territory`) and warehouses stay distinct; a territory may map to several branches/warehouses and warehouses may be shared.
+- `finance.ar_entry` (append-only): `customer_id`, nullable `invoice_id`, `entry_type` in (`opening`,`invoice`,`payment`,`credit_note`,`adjustment`), `entry_date`, `due_date`, `debit`, `credit`, `reason_id`, `note`, actor/time. `CHECK debit >= 0 AND credit >= 0`, `CHECK debit > 0 OR credit > 0`, `CHECK invoice_id IS NOT NULL OR entry_type != 'invoice'`. Balance = `Σ debit − Σ credit` per customer (matches Excel العملاء `مدين`/`دائن`/`الرصيد`).
+- `sales.sales_invoice` gained `posted_by`. Posting gates: `ck_invoice_posting_status` (`Draft`/`Voided`/`Posted`) and `ck_invoice_posted_at` (a Posted row must carry `posted_at`); the old `ck_invoice_posting_disabled` is gone. `ck_invoice_void_metadata` now also permits a `Posted` row (no void metadata). Posting itself stays disabled at the API (409); only `post_invoice_atomic` writes `Posted`.
+
+---
+
 ## Implemented overlay — Invoice Slice 1, 2026-10-17
 
 The tables below remain the broader planning schema, not evidence that every module is implemented. Applied migrations `0001`–`0004` are authoritative for the current local database; `docs/INVOICE_SLICE_1.md` describes the tested draft-only contract.

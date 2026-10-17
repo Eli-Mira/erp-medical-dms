@@ -32,7 +32,7 @@ Balances are keyed per `(warehouse, product, batch)`; batch-less stock is a sepa
 | `warehouse_staff` | Read and write all warehouses (PRD: "All warehouses' stock levels, movements, batches, expiry"). |
 | `finance` | Read all stock; write adjustments (PRD: "stock adjustments … per reason code"). |
 | `read_only_auditor` | Read only. |
-| `sales_manager`, `district_manager` | **Denied.** PRD grants them *branch-scoped* inventory, but no user→branch assignment table exists. Denied rather than widened to every warehouse. |
+| `sales_manager`, `district_manager` | **Denied in this slice.** PRD grants them *branch-scoped* inventory; the `platform.user_branch` mapping now exists (added in `0006`), but inventory authorization has not been rewired to use it yet — denied rather than widened to every warehouse. Rewiring is the tracked follow-up. |
 | `medical_rep`, `admin` | Denied. |
 | `user` / unknown roles | Denied. |
 

@@ -31,7 +31,7 @@ No blocking correctness or security defects found. The single remaining risk —
 
 ### 5. Accidental real posting — ✅ blocked (both layers)
 - API `post_invoice` (Line 159-164): scope check fires first, then the explicit `raise HTTPException(409, "Posting disabled...")` runs **before any DB mutation**. `_invoice` runs with no lock since nothing is written.
-- DB-level `ck_invoice_posting_disabled` constraint (in `0004_invoice_drafts.py`) enforces `posting_status IN ('Draft','Voided') AND posted_at IS NULL`, so even a bypass of the API or a future code path cannot write a Posted state without a deliberate migration that replaces the constraint.
+- DB-level gates `ck_invoice_posting_status` and `ck_invoice_posted_at` (migration `0006`) require `posting_status` to be a known state and a Posted row to carry `posted_at`, so a forged Posted row without `posted_at` is rejected. Real posting lives only behind `post_invoice_atomic`; the HTTP endpoint stays disabled (409).
 - `test_posting_blocked_by_api_and_database_with_no_success_audit` asserts: no posted row, no stock/AR write, no "posted" audit.
 
 ### 6. Authentication / sessions — ✅ (inherited, verified)

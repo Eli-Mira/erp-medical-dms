@@ -79,6 +79,7 @@ class InvoiceOut(BaseModel):
     updated_at: datetime
     updated_by: UUID | None
     posted_at: datetime | None
+    posted_by: UUID | None
     voided_at: datetime | None
     voided_by: UUID | None
     void_reason_id: UUID | None

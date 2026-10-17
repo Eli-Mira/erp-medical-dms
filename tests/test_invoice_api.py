@@ -288,8 +288,9 @@ def test_posting_blocked_by_api_and_database_with_no_success_audit(invoice_env):
     assert client.get(f"/invoices/{invoice['id']}", headers=auth).json() == invoice
     with pytest.raises(IntegrityError) as rejected:
         with db.begin_nested():
-            db.execute(text("UPDATE sales.sales_invoice SET posting_status='Posted',posted_at=now() WHERE id=:id"), {'id': invoice['id']})
-    assert rejected.value.orig.diag.constraint_name == 'ck_invoice_posting_disabled'
+            db.execute(text("UPDATE sales.sales_invoice SET posting_status='Posted' WHERE id=:id"), {'id': invoice['id']})
+    assert rejected.value.orig.diag.constraint_name == 'ck_invoice_posted_at'
+    assert db.execute(text("SELECT posting_status FROM sales.sales_invoice WHERE id=:id"), {'id': invoice['id']}).scalar_one() == 'Draft'
     assert db.execute(text("SELECT count(*) FROM audit.audit_log WHERE action='posted' AND entity_id=:id"), {'id': invoice['id']}).scalar_one() == 0
 
 

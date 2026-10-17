@@ -81,7 +81,7 @@ This piece maps the five security-document categories—Security, Auth, Data Sec
 | Cross-territory/other-rep access | Role + assignment + creator checks on reads and writes; allowed/denied integration tests | Conservative policy conflicts need business review before production |
 | Duplicate/stale edits | DB branch-number unique constraint, UPDATE row locks, required version; conflict tests | No concurrency/load stress claim |
 | Partial invoice/audit write | Header + lines + audit committed together; injected audit-failure rollback controls on create/update | No stock/AR implementation yet |
-| Accidental real posting | Unconditional API block plus `ck_invoice_posting_disabled` DB check (`Draft`/`Voided`, `posted_at IS NULL`) | A later reviewed migration and atomic stock+AR implementation are required to remove it |
+| Accidental real posting | Unconditional API block (409); DB gates `ck_invoice_posting_status` + `ck_invoice_posted_at` (a Posted row must carry `posted_at`) | Posting is enabled only by wiring `post_invoice_atomic` behind the endpoint after sign-off — see `docs/AR_SLICE.md` |
 
 Before production: implement and verify atomic stock + receivables posting/reversal; validate the actual invoice rounding/tax exceptions; settle permission/approval conflicts; complete release/security/backup/hosting inspection and UAT. Local draft development does not grant production release authority.
 

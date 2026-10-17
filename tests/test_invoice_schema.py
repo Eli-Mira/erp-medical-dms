@@ -11,6 +11,7 @@ def test_invoice_reference_and_safety_schema_exists():
     assert "user_territory" in inspector.get_table_names(schema="platform")
     assert "batch_record" in inspector.get_table_names(schema="inventory")
     columns = {c["name"] for c in inspector.get_columns("sales_invoice", schema="sales")}
-    assert {"territory_id", "version", "updated_at", "updated_by", "voided_by"} <= columns
+    assert {"territory_id", "version", "updated_at", "updated_by", "voided_by", "posted_by"} <= columns
     checks = {c["name"] for c in inspector.get_check_constraints("sales_invoice", schema="sales")}
-    assert "ck_invoice_posting_disabled" in checks
+    # posting gate: status must be a known state, and a Posted row must carry posted_at
+    assert {"ck_invoice_posting_status", "ck_invoice_posted_at"} <= checks

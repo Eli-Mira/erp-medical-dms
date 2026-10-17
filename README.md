@@ -47,6 +47,14 @@ to the posting and transfer flows. Balance cannot go below zero (API 409,
 database `ck_stock_balance_nonneg`). Contract, roles and the deferred
 branch-scoping item: `docs/INVENTORY_SLICE.md`.
 
+## Receivables (AR) Slice 1 — ledger + atomic posting transaction
+
+`finance.ar_entry` (balance = Σdebit − Σcredit, matching Excel العملاء) and the
+`platform.user_branch` mapping are in. `post_invoice_atomic` performs the
+Invoice → Stock → AR transaction and is tested, but `POST /invoices/{id}/post`
+still returns **409** — posting is not enabled through the API. Contract, roles
+and evidence: `docs/AR_SLICE.md`.
+
 ## Phases
 Phase 0 (Discovery) ✅ · Phase 1 (Planning) ✅ · Phase 2 (Platform) in progress.
 See `docs/PROGRESS_CHECKLIST.md` and `docs/IMPLEMENTATION_PLAN.md`.
