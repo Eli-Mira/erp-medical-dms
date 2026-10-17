@@ -32,6 +32,10 @@ def invoice_env():
         db.execute(text("INSERT INTO master_data.master_customer(id,code,name_ar,branch_id,territory_id) VALUES (:id,:code,'Test customer',:branch,:territory)"),
                    {"id": ids[key], "code": ids[key].hex[:30], "branch": ids["branch"], "territory": ids[territory]})
     db.execute(text("INSERT INTO master_data.master_warehouse(id,branch_id,code,name_ar) VALUES (:id,:branch,:code,'Test warehouse')"), {"id": ids["warehouse"], "branch": ids["branch"], "code": ids["warehouse"].hex[:30]})
+    # Least privilege: the branch-scoped test caller may reference this warehouse
+    # only through an explicit platform.user_branch grant to the owning branch.
+    db.execute(text("INSERT INTO platform.user_branch(user_id,branch_id) VALUES (:u,:b) ON CONFLICT DO NOTHING"),
+               {"u": ids["other"], "b": ids["branch"]})
     for key, rate in [("product", "14.00"), ("exempt", "0.00")]:
         db.execute(text("INSERT INTO master_data.master_product(id,sku,name_ar,base_price,vat_rate) VALUES (:id,:sku,'Test product',114,:rate)"), {"id": ids[key], "sku": ids[key].hex, "rate": rate})
     db.execute(text("INSERT INTO inventory.batch_record(id,product_id,warehouse_id,batch_no,expiry_date) VALUES (:id,:p,:w,'TEST',:expiry)"),
@@ -245,7 +249,9 @@ def test_unknown_references_rejected(invoice_env, reference):
     client, db, ids, payload, headers = invoice_env
     target = payload['lines'][0] if reference in {'product_id', 'batch_id'} else payload
     target[reference] = str(uuid4())
-    assert client.post('/invoices', json=payload, headers=headers()).status_code == 422
+    # Warehouse is hidden as 404 (least privilege); other unknown references 422.
+    expected = 404 if reference == 'warehouse_id' else 422
+    assert client.post('/invoices', json=payload, headers=headers()).status_code == expected
 
 
 def test_wrong_product_batch_and_expired_batch_rejected(invoice_env):

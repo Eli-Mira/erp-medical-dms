@@ -43,7 +43,9 @@ def test_inactive_reference_rejected(invoice_env, reference):
     table = {'customer': 'master_customer', 'product': 'master_product', 'warehouse': 'master_warehouse'}[reference]
     db.execute(text(f'UPDATE master_data.{table} SET is_active=false WHERE id=:id'), {'id': ids[reference]})
     db.commit()
-    assert client.post('/invoices', json=payload, headers=headers()).status_code == 422
+    # Inactive customer/product stays 422; inactive warehouse is hidden as 404.
+    expected = 404 if reference == 'warehouse' else 422
+    assert client.post('/invoices', json=payload, headers=headers()).status_code == expected
 
 
 def test_cross_branch_reference_rejected(invoice_env):
