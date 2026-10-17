@@ -1,4 +1,5 @@
 """Draft-only invoices. Posting is guarded in the API and the database."""
+
 import ipaddress
 from typing import Annotated
 from uuid import UUID
@@ -19,12 +20,23 @@ from app.sales.schemas import DraftIn, DraftUpdate, InvoiceOut, VoidIn
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 Db = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[dict, Depends(get_current_user)]
-INVOICE_ROLES = {"owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"}
+INVOICE_ROLES = {
+    "owner",
+    "finance",
+    "sales_manager",
+    "district_manager",
+    "medical_rep",
+    "read_only_auditor",
+}
 
 
 def _role(user):
     role = user["role"]
-    if not user["is_active"] or role not in INVOICE_ROLES or (role == "owner" and not user["is_owner"]):
+    if (
+        not user["is_active"]
+        or role not in INVOICE_ROLES
+        or (role == "owner" and not user["is_owner"])
+    ):
         raise HTTPException(403, "Invoice access denied")
     return role
 
@@ -32,8 +44,12 @@ def _role(user):
 def _scope(db, user, territory_id):
     if _role(user) == "owner":
         return
-    assigned = db.execute(text("SELECT 1 FROM platform.user_territory WHERE user_id=:uid AND territory_id=:tid"),
-                          {"uid": user["id"], "tid": territory_id}).scalar()
+    assigned = db.execute(
+        text(
+            "SELECT 1 FROM platform.user_territory WHERE user_id=:uid AND territory_id=:tid"
+        ),
+        {"uid": user["id"], "tid": territory_id},
+    ).scalar()
     if not assigned:
         raise HTTPException(404, "Invoice or reference not found")
 
@@ -65,9 +81,11 @@ def _warehouse_scope(db, user):
     if role in GLOBAL_WAREHOUSE_ROLES:
         return None
     rows = db.execute(
-        text("SELECT w.id FROM platform.user_branch ub "
-             "JOIN master_data.master_warehouse w ON w.branch_id = ub.branch_id "
-             "WHERE ub.user_id = :uid AND w.is_active"),
+        text(
+            "SELECT w.id FROM platform.user_branch ub "
+            "JOIN master_data.master_warehouse w ON w.branch_id = ub.branch_id "
+            "WHERE ub.user_id = :uid AND w.is_active"
+        ),
         {"uid": user["id"]},
     ).fetchall()
     warehouses = {r[0] for r in rows}
@@ -80,33 +98,79 @@ def _prepare(db, user, payload):
     role = _role(user)
     if role == "read_only_auditor":
         raise HTTPException(403, "Read-only role")
-    customer = db.execute(text("SELECT * FROM master_data.master_customer WHERE id=:id FOR SHARE"), {"id": payload.customer_id}).mappings().one_or_none()
-    if customer is None or not customer["is_active"] or customer["territory_id"] is None:
-        raise HTTPException(422, "Customer must be active and have an assigned territory")
+    customer = (
+        db.execute(
+            text("SELECT * FROM master_data.master_customer WHERE id=:id FOR SHARE"),
+            {"id": payload.customer_id},
+        )
+        .mappings()
+        .one_or_none()
+    )
+    if (
+        customer is None
+        or not customer["is_active"]
+        or customer["territory_id"] is None
+    ):
+        raise HTTPException(
+            422, "Customer must be active and have an assigned territory"
+        )
     _scope(db, user, customer["territory_id"])
     if customer["branch_id"] != payload.branch_id:
         raise HTTPException(422, "Customer does not belong to invoice branch")
-    warehouse = db.execute(text("SELECT * FROM master_data.master_warehouse WHERE id=:id FOR SHARE"), {"id": payload.warehouse_id}).mappings().one_or_none()
+    warehouse = (
+        db.execute(
+            text("SELECT * FROM master_data.master_warehouse WHERE id=:id FOR SHARE"),
+            {"id": payload.warehouse_id},
+        )
+        .mappings()
+        .one_or_none()
+    )
     if warehouse is None or not warehouse["is_active"]:
         raise HTTPException(404, "Warehouse not found")
     scope = _warehouse_scope(db, user)
     if scope is not None and payload.warehouse_id not in scope:
         raise HTTPException(404, "Warehouse not found")
     if warehouse["branch_id"] != payload.branch_id:
-        route = db.execute(text("SELECT 1 FROM inventory.branch_warehouse "
-                                "WHERE branch_id = :b AND warehouse_id = :w"),
-                           {"b": payload.branch_id, "w": payload.warehouse_id}).scalar()
+        route = db.execute(
+            text(
+                "SELECT 1 FROM inventory.branch_warehouse "
+                "WHERE branch_id = :b AND warehouse_id = :w"
+            ),
+            {"b": payload.branch_id, "w": payload.warehouse_id},
+        ).scalar()
         if not route:
-            raise HTTPException(422, "Source warehouse is not served to this sales territory")
+            raise HTTPException(
+                422, "Source warehouse is not served to this sales territory"
+            )
     lines, calculations = [], []
     for position, line in enumerate(payload.lines, 1):
-        product = db.execute(text("SELECT * FROM master_data.master_product WHERE id=:id FOR SHARE"), {"id": line.product_id}).mappings().one_or_none()
+        product = (
+            db.execute(
+                text("SELECT * FROM master_data.master_product WHERE id=:id FOR SHARE"),
+                {"id": line.product_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
         if product is None or not product["is_active"]:
             raise HTTPException(422, "Product must be active")
         if line.batch_id:
-            batch = db.execute(text("SELECT * FROM inventory.batch_record WHERE id=:id FOR SHARE"), {"id": line.batch_id}).mappings().one_or_none()
-            if batch is None or batch["product_id"] != line.product_id or batch["warehouse_id"] != payload.warehouse_id:
-                raise HTTPException(422, "Batch does not match product and source warehouse")
+            batch = (
+                db.execute(
+                    text("SELECT * FROM inventory.batch_record WHERE id=:id FOR SHARE"),
+                    {"id": line.batch_id},
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if (
+                batch is None
+                or batch["product_id"] != line.product_id
+                or batch["warehouse_id"] != payload.warehouse_id
+            ):
+                raise HTTPException(
+                    422, "Batch does not match product and source warehouse"
+                )
             if batch["expiry_date"] < payload.invoice_date:
                 raise HTTPException(422, "Batch expires before invoice date")
         price = product["base_price"] if line.unit_price is None else line.unit_price
@@ -115,13 +179,29 @@ def _prepare(db, user, payload):
         rate = product["vat_rate"]
         net, total, vat = line_calc(line.quantity, price, line.discount_pct, rate)
         calculations.append((line.quantity, price, line.discount_pct, rate))
-        lines.append({**line.model_dump(), "line_no": position, "unit_price": price,
-                      "net_price": net, "line_total": total, "vat_rate": rate, "vat_amount": vat})
+        lines.append(
+            {
+                **line.model_dump(),
+                "line_no": position,
+                "unit_price": price,
+                "net_price": net,
+                "line_total": total,
+                "vat_rate": rate,
+                "vat_amount": vat,
+            }
+        )
     totals = invoice_totals(calculations)
-    if any(abs(value) >= 10**12 for value in totals.values()) or any(line["line_total"] >= 10**12 for line in lines):
+    if any(abs(value) >= 10**12 for value in totals.values()) or any(
+        line["line_total"] >= 10**12 for line in lines
+    ):
         raise HTTPException(422, "Invoice exceeds supported monetary precision")
     values = payload.model_dump(exclude={"lines", "version"})
-    return {**values, **totals, "territory_id": customer["territory_id"], "actor": user["id"]}, lines
+    return {
+        **values,
+        **totals,
+        "territory_id": customer["territory_id"],
+        "actor": user["id"],
+    }, lines
 
 
 def _audit(db, request, user, action, old, new):
@@ -130,21 +210,35 @@ def _audit(db, request, user, action, old, new):
         host = str(ipaddress.ip_address(host)) if host else None
     except ValueError:
         host = None
-    log_audit(db, user["id"], action, "sales_invoice", new.id,
-              InvoiceOut.model_validate(old).model_dump(mode="json") if old else None,
-              new.model_dump(mode="json"), host, request.headers.get("user-agent", "")[:1000])
+    log_audit(
+        db,
+        user["id"],
+        action,
+        "sales_invoice",
+        new.id,
+        InvoiceOut.model_validate(old).model_dump(mode="json") if old else None,
+        new.model_dump(mode="json"),
+        host,
+        request.headers.get("user-agent", "")[:1000],
+    )
 
 
 def _integrity_error(db, error):
     db.rollback()
     constraint = getattr(getattr(error.orig, "diag", None), "constraint_name", None)
     if constraint == "uq_sales_invoice_branch_no":
-        raise HTTPException(409, "Invoice number already exists in this branch") from error
-    raise HTTPException(422, "Invoice violates a database reference or value constraint") from error
+        raise HTTPException(
+            409, "Invoice number already exists in this branch"
+        ) from error
+    raise HTTPException(
+        422, "Invoice violates a database reference or value constraint"
+    ) from error
 
 
 @router.post("", status_code=201)
-def create_invoice(payload: DraftIn, request: Request, db: Db, current: CurrentUser) -> InvoiceOut:
+def create_invoice(
+    payload: DraftIn, request: Request, db: Db, current: CurrentUser
+) -> InvoiceOut:
     values, lines = _prepare(db, current, payload)
     try:
         invoice_id = repo.insert_invoice(db, values)
@@ -167,13 +261,21 @@ def view_invoice(invoice_id: UUID, db: Db, current: CurrentUser) -> InvoiceOut:
 
 def _editable(invoice, version):
     if invoice["posting_status"] != "Draft":
-        raise HTTPException(409, "Only drafts can be changed; posted reversals are disabled")
+        raise HTTPException(
+            409, "Only drafts can be changed; posted reversals are disabled"
+        )
     if invoice["version"] != version:
         raise HTTPException(409, "Stale invoice version; reload before editing")
 
 
 @router.put("/{invoice_id}")
-def update_invoice(invoice_id: UUID, payload: DraftUpdate, request: Request, db: Db, current: CurrentUser) -> InvoiceOut:
+def update_invoice(
+    invoice_id: UUID,
+    payload: DraftUpdate,
+    request: Request,
+    db: Db,
+    current: CurrentUser,
+) -> InvoiceOut:
     try:
         old = _invoice(db, current, invoice_id, lock=True)
         _editable(old, payload.version)
@@ -197,19 +299,29 @@ def post_invoice(invoice_id: UUID, db: Db, current: CurrentUser) -> InvoiceOut:
     if _role(current) not in {"owner", "finance", "sales_manager", "district_manager"}:
         raise HTTPException(403, "Posting permission denied")
     if not POSTING_ENABLED:
-        raise HTTPException(409, "Posting disabled until stock and receivables can be updated atomically")
+        raise HTTPException(
+            409,
+            "Posting disabled until stock and receivables can be updated atomically",
+        )
     result = service.post_invoice_atomic(db, invoice_id, current["id"])
     return InvoiceOut.model_validate(result)
 
 
 @router.post("/{invoice_id}/void")
-def void_invoice(invoice_id: UUID, payload: VoidIn, request: Request, db: Db, current: CurrentUser) -> InvoiceOut:
+def void_invoice(
+    invoice_id: UUID, payload: VoidIn, request: Request, db: Db, current: CurrentUser
+) -> InvoiceOut:
     if _role(current) not in {"owner", "sales_manager"}:
         raise HTTPException(403, "Void requires Owner or Sales Manager")
     try:
         old = _invoice(db, current, invoice_id, lock=True)
         _editable(old, payload.version)
-        reason = db.execute(text("SELECT 1 FROM audit.reason_code WHERE id=:id AND is_active AND category='void' FOR SHARE"), {"id": payload.reason_id}).scalar()
+        reason = db.execute(
+            text(
+                "SELECT 1 FROM audit.reason_code WHERE id=:id AND is_active AND category='void' FOR SHARE"
+            ),
+            {"id": payload.reason_id},
+        ).scalar()
         if not reason:
             raise HTTPException(422, "An active void reason code is required")
         repo.void_draft(db, invoice_id, current["id"], payload.reason_id)
@@ -222,4 +334,3 @@ def void_invoice(invoice_id: UUID, payload: VoidIn, request: Request, db: Db, cu
     except Exception:
         db.rollback()
         raise
-
