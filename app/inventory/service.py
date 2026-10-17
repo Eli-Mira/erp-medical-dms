@@ -64,9 +64,16 @@ def fetch_movement(db, movement_id):
     return dict(row) if row is not None else None
 
 
-def _filters(warehouse_id, product_id, batch_id, movement_type=None, date_from=None, date_to=None):
+def _filters(warehouse_id=None, product_id=None, batch_id=None, movement_type=None,
+             date_from=None, date_to=None, warehouse_ids=None):
     """Build a WHERE clause from bound values; column names are fixed literals."""
     clauses, params = [], {}
+    if warehouse_ids is not None:
+        if warehouse_ids:
+            clauses.append("warehouse_id = ANY(:warehouse_ids)")
+            params["warehouse_ids"] = [str(w) for w in warehouse_ids]
+        else:
+            clauses.append("1 = 0")
     for column, value in (("warehouse_id", warehouse_id), ("product_id", product_id),
                           ("batch_id", batch_id), ("movement_type", movement_type)):
         if value is not None:
@@ -81,8 +88,9 @@ def _filters(warehouse_id, product_id, batch_id, movement_type=None, date_from=N
     return (" WHERE " + " AND ".join(clauses)) if clauses else "", params
 
 
-def list_balances(db, warehouse_id=None, product_id=None, batch_id=None):
-    where, params = _filters(warehouse_id, product_id, batch_id)
+def list_balances(db, warehouse_id=None, product_id=None, batch_id=None,
+                  warehouse_ids=None):
+    where, params = _filters(warehouse_id, product_id, batch_id, warehouse_ids=warehouse_ids)
     rows = db.execute(text(
         "SELECT warehouse_id, product_id, batch_id, quantity, updated_at "
         "FROM inventory.stock_balance" + where +
@@ -91,8 +99,10 @@ def list_balances(db, warehouse_id=None, product_id=None, batch_id=None):
 
 
 def list_movements(db, warehouse_id=None, product_id=None, batch_id=None,
-                   movement_type=None, date_from=None, date_to=None):
-    where, params = _filters(warehouse_id, product_id, batch_id, movement_type, date_from, date_to)
+                   movement_type=None, date_from=None, date_to=None,
+                   warehouse_ids=None):
+    where, params = _filters(warehouse_id, product_id, batch_id, movement_type,
+                             date_from, date_to, warehouse_ids=warehouse_ids)
     rows = db.execute(text(
         "SELECT * FROM inventory.stock_movement" + where +
         " ORDER BY created_at DESC, id"), params).mappings()
