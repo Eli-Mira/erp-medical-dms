@@ -10,8 +10,9 @@ from sqlalchemy.orm import Session
 
 from app.auth.repo import log_audit
 from app.auth.router import get_current_user
+from app.config import POSTING_ENABLED
 from app.db import get_db
-from app.sales import repo
+from app.sales import repo, service
 from app.sales.calc import invoice_totals, line_calc
 from app.sales.schemas import DraftIn, DraftUpdate, InvoiceOut, VoidIn
 
@@ -50,6 +51,31 @@ def _invoice(db, user, invoice_id, *, lock=False):
     return invoice
 
 
+# Roles that may reference any warehouse (no per-warehouse filtering).
+GLOBAL_WAREHOUSE_ROLES = {"owner", "finance", "warehouse_staff", "read_only_auditor"}
+
+
+def _warehouse_scope(db, user):
+    """Active warehouses the caller may reference; None means global.
+
+    Explicit platform.user_branch grants joined to master_warehouse.branch_id.
+    Fulfillment routes (inventory.branch_warehouse) never grant access here.
+    """
+    role = user["role"]
+    if role in GLOBAL_WAREHOUSE_ROLES:
+        return None
+    rows = db.execute(
+        text("SELECT w.id FROM platform.user_branch ub "
+             "JOIN master_data.master_warehouse w ON w.branch_id = ub.branch_id "
+             "WHERE ub.user_id = :uid AND w.is_active"),
+        {"uid": user["id"]},
+    ).fetchall()
+    warehouses = {r[0] for r in rows}
+    if not warehouses:
+        raise HTTPException(404, "Warehouse not found")
+    return warehouses
+
+
 def _prepare(db, user, payload):
     role = _role(user)
     if role == "read_only_auditor":
@@ -61,8 +87,17 @@ def _prepare(db, user, payload):
     if customer["branch_id"] != payload.branch_id:
         raise HTTPException(422, "Customer does not belong to invoice branch")
     warehouse = db.execute(text("SELECT * FROM master_data.master_warehouse WHERE id=:id FOR SHARE"), {"id": payload.warehouse_id}).mappings().one_or_none()
-    if warehouse is None or not warehouse["is_active"] or warehouse["branch_id"] != payload.branch_id:
-        raise HTTPException(422, "Warehouse must be active and belong to invoice branch")
+    if warehouse is None or not warehouse["is_active"]:
+        raise HTTPException(404, "Warehouse not found")
+    scope = _warehouse_scope(db, user)
+    if scope is not None and payload.warehouse_id not in scope:
+        raise HTTPException(404, "Warehouse not found")
+    if warehouse["branch_id"] != payload.branch_id:
+        route = db.execute(text("SELECT 1 FROM inventory.branch_warehouse "
+                                "WHERE branch_id = :b AND warehouse_id = :w"),
+                           {"b": payload.branch_id, "w": payload.warehouse_id}).scalar()
+        if not route:
+            raise HTTPException(422, "Source warehouse is not served to this sales territory")
     lines, calculations = [], []
     for position, line in enumerate(payload.lines, 1):
         product = db.execute(text("SELECT * FROM master_data.master_product WHERE id=:id FOR SHARE"), {"id": line.product_id}).mappings().one_or_none()
@@ -157,11 +192,14 @@ def update_invoice(invoice_id: UUID, payload: DraftUpdate, request: Request, db:
 
 
 @router.post("/{invoice_id}/post")
-def post_invoice(invoice_id: UUID, db: Db, current: CurrentUser) -> None:
+def post_invoice(invoice_id: UUID, db: Db, current: CurrentUser) -> InvoiceOut:
     _invoice(db, current, invoice_id)
     if _role(current) not in {"owner", "finance", "sales_manager", "district_manager"}:
         raise HTTPException(403, "Posting permission denied")
-    raise HTTPException(409, "Posting disabled until stock and receivables can be updated atomically")
+    if not POSTING_ENABLED:
+        raise HTTPException(409, "Posting disabled until stock and receivables can be updated atomically")
+    result = service.post_invoice_atomic(db, invoice_id, current["id"])
+    return InvoiceOut.model_validate(result)
 
 
 @router.post("/{invoice_id}/void")
