@@ -69,3 +69,38 @@ def test_rounding_half_up():
     assert vat_amount_for(Decimal("100"), Decimal("14")) == Decimal("12.28")
     # 333.33 × 0.5% discount path: net = 333.33 × (1 − 0.005)
     assert net_price(Decimal("333.33"), Decimal("0.5")) == Decimal("331.66")
+
+
+def test_invariant_under_per_unit_net_rounding():
+    # Bug class: total_before_discount and total_discount are independently
+    # rounded per line, but per-unit net_price rounding can shift the realized
+    # discount by a cent vs the independently-computed discount sum.
+    # price=101, disc=0.5%: net=_r2(101*0.995)=100.50 but
+    # discount=_r2(101*0.005)=0.51; gross(101)-discount(0.51)=100.49 != grand(100.50).
+    # Fix: derive total_discount as the residual (gross − charged) so the
+    # invariant holds by construction.
+    cases = [
+        (Decimal("1"), Decimal("101"), Decimal("0.5"), Decimal("14")),
+        (Decimal("2"), Decimal("100"), Decimal("30"), Decimal("14")),
+    ]
+    t = invoice_totals(cases)
+    assert t["total_before_discount"] - t["total_discount"] == t["grand_total"]
+    assert t["total_net"] + t["vat_amount"] == t["grand_total"]
+
+
+def test_invariant_with_non_round_discounts():
+    # Non-round discount percentages (found in real workbooks) can also trigger
+    # the drift. Each single-line aggregation must satisfy the invariant.
+    cases = [
+        (Decimal("1"), Decimal("360"), Decimal("28"), Decimal("14")),
+        (Decimal("1"), Decimal("250"), Decimal("45"), Decimal("14")),
+        (Decimal("1"), Decimal("100"), Decimal("31"), Decimal("14")),
+        (Decimal("1"), Decimal("180"), Decimal("38"), Decimal("14")),
+        (Decimal("3"), Decimal("101"), Decimal("0.5"), Decimal("14")),
+        (Decimal("2.5"), Decimal("101"), Decimal("0.5"), Decimal("14")),
+    ]
+    for qty, price, disc, rate in cases:
+        t = invoice_totals([(qty, price, disc, rate)])
+        assert t["total_before_discount"] - t["total_discount"] == t["grand_total"], (
+            qty, price, disc, t
+        )

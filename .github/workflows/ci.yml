@@ -24,6 +24,8 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.14" }
       - run: pip install -r requirements.txt pytest
+      - name: Apply database migrations
+        run: alembic upgrade head
       - name: App boots + tests
         run: |
           python -c "from fastapi.testclient import TestClient; from app.main import app; r=TestClient(app).get('/health'); assert r.status_code==200, r.text; print('health ok')"

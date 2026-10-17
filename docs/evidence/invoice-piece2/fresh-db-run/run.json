@@ -1,0 +1,20 @@
+{
+  "started_utc": "2026-10-17T05:16:25.416451+00:00",
+  "database": "invoice_verify_a718ad197c2a45ec835035e69f2c3c86",
+  "migration_head": "0004_invoice_drafts",
+  "initial_invoices": 0,
+  "argv": [
+    "C:\\Users\\emadg\\AppData\\Local\\uv\\cache\\builds-v0\\.tmpqY4ULC\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "tests/",
+    "-v",
+    "--junitxml=C:\\Desktop\\Huge system\\docs\\evidence\\invoice-piece2\\fresh-db-run\\pytest.xml"
+  ],
+  "cwd": "C:\\Desktop\\Huge system",
+  "test_exit": 0,
+  "disposable_database_removed": true,
+  "finished_utc": "2026-10-17T05:16:31.950879+00:00",
+  "pytest.log_sha256": "a29a53c4a3d3de4ab7b8d9a00ece726e6bf37b79d9e423d8d1d19750d0852c3f",
+  "pytest.xml_sha256": "6edb5c7ef694deff64d9ea3889948f64a764daacd8bada2e1db111c0b6d71f0e"
+}

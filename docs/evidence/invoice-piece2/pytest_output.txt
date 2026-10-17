@@ -1,0 +1,19 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.0, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\emadg\AppData\Local\uv\cache\builds-v0\.tmpEKRu0e\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Desktop\Huge system
+collecting ... collected 11 items
+
+tests/test_invoice_calc.py::test_net_price_matches_excel_formula PASSED  [  9%]
+tests/test_invoice_calc.py::test_vat_extracted_from_inclusive_amount PASSED [ 18%]
+tests/test_invoice_calc.py::test_line_calc PASSED                        [ 27%]
+tests/test_invoice_calc.py::test_invoice_totals_sum_lines_consistently PASSED [ 36%]
+tests/test_invoice_calc.py::test_line_total_is_vat_inclusive PASSED      [ 45%]
+tests/test_invoice_calc.py::test_rounding_half_up PASSED                 [ 54%]
+tests/test_invoice_calc.py::test_invariant_under_per_unit_net_rounding PASSED [ 63%]
+tests/test_invoice_calc.py::test_invariant_with_non_round_discounts PASSED [ 72%]
+tests/test_invoice_excel.py::test_line_total_matches_excel_cached_value PASSED [ 81%]
+tests/test_invoice_excel.py::test_invoice_totals_invariant_on_real_rows PASSED [ 90%]
+tests/test_invoice_excel.py::test_vat_invariant_holds_but_not_excel_reconciled PASSED [100%]
+
+============================= 11 passed in 18.43s =============================

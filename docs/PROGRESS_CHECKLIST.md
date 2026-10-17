@@ -1,5 +1,19 @@
 # Progress Checklist — Medical Company System
 
+## Current checkpoint — 2026-10-17 (supersedes older gate/stack summaries below)
+
+- [x] Eli authorized Invoice Slice 1 and continued Piece 2. Approved stack: **FastAPI + PostgreSQL + psycopg3 + existing vanilla JS/PWA** (D34–D37). Hosting OS remains deferred; no React rewrite.
+- [x] Piece 1 schema/calculation baseline: commit `5cb375a` (25 tests then). This is not the complete Invoice Module.
+- [x] Piece 2 create/view/replace Draft/void Draft API, territory/role controls, audit and duplicate/version/input validation: `app/sales/{router,repo,schemas}.py`; `tests/test_invoice_api.py` and `tests/test_invoice_boundaries.py`.
+- [x] Applied additive migration `0004_invoice_drafts`; minimal territory/warehouse/batch references and API + database posting block. No stock/AR module was built.
+- [x] Parent native full-suite run: **91 passed**, no failed/skipped cases; raw log/JUnit/runtime/source-hash bindings under `docs/evidence/invoice-piece2/final-run/`. Fresh empty database migrated `0001→0004` and passed its then-current **81-case** suite: `fresh-db-run/`; temporary DB removed and absence verified.
+- [x] Strict application-vs-Excel comparison: **133 numeric rows** across two complete named transaction sheets, no mismatch skipping; all 7 workbook hashes preserved. Exact coverage/limits: `docs/INVOICE_SLICE_1.md`.
+- [ ] Independent API review: pending intake; evidence snapshot `docs/evidence/invoice-piece2/api-review-input/`. Two earlier workers timed out and were not accepted as complete.
+- [ ] Production gate: atomic stock + AR posting/reversal, real-invoice VAT/rounding/exemptions, permission/approval conflicts, security/deployment/backup/UAT sign-off. **Posting is disabled.**
+- [ ] Payroll formula remains **UNVERIFIED**; the header-structure test is not salary-formula validation. Stock thresholds and other deferred UQs stay deferred.
+
+The older phase items below are historical records, not renewed claims that the complete platform, mapping, schema or production gate has passed.
+
 > **D29 rule (Eli):** a task is ✅ only when evidence is attached — a file path,
 > terminal output, or hash. No empty checkmarks. We never assume something is
 > done without verifying it really exists and is fully implemented.

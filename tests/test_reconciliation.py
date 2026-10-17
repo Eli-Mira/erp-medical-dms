@@ -132,29 +132,27 @@ def test_line_total_is_qty_times_net():
 
 
 def test_hq_rollup_balance_is_sales_minus_collection():
-    # الرئيسية: E (الرصيد) = C (المبيعات وارصدة بداية المدة) - D (التحصيل)
+    # Reconcile EVERY numeric named row, including zero-sales rows. The known
+    # residual is preserved, not repaired or assumed to be an opening balance.
     wb, ws = _sheet(SALES_6OCT, "الرئيسية")
-    # Verified for named rows. The ONLY known exception is a data anomaly
-    # (صيدليات الشركة المصرية للأدوية: C=0 but E=16103.56, missing opening
-    # balance). Any NEW exception fails the test. The unnamed total row
-    # (name=None) aggregates that anomaly.
-    known = {"صيدليات الشركة المصرية للأدوية"}
-    checked, exceptions = 0, []
-    for name, _addr, sales, coll, bal in ws.iter_rows(
-        min_row=2, max_row=147, min_col=1, max_col=5, values_only=True
-    ):
-        if not isinstance(name, str) or not name.strip():
-            continue  # skip the unnamed total row
-        if not _nums(sales, coll, bal) or sales == 0:
-            continue
-        if abs(bal - (sales - coll)) >= TOL:
-            if name.strip() not in known:
-                exceptions.append((name, sales, coll, bal))
-            continue
-        checked += 1
-    assert not exceptions, exceptions
-    assert checked >= 10, checked
-    wb.close()
+    exceptions, checked = [], 0
+    try:
+        for row_no, (name, _addr, sales, coll, bal) in enumerate(ws.iter_rows(
+            min_row=2, max_row=ws.max_row, min_col=1, max_col=5, values_only=True
+        ), 2):
+            if not isinstance(name, str) or not name.strip() or not _nums(sales, coll, bal):
+                continue
+            checked += 1
+            if abs(bal - (sales - coll)) >= TOL:
+                exceptions.append((row_no, name, sales, coll, round(bal, 2)))
+        assert exceptions == [(16, "صيدليات الشركة المصرية للأدوية", 0, 0, 16103.56)], exceptions
+        assert checked >= 20, checked
+        # The unnamed total carries the same known residual; do not call it zero.
+        sales, coll, balance = next(ws.iter_rows(min_row=102, max_row=102,
+                                                min_col=3, max_col=5, values_only=True))
+        assert abs((balance - (sales - coll)) - 16103.56) < TOL
+    finally:
+        wb.close()
 
 
 def test_payroll_sheet_structure():

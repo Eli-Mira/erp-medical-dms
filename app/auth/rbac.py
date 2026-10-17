@@ -10,7 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from .router import get_current_user
 
 # Role model mirrors DATABASE_SCHEMA §2 (platform_user.role + is_owner).
-ROLES = ("admin", "accountant", "manager", "sales", "user")
+ROLES = ("owner", "admin", "finance", "sales_manager", "district_manager",
+         "medical_rep", "warehouse_staff", "read_only_auditor")
 
 rbac_router = APIRouter(tags=["owner"])
 

@@ -46,6 +46,8 @@ Source: OpenCode session `ses_ed7b1d6dfffeosaSErmAIeRpaf` ("Sufficient docs chec
 
 - **D31.** **Phase-1 planning package complete (2026-10-16).** All six core docs verified present and D29-clean: `PRD.md` (390), `TECHNICAL_REQUIREMENTS.md` (555), `APP_FLOW.md` (738), `DESIGN_BRIEF.md` (371), `DATABASE_SCHEMA.md` (308), `IMPLEMENTATION_PLAN.md` (422). Sources untouched (D25). Build-start gate is the next blocker: requires Eli's approval of all six docs + security model + stack (D21) + 9-role split (UQ-1) + backup/dependency policy/pilot scope/acceptance (V2 §20) before ANY Phase-2 code.
 | **D32.** **Subagent reliability caveat:** 2/6 delegated docs failed on raw output — `APP_FLOW.md` was written to a wrong working directory (`Desktop/💻 Dev Corner/docs`, not the project) and `DATABASE_SCHEMA.md` aborted once on a dropped connection. Both recovered and relocated/rewritten, but this confirms the D29 rule: verify file existence before trusting a subagent's summary.
+The latest implemented local-only slice is recorded in `docs/INVOICE_SLICE_1.md` (2026-10-17): draft invoice API plus audit and scope controls; real posting remains blocked. Earlier implementation/schema verification claims do not approve production or establish the still-unverified payroll and invoice-rounding rules.
+
 If a later decision contradicts an earlier one, the later entry wins and must reference the superseded decision ID. Eli's explicit instructions always override inferred ones.
 
 ## 2026-10-16 — Eli's UQ decisions (critical blockers resolved)

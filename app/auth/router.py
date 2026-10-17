@@ -53,8 +53,8 @@ def get_current_user(
     if not session or session["expires_at"] < datetime.datetime.now(datetime.timezone.utc):
         raise HTTPException(status_code=401, detail="session expired")
     user = repo.get_user_by_id(db, session["user_id"])
-    if not user:
-        raise HTTPException(status_code=401, detail="user not found")
+    if not user or not user["is_active"]:
+        raise HTTPException(status_code=401, detail="user inactive or not found")
     return user
 
 

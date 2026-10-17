@@ -2,9 +2,9 @@
 
 Business rules (D18 net price, D36 VAT):
 - Net price:  E = C × (1 − D)          (per-unit, after discount)
-- VAT-inclusive: the listed prices already include VAT. The VAT portion is
-  extracted as  vat = amount × rate / (1 + rate)   (Egyptian 14% standard).
-- All money is Decimal, rounded half-up to 2 decimals (EGP).
+- VAT-inclusive extraction uses rate/(100 + rate), where 14 means 14%.
+- Draft policy inherited from Piece 1: Decimal half-up to 2 places. The
+  printed-invoice rounding/exemption policy is NOT verified for production.
 
 The unit_price is the VAT-inclusive price the customer pays (matching the
 source workbooks, which carry no VAT column). The invoice header breaks the
@@ -60,25 +60,27 @@ def invoice_totals(lines):
     `lines`: iterable of (quantity, unit_price, discount_pct, vat_rate).
     Returns a dict:
       total_before_discount  Σ(qty × unit_price)              [incl-VAT]
-      total_discount         Σ(qty × unit_price × disc)       [incl-VAT]
+      total_discount         total_before_discount − grand_total  [realized, incl-VAT]
       total_net              grand_total − vat_amount         [ex-VAT]
       vat_amount             Σ line vat                        [VAT]
       grand_total            Σ line_total                     [incl-VAT]
     """
     total_before_discount = ZERO
-    total_discount = ZERO
     grand_total = ZERO
     vat_total = ZERO
     for qty, price, disc, rate in lines:
         _net, total, vat = line_calc(qty, price, disc, rate)
         total_before_discount += _r2(qty * price)
-        total_discount += _r2(qty * price * disc / HUNDRED)
         grand_total += total
         vat_total += vat
     total_before_discount = _r2(total_before_discount)
-    total_discount = _r2(total_discount)
     grand_total = _r2(grand_total)
     vat_total = _r2(vat_total)
+    # Discount is derived as the residual (gross − charged) so the reconciliation
+    # invariant total_before_discount − total_discount == grand_total holds
+    # exactly, avoiding the 1-cent drift from independent per-line rounding of
+    # the pct-based discount sum under half-up 2dp net_price rounding.
+    total_discount = _r2(total_before_discount - grand_total)
     return {
         "total_before_discount": total_before_discount,
         "total_discount": total_discount,

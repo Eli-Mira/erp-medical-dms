@@ -18,16 +18,16 @@
 | `مبيعات الغربية  2026.xlsx::الرئيسية` | Rollup | Same | Sales.BranchRollup | ~1020-1096 |
 | `مبيعات الفيوم 2026.xlsx::الرئيسية` | Rollup | Same | Sales.BranchRollup | ~1254-1330 |
 | `*::رصيد الارصدة المباعة` (all 5 sales) | Ledger | Sold balances (customer/agent, dates, qty/price, net). 1100–1267 formulas | Sales.SoldBalances (branch-scoped) | ~87-163, 552-628, 940-1019, 1174-1253 |
-| `*::كامل الكمية` (all 5) | Price/Item list | `E = C*(1-D)` (net price), `SUM(E5:E...)`, `SUMIFS(B:B,A:A,A2)` cumulative by item; discount ~0.28–0.30 | Sales.PriceList / Inventory.Items (branch context) | ~164-240, 629-705, 1174-1253, 1331-1407 |
+| `*::كامل الكمية` (all 5) | Price/Item list | `E = C*D` (opening quantity × price) in the verified 6 October layout; cumulative/catalog fields need per-sheet mapping. Net-price discount formula belongs to transaction sheets, not this citation. | Sales.PriceList / Inventory.Items (branch context) | ~164-240, 629-705, 1174-1253, 1331-1407 |
 | `*::تحت التصريف` (6 أكتوبر, الفيوم) | Stock view | Large row sets (3751–4455 non-empty), per-line qty/price formulas | Inventory.StockView_UnderDisposal (branch-scoped) | ~318-397, 1408-1487 |
-| Per-warehouse/pharmacy sheets (many) | Source transactions | Large sheets (3460–5520 rows) with thousands of formulas; feed `الرئيسية` | Sales.Transactions (warehouse-scoped) | Structural: `inventory_raw.md` (per sheet counts) |
+| Per-warehouse/pharmacy sheets (many) | Source transactions | Large transaction sheets (3460–5520 rows); net `E=C*(1-D)` (D is fractional discount), total `F=B*E`; feeds `الرئيسية`. Application comparison: 133 numeric rows in two complete named sheets, see INVOICE_SLICE_1.md. | Sales.Transactions (warehouse-scoped) | Structural: `inventory_raw.md` (per sheet counts) |
 
 **Notes:** Same names across workbooks → map by `(workbook,sheet)`. Net price formula `E=C*(1-D)` must be preserved in logic (not guessed beyond formula). Discount bands observed ~0.28–0.30 — confirm applicability.
 
 ## B. Payroll → B.MasterData/Platform (lightweight) + related
 | Excel | Fields/Logic | System Target | Citation |
 |---|---|---|---|
-| `مبيعات الدقهليه 2026.xlsx::المرتبات` | `الاسم`, basic/due/received, `دبى`, `Dopay`, `التارجيت`, **net `E = B-C-D`** | Payroll.SalaryRecord (lightweight) | ~475-551 |
+| `مبيعات الدقهليه 2026.xlsx::المرتبات` | `الاسم`, basic/due/received, `دبى`, `Dopay`, `التارجيت`, **UNVERIFIED salary formula**: prior `E=B-C-D` claim conflicts with observed E=دوباى; preserve source values until real salary formulas are verified | Payroll.SalaryRecord (lightweight) | ~475-551 |
 | `مبيعات الشرقية 2026.xlsx::المرتبات` | same | same | ~863-939 |
 | `مبيعات الغربية  2026.xlsx::المرتبات` | same | same | ~1097-1173 |
 
@@ -65,7 +65,7 @@
 - **Branch scoping:** Duplicate sheet names (86) → always key by `(workbook, sheet)`. Rollups are branch-scoped.
 - **Placeholders:** 53 unnamed sheets (`ورقة1 (NN)`, `Sheet1/2`, `اخر ورقة`) — **not mapped** (treat as non-business). Confirm before import.
 - **External links:** 15 total (7 in `حسابات خاصه.xlsx`, 4+4 in sales). System must not assume links resolve; capture link targets if present.
-- **Formulas preserved as logic:** `E=C*(1-D)`, `E=B-C-D`, `الرصيد = C-D`, cross-sheet references, `SUMIFS(B:B,A:A,A2)`. No behavioral expansion beyond cited logic.
+- **Formulas preserved as logic:** `E=C*(1-D)` (transaction sheets), `الرصيد = C-D` (with explicit known anomaly; see INVOICE_SLICE_1.md). Payroll `E=B-C-D` is UNVERIFIED, cross-sheet references, `SUMIFS(B:B,A:A,A2)`. No behavioral expansion beyond cited logic.
 - **Discovery-gated:** Purchasing/Raw Materials/Manufacturing (BOM/MRP/PO depth), Budgeting, UOM necessity, deeper Payroll HR/attendance/leave/taxes.
 
 ## References

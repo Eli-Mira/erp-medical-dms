@@ -1,5 +1,18 @@
 # DATABASE_SCHEMA.md — Medical Company System
 
+## Implemented overlay — Invoice Slice 1, 2026-10-17
+
+The tables below remain the broader planning schema, not evidence that every module is implemented. Applied migrations `0001`–`0004` are authoritative for the current local database; `docs/INVOICE_SLICE_1.md` describes the tested draft-only contract.
+
+- `master_data.master_product` includes per-product `vat_rate NUMERIC(5,2)`; VAT is snapshotted in invoice lines. The broader category/UOM/brand schema is not implemented by this slice.
+- Minimal `master_territory`, `platform.user_territory` assignments, `master_warehouse`, and `inventory.batch_record` are **reference metadata only**. No inventory balances, movements or AR ledger are implemented. Batch reference uniqueness is `(product_id, warehouse_id, batch_no)` in `0004`.
+- Invoice header adds `territory_id`, integer `version`, `updated_at`, `updated_by`, `voided_by`. Header customer/branch/warehouse/creator and line product are required; source warehouse has a composite branch FK. Lines have stable ordering via `line_no`; product/batch FK is enforced.
+- PostgreSQL constraint `ck_invoice_posting_disabled` permits **Draft/Voided only and NULL posted_at**. API posting always rejects; posted reversal is unavailable. Future atomic stock+AR posting needs a deliberate later migration, not a runtime toggle.
+- Current 2-decimal half-up calculator is a **draft policy inherited from Piece 1**, not verified printed-invoice rounding or permission to round source migrations. Header totals must satisfy `before_discount − discount = grand_total` and `total_net + vat_amount = grand_total`.
+- The older payroll formulas in §§7/11 and D18 are **UNVERIFIED and mutually inconsistent with the observed layout**. No salary formula is approved or implemented. Net-price formula `E=C×(1−D)` is in the named warehouse transaction sheets, **not** `كامل الكمية` (whose opening-value total uses `E=C×D`).
+
+---
+
 **Generated:** 2026-10-16  
 **Authoritative sources:** DATA_DICTIONARY.md, EXCEL_TO_SYSTEM_MAPPING.md, DECISION_LOG.md, MODULE_MAP.md  
 **PostgreSQL · PWA · Arabic/English RTL**

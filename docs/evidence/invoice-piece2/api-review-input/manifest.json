@@ -1,0 +1,61 @@
+{
+  "base_commit": "5cb375a6dea5966b2a52b215c2c79a9ec0712f2c",
+  "files": {
+    "app/sales/router.py": {
+      "sha256": "b73f1b712dfe49921a1041f1be36465ac421df6c884249e347e7b346cfd08ecb",
+      "bytes": 8995
+    },
+    "app/sales/repo.py": {
+      "sha256": "3f863eafcceb14d32e5c52fa4b810035316214699bfb54703f209afca8709e62",
+      "bytes": 2777
+    },
+    "app/sales/schemas.py": {
+      "sha256": "d1eba4fcaee7b13d77d67fe78ec76eb56f6593abe7f8b85cb68b061dd610a7bc",
+      "bytes": 2342
+    },
+    "app/auth/router.py": {
+      "sha256": "d7dbe8017252256eaa197ed1585782ee47a247de3e29ca7391f36e41708c5f67",
+      "bytes": 3193
+    },
+    "app/auth/repo.py": {
+      "sha256": "092c9853237709de31d330d63c95063949fb5d3ef319c70c7fdcd48770d0000f",
+      "bytes": 3547
+    },
+    "app/auth/rbac.py": {
+      "sha256": "8a8640f395b9c5fc4ee07f0187a7af61ab4b9a3b94a683b7fde935fc36901403",
+      "bytes": 1476
+    },
+    "app/db.py": {
+      "sha256": "854cd21a826380ab725cb4fa618a15db60bc1f8bafd7fbfc965e84cd48f40c1e",
+      "bytes": 697
+    },
+    "app/main.py": {
+      "sha256": "b2a81a215c4c62258797f9ed93b1b200bc81ca7ab4fd3e2e72c9904498dd09f0",
+      "bytes": 1100
+    },
+    "alembic/versions/0003_invoice.py": {
+      "sha256": "a6fe81825b40954b6077c02194b466c0c3d1b2641a56e0bd68d43dbba211ffd4",
+      "bytes": 6537
+    },
+    "alembic/versions/0004_invoice_drafts.py": {
+      "sha256": "b8011385c67e990cdc5703be01dfb6303b22414a788bae1a5295ab4df6df184f",
+      "bytes": 6342
+    },
+    "tests/test_invoice_api.py": {
+      "sha256": "faccc4bf4c956b80dc4121b8c2c71858885f0f50c08995414e0141b58de6ed48",
+      "bytes": 18628
+    },
+    "tests/test_invoice_schema.py": {
+      "sha256": "8c1cf1fc23f0c8c24be606828fd5fa465083dcb76a31ceb891ddf98928c54664",
+      "bytes": 840
+    },
+    "requirements.txt": {
+      "sha256": "3f11fc24159b9f2867d01d70faae5c988584aa72e1ba2b53015593ed1bd2da63",
+      "bytes": 226
+    },
+    ".github/workflows/ci.yml": {
+      "sha256": "d736fb41001ae135b56da46808c783df510bd66d93507d2431e4024c7736d4ad",
+      "bytes": 958
+    }
+  }
+}

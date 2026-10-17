@@ -1,5 +1,21 @@
 # Pre-Coding Verification — First Milestone
 
+## Current status correction — 2026-10-17
+
+**Local draft-invoice development is authorized by Eli. Production readiness is NOT approved.** The earlier blanket `Gate: MET`, schema-validation and universal rollup claims below overstate the evidence and are superseded by this section.
+
+- Piece 2: create/read/update/void **Draft** API, territory/responsibility checks, Decimal calculations, actor/before/after audit, duplicates and version conflicts are implemented and exercised against real PostgreSQL. Full parent run: **91 passed, zero failed/skipped**; `docs/evidence/invoice-piece2/final-run/`. Fresh DB migration chain and then-current 81-case suite also passed (`fresh-db-run/`).
+- All seven source SHA-256 values match the frozen baseline. New application-equivalence checks cover **133 numeric rows in two named transaction sheets**, not all workbooks or a migrated database. Older nine source checks include sampled ranges and a salary-header check; they are not nine complete business-rule validations.
+- Rollup anomaly `الرئيسية!C16:E16` (0, 0, 16103.56) and total-row residual remain unresolved; its cause is unknown. The strengthened test binds exact row/values and checks zero-sales rows instead of skipping them. Green anomaly-baseline tests do not authorize source cleanup or migration sign-off.
+- Critical UQs have Eli's decisions (D34–D37), but real invoice VAT rounding/product exceptions and fine-grained permission/approval conflicts still need production validation. **Payroll remains UNVERIFIED**; no salary formula is approved by a layout/header test.
+- Real posting is blocked in both the API and PostgreSQL until stock and customer receivables can change atomically. Posted-invoice void/reversal is also unavailable. The independent API review remains pending intake. No PWA redesign or unrelated module was implemented.
+
+Authoritative scoped delivery/evidence/remaining gates: **`docs/INVOICE_SLICE_1.md`**. Detailed historical report follows; its blanket approval language is retained only as history, not current status.
+
+---
+
+## Historical report (superseded where it conflicts with the correction above)
+
 **Date:** 2026-10-16
 **Milestone (Eli's image):** "Recommended first development milestone" — build one complete working flow: **Invoice → Warehouse Stock → Customer Balance → Collection**, as one complete vertical slice with authentication, database transactions, audit logging, and Excel reconciliation.
 **Rule (D29):** verify before coding; no guessing; no invented entities.
