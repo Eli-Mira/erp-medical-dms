@@ -1390,6 +1390,24 @@
     return [first, now];
   }
 
+  // Count-up KPI numbers (reference pattern); skipped for reduced-motion users.
+  function animateCount(nodeEl, target, format) {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      nodeEl.textContent = format(target);
+      return;
+    }
+    var start = null, dur = 600;
+    function step(ts) {
+      if (start === null) start = ts;
+      var k = Math.min((ts - start) / dur, 1);
+      var eased = 1 - Math.pow(1 - k, 3);
+      nodeEl.textContent = format(target * eased);
+      if (k < 1) requestAnimationFrame(step);
+      else nodeEl.textContent = format(target);
+    }
+    requestAnimationFrame(step);
+  }
+
   function loadHome() {
     clearError(el.homeError);
     [el.statAr, el.statStock, el.statReceipts, el.statSales].forEach(function (n) { n.textContent = "—"; });
@@ -1405,18 +1423,18 @@
       var receipts = results[1];
       var stock = results[2];
       var open = state.balancesCache.filter(function (row) { return Number(row.balance) > 0.004; });
-      el.statAr.textContent = fmt(open.reduce(function (total, row) {
-        return total + Number(row.balance);
-      }, 0));
       el.statArSub.textContent = t("stat_ar_sub") + " " + open.length;
-      el.statStock.textContent = fmtQty(stock.reduce(function (total, row) {
-        return total + Number(row.quantity);
-      }, 0));
+      animateCount(el.statAr, open.reduce(function (total, row) {
+        return total + Number(row.balance);
+      }, 0), fmt);
       el.statStockSub.textContent = t("stat_stock_sub") + " " + String(state.products.length);
-      el.statReceipts.textContent = fmt(receipts.reduce(function (total, row) {
-        return total + Number(row.amount);
-      }, 0));
+      animateCount(el.statStock, stock.reduce(function (total, row) {
+        return total + Number(row.quantity);
+      }, 0), fmtQty);
       el.statReceiptsSub.textContent = t("stat_receipts_sub") + " " + receipts.length;
+      animateCount(el.statReceipts, receipts.reduce(function (total, row) {
+        return total + Number(row.amount);
+      }, 0), fmt);
       var recent = receipts.slice().sort(function (a, b) {
         return String(b.receipt_date).localeCompare(String(a.receipt_date));
       }).slice(0, 5);
@@ -1437,8 +1455,8 @@
         var d = new Date(e.entry_date);
         if (d >= win[0] && d <= win[1]) { sales += Number(e.debit); invoicesCount += 1; }
       });
-      el.statSales.textContent = fmt(sales);
       el.statSalesSub.textContent = t("stat_sales_sub") + " " + invoicesCount;
+      animateCount(el.statSales, sales, fmt);
       // AR aging strip across all customers (owner/finance).
       var buckets = [0, 0, 0, 0];
       (state.balancesCache || []).forEach(function (b) {
