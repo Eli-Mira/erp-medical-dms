@@ -1,0 +1,27 @@
+........................................................................ [ 20%]
+........................................................................ [ 41%]
+........................................................................ [ 62%]
+................................................F....................... [ 83%]
+........................................................                 [100%]
+================================== FAILURES ===================================
+___________ test_populated_downgrade_refuses_without_losing_history ___________
+tests\test_invoice_cycle_safety.py:505: in test_populated_downgrade_refuses_without_losing_history
+    assert (
+E   AssertionError: assert '0011_master_data_b' == '0010_invoice_collections'
+E     
+E     - 0010_invoice_collections
+E     + 0011_master_data_b
+---------------------------- Captured stderr call -----------------------------
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running downgrade 0011_master_data_b -> 0010_invoice_collections, B Master Data slice: supplier, minimal chart of accounts, doctor/KOL master.
+INFO  [alembic.runtime.migration] Running downgrade 0010_invoice_collections -> 0009_sales_source_warehouse, Invoice collections: payment receipts, reversal support, and related constraints.
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\uv\cache\archive-v0\318E1tNGthZHca-G\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\emadg\AppData\Local\uv\cache\archive-v0\318E1tNGthZHca-G\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_invoice_cycle_safety.py::test_populated_downgrade_refuses_without_losing_history
+1 failed, 343 passed, 1 warning in 94.60s (0:01:34)

@@ -499,12 +499,14 @@ def test_populated_downgrade_refuses_without_losing_history(life):
         "sqlalchemy.url",
         engine.url.render_as_string(hide_password=False).replace("%", "%%"),
     )
+    head = scalar("SELECT version_num FROM alembic_version")
     with pytest.raises(RuntimeError, match="history must be preserved"):
         command.downgrade(cfg, "0009_sales_source_warehouse")
     assert state(life) == before
-    assert (
-        scalar("SELECT version_num FROM alembic_version") == "0010_invoice_collections"
-    )
+    # A downgrade to an older revision traverses every migration above it; the
+    # refusal aborts the whole transactional downgrade, so the current head is
+    # still the head. Compared dynamically so a new head does not break this.
+    assert scalar("SELECT version_num FROM alembic_version") == head
 
 
 @pytest.mark.parametrize("operation", ["reverse", "collect", "void"])

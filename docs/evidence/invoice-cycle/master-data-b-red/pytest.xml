@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="10" skipped="0" tests="10" time="0.530" timestamp="2026-10-18T19:01:31.438675+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_master_data_b" name="test_master_b_reads_require_a_session" time="0.149"><failure message="AssertionError: /master/suppliers&#10;assert 404 in (401, 403)&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code&#10; +    where &lt;Response [404 Not Found]&gt; = get('/master/suppliers')&#10; +      where get = &lt;starlette.testclient.TestClient object at 0x0000019C76074980&gt;.get">E   AssertionError: /master/suppliers
+    assert 404 in (401, 403)
+     +  where 404 = &lt;Response [404 Not Found]&gt;.status_code
+     +    where &lt;Response [404 Not Found]&gt; = get('/master/suppliers')
+     +      where get = &lt;starlette.testclient.TestClient object at 0x0000019C76074980&gt;.get</failure></testcase><testcase classname="tests.test_master_data_b" name="test_owner_sees_seeded_rows" time="0.037"><failure message="sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation &quot;master_data.master_supplier&quot; does not exist&#10;LINE 1: INSERT INTO master_data.master_supplier(id,code,name_ar) VAL...&#10;                    ^&#10;[SQL: INSERT INTO master_data.master_supplier(id,code,name_ar) VALUES (%(id)s,%(code)s,'Test supplier')]&#10;[parameters: {'id': UUID('51c8191d-e352-4c96-af23-febe935e6713'), 'code': '51c8191de3524c96af23'}]&#10;(Background on this error at: https://sqlalche.me/e/21/f405)">E   psycopg.errors.UndefinedTable: relation "master_data.master_supplier" does not exist
+    LINE 1: INSERT INTO master_data.master_supplier(id,code,name_ar) VAL...
+                        ^
+
+The above exception was the direct cause of the following exception:
+E   sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation "master_data.master_supplier" does not exist
+    LINE 1: INSERT INTO master_data.master_supplier(id,code,name_ar) VAL...
+                        ^
+    [SQL: INSERT INTO master_data.master_supplier(id,code,name_ar) VALUES (%(id)s,%(code)s,'Test supplier')]
+    [parameters: {'id': UUID('51c8191d-e352-4c96-af23-febe935e6713'), 'code': '51c8191de3524c96af23'}]
+    (Background on this error at: https://sqlalche.me/e/21/f405)</failure></testcase><testcase classname="tests.test_master_data_b" name="test_least_privilege_role_sets" time="0.047"><failure message="AssertionError: assert 404 == 200&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code&#10; +    where &lt;Response [404 Not Found]&gt; = get('/master/doctors', headers={'Authorization': 'Bearer 34c1f046-caee-4f83-ac7b-ec32d54011bb'})&#10; +      where get = &lt;starlette.testclient.TestClient object at 0x0000019C7616C410&gt;.get">E   AssertionError: assert 404 == 200
+     +  where 404 = &lt;Response [404 Not Found]&gt;.status_code
+     +    where &lt;Response [404 Not Found]&gt; = get('/master/doctors', headers={'Authorization': 'Bearer 34c1f046-caee-4f83-ac7b-ec32d54011bb'})
+     +      where get = &lt;starlette.testclient.TestClient object at 0x0000019C7616C410&gt;.get</failure></testcase><testcase classname="tests.test_master_data_b" name="test_owner_role_without_the_flag_is_denied" time="0.038"><failure message="AssertionError: /master/suppliers&#10;assert 404 == 403&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code&#10; +    where &lt;Response [404 Not Found]&gt; = get('/master/suppliers', headers={'Authorization': 'Bearer 8817e235-b979-49e8-a6d5-254636a35830'})&#10; +      where get = &lt;starlette.testclient.TestClient object at 0x0000019C761108A0&gt;.get">E   AssertionError: /master/suppliers
+    assert 404 == 403
+     +  where 404 = &lt;Response [404 Not Found]&gt;.status_code
+     +    where &lt;Response [404 Not Found]&gt; = get('/master/suppliers', headers={'Authorization': 'Bearer 8817e235-b979-49e8-a6d5-254636a35830'})
+     +      where get = &lt;starlette.testclient.TestClient object at 0x0000019C761108A0&gt;.get</failure></testcase><testcase classname="tests.test_master_data_b" name="test_doctors_are_branch_scoped" time="0.034"><failure message="sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation &quot;marketing.marketing_kol&quot; does not exist&#10;LINE 1: INSERT INTO marketing.marketing_kol(id,code,name_ar,branch_i...&#10;                    ^&#10;[SQL: INSERT INTO marketing.marketing_kol(id,code,name_ar,branch_id) VALUES (%(id)s,%(code)s,'Test doctor',%(b)s)]&#10;[parameters: {'id': UUID('aebf3beb-2753-460a-83eb-3532b709065c'), 'code': 'aebf3beb2753460a83eb', 'b': UUID('67cbe6de-f942-4984-8a56-f4fd0c0afd11')}]&#10;(Background on this error at: https://sqlalche.me/e/21/f405)">E   psycopg.errors.UndefinedTable: relation "marketing.marketing_kol" does not exist
+    LINE 1: INSERT INTO marketing.marketing_kol(id,code,name_ar,branch_i...
+                        ^
+
+The above exception was the direct cause of the following exception:
+E   sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation "marketing.marketing_kol" does not exist
+    LINE 1: INSERT INTO marketing.marketing_kol(id,code,name_ar,branch_i...
+                        ^
+    [SQL: INSERT INTO marketing.marketing_kol(id,code,name_ar,branch_id) VALUES (%(id)s,%(code)s,'Test doctor',%(b)s)]
+    [parameters: {'id': UUID('aebf3beb-2753-460a-83eb-3532b709065c'), 'code': 'aebf3beb2753460a83eb', 'b': UUID('67cbe6de-f942-4984-8a56-f4fd0c0afd11')}]
+    (Background on this error at: https://sqlalche.me/e/21/f405)</failure></testcase><testcase classname="tests.test_master_data_b" name="test_inactive_rows_are_soft_deleted" time="0.034"><failure message="sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation &quot;master_data.master_supplier&quot; does not exist&#10;LINE 1: INSERT INTO master_data.master_supplier(id,code,name_ar) VAL...&#10;                    ^&#10;[SQL: INSERT INTO master_data.master_supplier(id,code,name_ar) VALUES (%(id)s,%(code)s,'Test supplier')]&#10;[parameters: {'id': UUID('76406b31-bbc8-4db0-be17-572e85b2fd2f'), 'code': '76406b31bbc84db0be17'}]&#10;(Background on this error at: https://sqlalche.me/e/21/f405)">E   psycopg.errors.UndefinedTable: relation "master_data.master_supplier" does not exist
+    LINE 1: INSERT INTO master_data.master_supplier(id,code,name_ar) VAL...
+                        ^
+
+The above exception was the direct cause of the following exception:
+E   sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation "master_data.master_supplier" does not exist
+    LINE 1: INSERT INTO master_data.master_supplier(id,code,name_ar) VAL...
+                        ^
+    [SQL: INSERT INTO master_data.master_supplier(id,code,name_ar) VALUES (%(id)s,%(code)s,'Test supplier')]
+    [parameters: {'id': UUID('76406b31-bbc8-4db0-be17-572e85b2fd2f'), 'code': '76406b31bbc84db0be17'}]
+    (Background on this error at: https://sqlalche.me/e/21/f405)</failure></testcase><testcase classname="tests.test_master_data_b" name="test_account_type_filter_and_domain" time="0.037"><failure message="sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation &quot;finance.coa_account&quot; does not exist&#10;LINE 1: INSERT INTO finance.coa_account(id,code,name_ar,account_type...&#10;                    ^&#10;[SQL: INSERT INTO finance.coa_account(id,code,name_ar,account_type) VALUES (%(id)s,%(code)s,'Test account',%(t)s)]&#10;[parameters: {'id': UUID('563e0274-9290-486c-a1fc-09db76a67202'), 'code': '1000', 't': 'asset'}]&#10;(Background on this error at: https://sqlalche.me/e/21/f405)">E   psycopg.errors.UndefinedTable: relation "finance.coa_account" does not exist
+    LINE 1: INSERT INTO finance.coa_account(id,code,name_ar,account_type...
+                        ^
+
+The above exception was the direct cause of the following exception:
+E   sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation "finance.coa_account" does not exist
+    LINE 1: INSERT INTO finance.coa_account(id,code,name_ar,account_type...
+                        ^
+    [SQL: INSERT INTO finance.coa_account(id,code,name_ar,account_type) VALUES (%(id)s,%(code)s,'Test account',%(t)s)]
+    [parameters: {'id': UUID('563e0274-9290-486c-a1fc-09db76a67202'), 'code': '1000', 't': 'asset'}]
+    (Background on this error at: https://sqlalche.me/e/21/f405)</failure></testcase><testcase classname="tests.test_master_data_b" name="test_supplier_and_doctor_filters" time="0.031"><failure message="sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation &quot;master_data.master_supplier&quot; does not exist&#10;LINE 1: INSERT INTO master_data.master_supplier(id,code,name_ar) VAL...&#10;                    ^&#10;[SQL: INSERT INTO master_data.master_supplier(id,code,name_ar) VALUES (%(id)s,%(code)s,'Test supplier')]&#10;[parameters: {'id': UUID('3f373c74-fa56-445a-9a0c-4d271d11e5dd'), 'code': 'SUP-UNIQUE-AAA'}]&#10;(Background on this error at: https://sqlalche.me/e/21/f405)">E   psycopg.errors.UndefinedTable: relation "master_data.master_supplier" does not exist
+    LINE 1: INSERT INTO master_data.master_supplier(id,code,name_ar) VAL...
+                        ^
+
+The above exception was the direct cause of the following exception:
+E   sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation "master_data.master_supplier" does not exist
+    LINE 1: INSERT INTO master_data.master_supplier(id,code,name_ar) VAL...
+                        ^
+    [SQL: INSERT INTO master_data.master_supplier(id,code,name_ar) VALUES (%(id)s,%(code)s,'Test supplier')]
+    [parameters: {'id': UUID('3f373c74-fa56-445a-9a0c-4d271d11e5dd'), 'code': 'SUP-UNIQUE-AAA'}]
+    (Background on this error at: https://sqlalche.me/e/21/f405)</failure></testcase><testcase classname="tests.test_master_data_b" name="test_coa_parent_relationship" time="0.034"><failure message="sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation &quot;finance.coa_account&quot; does not exist&#10;LINE 1: INSERT INTO finance.coa_account(id,code,name_ar,account_type...&#10;                    ^&#10;[SQL: INSERT INTO finance.coa_account(id,code,name_ar,account_type) VALUES (%(id)s,%(code)s,'Test account',%(t)s)]&#10;[parameters: {'id': UUID('2345fec9-3377-4c0b-9927-edced8ef4df8'), 'code': '1000', 't': 'asset'}]&#10;(Background on this error at: https://sqlalche.me/e/21/f405)">E   psycopg.errors.UndefinedTable: relation "finance.coa_account" does not exist
+    LINE 1: INSERT INTO finance.coa_account(id,code,name_ar,account_type...
+                        ^
+
+The above exception was the direct cause of the following exception:
+E   sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation "finance.coa_account" does not exist
+    LINE 1: INSERT INTO finance.coa_account(id,code,name_ar,account_type...
+                        ^
+    [SQL: INSERT INTO finance.coa_account(id,code,name_ar,account_type) VALUES (%(id)s,%(code)s,'Test account',%(t)s)]
+    [parameters: {'id': UUID('2345fec9-3377-4c0b-9927-edced8ef4df8'), 'code': '1000', 't': 'asset'}]
+    (Background on this error at: https://sqlalche.me/e/21/f405)</failure></testcase><testcase classname="tests.test_master_data_b" name="test_database_invariants" time="0.036"><failure message="sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation &quot;finance.coa_account&quot; does not exist&#10;LINE 1: INSERT INTO finance.coa_account(code,name_ar,account_type) V...&#10;                    ^&#10;[SQL: INSERT INTO finance.coa_account(code,name_ar,account_type) VALUES ('9999','Bad type','nonsense')]&#10;(Background on this error at: https://sqlalche.me/e/21/f405)">E   psycopg.errors.UndefinedTable: relation "finance.coa_account" does not exist
+    LINE 1: INSERT INTO finance.coa_account(code,name_ar,account_type) V...
+                        ^
+
+The above exception was the direct cause of the following exception:
+E   sqlalchemy.exc.ProgrammingError: (psycopg.errors.UndefinedTable) relation "finance.coa_account" does not exist
+    LINE 1: INSERT INTO finance.coa_account(code,name_ar,account_type) V...
+                        ^
+    [SQL: INSERT INTO finance.coa_account(code,name_ar,account_type) VALUES ('9999','Bad type','nonsense')]
+    (Background on this error at: https://sqlalche.me/e/21/f405)</failure></testcase></testsuite></testsuites>

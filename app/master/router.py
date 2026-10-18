@@ -1,4 +1,4 @@
-"""Read-only master-data lookups for the invoice screen.
+"""Read-only master-data lookups for the invoice screen and B Master Data slice.
 
 Scope rules mirror the invoice API exactly so the UI can only offer references
 that invoice creation would accept:
@@ -12,9 +12,20 @@ that invoice creation would accept:
 - branches   : non-global callers limited to their ``platform.user_branch`` grants.
 - products   : active catalog rows (invoice create only checks ``is_active``).
 
+B Master Data slice (PRD B-02/B-12/B-13) adds three company-wide references,
+each gated to the roles that consume it (no purchasing/marketing role exists yet):
+
+- suppliers  : active ``master_data.master_supplier`` rows (owner/finance/auditor).
+- accounts   : active ``finance.coa_account`` rows, optionally by account type
+               (owner/finance/auditor). No accounts are seeded — the COA
+               structure is a business-policy question.
+- doctors    : active ``marketing.marketing_kol`` rows; non-global callers are
+               limited to their ``platform.user_branch`` grants. A doctor with no
+               branch is never offered to a branch-scoped caller.
+
 Reads only. No writes, no commits, no schema changes.
 """
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -23,7 +34,15 @@ from sqlalchemy.orm import Session
 
 from app.auth.router import get_current_user
 from app.db import get_db
-from app.master.schemas import BranchOut, CustomerOut, ProductOut, WarehouseOut
+from app.master.schemas import (
+    AccountOut,
+    BranchOut,
+    CustomerOut,
+    DoctorOut,
+    ProductOut,
+    SupplierOut,
+    WarehouseOut,
+)
 
 router = APIRouter(prefix="/master", tags=["master-data"])
 Db = Annotated[Session, Depends(get_db)]
@@ -42,19 +61,54 @@ READ_ROLES = {
 GLOBAL_WAREHOUSE_ROLES = {"owner", "finance", "warehouse_staff", "read_only_auditor"}
 GLOBAL_BRANCH_ROLES = {"owner", "finance", "read_only_auditor"}
 
-PRODUCT_LIMIT_DEFAULT = 100
-PRODUCT_LIMIT_MAX = 500
+# B Master Data slice: company-wide references, each limited to its consumers.
+# No purchasing or marketing role exists in the role model (D34), so suppliers
+# and the COA stay with finance-side roles.
+SUPPLIER_ROLES = {"owner", "finance", "read_only_auditor"}
+ACCOUNT_ROLES = {"owner", "finance", "read_only_auditor"}
+DOCTOR_ROLES = {
+    "owner",
+    "sales_manager",
+    "district_manager",
+    "medical_rep",
+    "read_only_auditor",
+}
+AccountType = Literal["asset", "liability", "equity", "revenue", "expense"]
+
+LIMIT_DEFAULT = 100
+LIMIT_MAX = 500
 
 
-def _role(user):
+def _require(user, allowed: set[str]):
     role = user["role"]
     if (
         not user["is_active"]
-        or role not in READ_ROLES
+        or role not in allowed
         or (role == "owner" and not user["is_owner"])
     ):
         raise HTTPException(403, "Master data access denied")
     return role
+
+
+def _role(user):
+    return _require(user, READ_ROLES)
+
+
+def _limit(value: int) -> int:
+    if value < 1:
+        return LIMIT_DEFAULT
+    return min(value, LIMIT_MAX)
+
+
+def _like(q: str) -> str:
+    """Build a literal substring pattern for ILIKE.
+
+    User input must never act as a LIKE metacharacter: an unescaped ``%`` or
+    ``_`` would silently widen the search, and a stray backslash would be eaten
+    as the escape character. Postgres uses backslash as the default LIKE escape.
+    """
+    escaped = q.replace("\\", r"\\").replace("%", r"\%").replace("_", r"\_")
+    return f"%{escaped}%"
 
 
 def _territories(db, user):
@@ -179,17 +233,15 @@ def list_customers(
 
 @router.get("/products")
 def list_products(
-    db: Db, current: CurrentUser, q: str | None = None, limit: int = PRODUCT_LIMIT_DEFAULT
+    db: Db, current: CurrentUser, q: str | None = None, limit: int = LIMIT_DEFAULT
 ) -> list[ProductOut]:
     _role(current)
-    if limit < 1:
-        limit = PRODUCT_LIMIT_DEFAULT
-    limit = min(limit, PRODUCT_LIMIT_MAX)
+    limit = _limit(limit)
     clauses = ["is_active"]
     params: dict = {"limit": limit}
     if q:
         clauses.append("(name_ar ILIKE :q OR name_en ILIKE :q OR sku ILIKE :q)")
-        params["q"] = f"%{q}%"
+        params["q"] = _like(q)
     rows = db.execute(
         text(
             "SELECT id, sku, name_ar, name_en, base_price, vat_rate "
@@ -200,3 +252,91 @@ def list_products(
         params,
     ).mappings()
     return [ProductOut.model_validate(dict(row)) for row in rows]
+
+
+@router.get("/suppliers")
+def list_suppliers(
+    db: Db,
+    current: CurrentUser,
+    q: str | None = None,
+    limit: int = LIMIT_DEFAULT,
+) -> list[SupplierOut]:
+    _require(current, SUPPLIER_ROLES)
+    clauses = ["is_active"]
+    params: dict = {"limit": _limit(limit)}
+    if q:
+        clauses.append("(name_ar ILIKE :q OR name_en ILIKE :q OR code ILIKE :q)")
+        params["q"] = _like(q)
+    rows = db.execute(
+        text(
+            "SELECT id, code, name_ar, name_en, contact_phone, address, is_active "
+            "FROM master_data.master_supplier WHERE "
+            + " AND ".join(clauses)
+            + " ORDER BY name_ar LIMIT :limit"
+        ),
+        params,
+    ).mappings()
+    return [SupplierOut.model_validate(dict(row)) for row in rows]
+
+
+@router.get("/accounts")
+def list_accounts(
+    db: Db,
+    current: CurrentUser,
+    account_type: AccountType | None = None,
+    limit: int = LIMIT_DEFAULT,
+) -> list[AccountOut]:
+    _require(current, ACCOUNT_ROLES)
+    clauses = ["is_active"]
+    params: dict = {"limit": _limit(limit)}
+    if account_type is not None:
+        clauses.append("account_type = :account_type")
+        params["account_type"] = account_type
+    rows = db.execute(
+        text(
+            "SELECT id, code, name_ar, name_en, account_type, parent_id, is_active "
+            "FROM finance.coa_account WHERE "
+            + " AND ".join(clauses)
+            + " ORDER BY code LIMIT :limit"
+        ),
+        params,
+    ).mappings()
+    return [AccountOut.model_validate(dict(row)) for row in rows]
+
+
+@router.get("/doctors")
+def list_doctors(
+    db: Db,
+    current: CurrentUser,
+    branch_id: UUID | None = None,
+    q: str | None = None,
+    limit: int = LIMIT_DEFAULT,
+) -> list[DoctorOut]:
+    _require(current, DOCTOR_ROLES)
+    scope = _branches(db, current)
+    if scope is not None and not scope:
+        return []
+    clauses = ["is_active"]
+    params: dict = {"limit": _limit(limit)}
+    if scope is not None:
+        clauses.append("branch_id = ANY(CAST(:branches AS uuid[]))")
+        params["branches"] = [str(b) for b in scope]
+    if branch_id is not None:
+        clauses.append("branch_id = :branch_id")
+        params["branch_id"] = branch_id
+    if q:
+        clauses.append(
+            "(name_ar ILIKE :q OR name_en ILIKE :q OR code ILIKE :q "
+            "OR specialty ILIKE :q)"
+        )
+        params["q"] = _like(q)
+    rows = db.execute(
+        text(
+            "SELECT id, code, name_ar, name_en, specialty, branch_id, "
+            "contact_phone, is_active FROM marketing.marketing_kol WHERE "
+            + " AND ".join(clauses)
+            + " ORDER BY name_ar LIMIT :limit"
+        ),
+        params,
+    ).mappings()
+    return [DoctorOut.model_validate(dict(row)) for row in rows]

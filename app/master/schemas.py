@@ -41,3 +41,34 @@ class ProductOut(BaseModel):
     name_en: str | None
     base_price: Decimal
     vat_rate: Decimal
+
+
+class SupplierOut(BaseModel):
+    id: UUID
+    code: str
+    name_ar: str
+    name_en: str | None
+    contact_phone: str | None
+    address: str | None
+    is_active: bool
+
+
+class AccountOut(BaseModel):
+    id: UUID
+    code: str
+    name_ar: str
+    name_en: str | None
+    account_type: str
+    parent_id: UUID | None
+    is_active: bool
+
+
+class DoctorOut(BaseModel):
+    id: UUID
+    code: str
+    name_ar: str
+    name_en: str | None
+    specialty: str | None
+    branch_id: UUID | None
+    contact_phone: str | None
+    is_active: bool
