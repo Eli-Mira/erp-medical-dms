@@ -121,6 +121,28 @@ STOCK = [  # (warehouse_idx, product_idx, quantity)
     (1, 3, "40.000"),
 ]
 
+SUPPLIERS = [  # (code, name_ar, phone, address)
+    ("DEMO-SUP-001", "مورّد تجريبي ١ (بيانات وهمية)", "+20-100-000-0001", "عنوان تجريبي — غير حقيقي"),
+    ("DEMO-SUP-002", "مورّد تجريبي ٢ (بيانات وهمية)", "+20-100-000-0002", "عنوان تجريبي — غير حقيقي"),
+    ("DEMO-SUP-003", "مورّد تجريبي ٣ (بيانات وهمية)", "+20-100-000-0003", "عنوان تجريبي — غير حقيقي"),
+]
+# finance.coa_account — synthetic skeleton covering all five account types.
+COA_ACCOUNTS = [  # (code, name_ar, account_type)
+    ("1001", "الصندوق (تجريبي)", "asset"),
+    ("1101", "العملاء — مدينون (تجريبي)", "asset"),
+    ("1201", "المخزون (تجريبي)", "asset"),
+    ("2101", "ضريبة القيمة المضافة المستحقة (تجريبي)", "liability"),
+    ("3101", "رأس المال (تجريبي)", "equity"),
+    ("4101", "إيرادات المبيعات (تجريبي)", "revenue"),
+    ("5101", "تكلفة المبيعات (تجريبي)", "expense"),
+    ("6101", "مصروفات إدارية (تجريبي)", "expense"),
+]
+DOCTORS = [  # (code, name_ar, specialty, branch_idx)
+    ("DEMO-KOL-001", "دكتور تجريبي ١ (بيانات وهمية)", "باطنة", 0),
+    ("DEMO-KOL-002", "دكتور تجريبي ٢ (بيانات وهمية)", "أطفال", 1),
+    ("DEMO-KOL-003", "دكتور تجريبي ٣ (بيانات وهمية)", "جراحة عامة", 0),
+]
+
 USERS = [  # (username, role, is_owner)
     ("demo_owner", "owner", True),
     ("demo_rep", "medical_rep", False),
@@ -204,6 +226,21 @@ def seed(engine: Engine) -> None:
                 "VALUES (:id,:code,:name,:b,:t)"),
                 {"id": ids[f"c{i}"], "code": code, "name": name,
                  "b": ids[f"b{branch_idx}"], "t": ids[f"t{terr_idx}"]})
+        for i, (code, name, phone, address) in enumerate(SUPPLIERS):
+            db.execute(text(
+                "INSERT INTO master_data.master_supplier(id,code,name_ar,contact_phone,address,is_active) "
+                "VALUES (:id,:code,:name,:phone,:address,true)"),
+                {"id": uuid4(), "code": code, "name": name, "phone": phone, "address": address})
+        for code, name, account_type in COA_ACCOUNTS:
+            db.execute(text(
+                "INSERT INTO finance.coa_account(id,code,name_ar,account_type,is_active) "
+                "VALUES (:id,:code,:name,:type,true)"),
+                {"id": uuid4(), "code": code, "name": name, "type": account_type})
+        for code, name, specialty, branch_idx in DOCTORS:
+            db.execute(text(
+                "INSERT INTO marketing.marketing_kol(id,code,name_ar,specialty,branch_id,is_active) "
+                "VALUES (:id,:code,:name,:spec,:b,true)"),
+                {"id": uuid4(), "code": code, "name": name, "spec": specialty, "b": ids[f"b{branch_idx}"]})
 
         # Demo accounts — passwords hashed with the app's own PBKDF2 helper.
         password_hash = hash_password(DEMO_PASSWORD)
@@ -346,6 +383,9 @@ def verify(engine: Engine) -> None:
         "stock_balances": "SELECT count(*) FROM inventory.stock_balance",
         "ar_entries": "SELECT count(*) FROM finance.ar_entry",
         "receipts": "SELECT count(*) FROM finance.payment_receipt",
+        "suppliers": "SELECT count(*) FROM master_data.master_supplier",
+        "coa_accounts": "SELECT count(*) FROM finance.coa_account",
+        "kol_doctors": "SELECT count(*) FROM marketing.marketing_kol",
         "collections_sum": "SELECT COALESCE(sum(credit),0) FROM finance.ar_entry WHERE entry_type='payment'",
         "totals_ok": (
             "SELECT count(*) FROM sales.sales_invoice "

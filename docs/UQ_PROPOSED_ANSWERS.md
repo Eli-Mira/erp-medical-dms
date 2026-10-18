@@ -15,6 +15,19 @@
 
 All other UQs remain as proposed (see table below).
 
+## Decided by Eli (2026-10-18)
+
+| UQ | Decision |
+|----|----------|
+| UQ-3 | Stock-cover averaging window default = **30-day rolling** (still configurable). |
+| UQ-4 | Overstock threshold default = **180 days** (still configurable). |
+| UQ-10 | Name stays **"Medical Company System"** until branding is provided; UI reads `platform_setting(key='company_name')`. |
+| UQ-12 | E-invoicing **not required for MVP**; ITIDA/legal review mandatory before go-live. |
+| UQ-13 | 2FA **deferred** (Phase 4+); password + session management only for MVP. |
+| UQ-14 | Backup = **daily local pg_dump (30-day retention) + weekly Backblaze B2 offsite copy (90-day)**. |
+
+Recorded in `docs/DECISION_LOG.md` (D41–D43).
+
 ## Proposed Answers Table
 
 | UQ | Question | Proposed Answer | Basis (Citation) | MVP-blocker? | Needs Approval? |

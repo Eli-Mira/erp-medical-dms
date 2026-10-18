@@ -52,6 +52,16 @@ The latest implemented local-only slice is recorded in `docs/INVOICE_SLICE_1.md`
 
 If a later decision contradicts an earlier one, the later entry wins and must reference the superseded decision ID. Eli's explicit instructions always override inferred ones.
 
+## 2026-10-18 — Private/owner accounts boundary resolved
+- **D40. Private/Owner accounts security boundary (Eli, `C:/Desktop/Answers.txt` 2026-10-16; recorded 2026-10-18).**
+  Private/owner accounts live in the **same PostgreSQL database inside a separate protected module/security
+  boundary**: separate permissions, restricted queries, dedicated audit logging, and ideally a separate
+  schema/tables. **A second database is explicitly not required yet.** This resolves the 2026-10-18 open
+  question (see `docs/OPEN_QUESTIONS.md`), refines D30's "Private/Owner boundary" platform module, and
+  constrains E-Finance: the `حسابات خاصه` prototype (owner-only, view-only) already follows this boundary.
+  Any private-accounts backend slice must: use a dedicated schema, stay invisible to every non-owner role
+  (D34), keep its audit trail separate, and never share code paths with company AR/stock ledgers.
+
 ## 2026-10-16 — Eli's UQ decisions (critical blockers resolved)
 - **D34 (UQ-1 Roles).** Role list = **Owner, Admin, Finance, Sales Manager, District Manager, Medical Rep, Warehouse Staff, Read-Only Auditor**. Access restricted by **responsibility + assigned territory**. (Eli, 2026-10-16)
 - **D35 (UQ-2 AR).** AR = **transaction-level ledger + monthly summaries**. **Preserve opening balances and historical transactions.** (Eli, 2026-10-16)
@@ -65,3 +75,10 @@ If a later decision contradicts an earlier one, the later entry wins and must re
   - **D39c Doctor/KOL list** — `marketing.marketing_kol` (PRD B-13, D22: `حسابات خاصه.xlsx::Sheet1`). Specialty stays an inline attribute because the authoritative schema defines no specialty master table; no specialty or area taxonomy was invented (`Sheet1`'s `المنطقة`/`التخصص` values are not yet mapped to branches/territories).
   - **D39d Access** — read-only `GET /master/suppliers|accounts|doctors`. Suppliers and the COA are limited to `owner`/`finance`/`read_only_auditor`; doctors to `owner`/`sales_manager`/`district_manager`/`medical_rep`/`read_only_auditor`, branch-scoped through `platform.user_branch` for non-global callers. Territory, branch and warehouse grants stay distinct; no purchasing or marketing role was invented (D34).
   - **D39e Gated / not built** — UOM conversion stays gated (D13/D20): no `master_uom` was created. No CRUD, import, or write endpoint, and no real supplier, doctor, or financial record was loaded (synthetic test rows only). `POSTING_ENABLED` stays OFF.
+
+## 2026-10-18 — Eli approvals round 2: UQ defaults, UI reference, invoice print
+- **D41 (UQ-3/UQ-4 stock-policy defaults).** Stock-cover averaging window default = **30-day rolling**; overstock threshold default = **180 days**. Both remain configurable in `platform_setting`; this approves the defaults, never hardcoding.
+- **D42 (UQ-12/UQ-13/UQ-14).** E-invoicing: **not required for MVP**; ITIDA/legal review before go-live. 2FA: **deferred** (password + session only). Backup: **daily local pg_dump (30-day retention) + weekly Backblaze B2 offsite copy (90-day)**.
+- **D43 (UQ-10 name).** Product name stays **"Medical Company System"** until branding is provided; UI reads `platform_setting(key='company_name')`.
+- **D44 (UI reference: Vertix Dashboard V14).** `docs/ui_reference/Vertix_Dashboard_V14/index.html` is a **study reference only, never shipped source** (anonymous "motion recreation", no license attached). Company identity (navy/sapphire, Arabic-first RTL, per DESIGN_BRIEF and D37) is unchanged. What may be borrowed into the existing PWA: interaction patterns (staged skeleton reveal, count-up KPI counters, Blob CSV export, Escape-closable dialogs, `:focus-visible`/reduced-motion handling), the overview layout rhythm, its icon style and chart look. It is not a new shell and not a palette.
+- **D45 (2B.4 invoice print/PDF).** Client-facing print = **dedicated print view in the existing PWA driven by browser "Save as PDF"**, honoring the zero-quantity-line hiding rule, keeping server values authoritative. No new server dependency is added: `requirements.txt` is a protected file (hard rule 4), so a server-side PDF library needs explicit owner action first; real backend PDF generation is deferred until then.

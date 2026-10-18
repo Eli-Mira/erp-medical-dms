@@ -67,3 +67,13 @@ Method: openpyxl read of `الميزانية العمومية 2026.xlsx::الع�
 - Tools: `tools/inventory_excel.py` (fixed), `tools/analyze_inventory.py`, `tools/extract_summary.py`
 - Specs: `MEDICAL_COMPANY_SYSTEM_MASTER_SPEC.md`, `MEDICAL_COMPANY_SYSTEM_MASTER_SPEC_V2.md` (authoritative)
 - Decisions: `C:\Users\emadg\CrossDevice\Desktop\Answers.txt` (2026-10-11), `docs/DECISION_LOG.md`
+
+## 2026-10-18 — Private accounts security boundary (`حسابات خاصه`)
+
+- **Source:** `حسابات خاصه.xlsx` (owner's accounts notebook, one of the 7 source workbooks).
+- **Question:** Should private accounts live inside the same application/database security boundary as the
+  distribution company books, or in a separate domain/user set (owner-only)?
+- **Why it matters:** V1 §6/§10 flags owner/private-account separation as open; the current prototype shows
+  the module view-only and owner-only (`web/app.js` `PROTON.privateaccounts`, `data-roles="owner"`).
+- **Status:** RESOLVED 2026-10-18 — answered by `C:/Desktop/Answers.txt` (2026-10-16, Eli): **same PostgreSQL database, separate protected module/security boundary** — separate permissions, restricted queries, audit logs, ideally separate schema/tables; no second database. Recorded as **D40** in `docs/DECISION_LOG.md`. No design finalized before this was answered, as required above.
+- Related note: audit/analytics read endpoints and the private-accounts model are both untouched by this decision.

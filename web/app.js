@@ -1,9 +1,9 @@
-/* Invoice desk — vanilla JS PWA (no framework, per D37).
+/* Medical Company System — web shell (vanilla JS PWA, per D37).
  *
- * Flow: sign in -> load master data (customers/products/branches/warehouses)
- * -> build a draft with live estimated totals -> POST /invoices (the server
- * recalculates and stores the authoritative totals) -> render the saved draft
- * and its status. Posting is deliberately left to the server's 409 gate.
+ * Real screens are wired to the live backend endpoints; every unimplemented
+ * capability is an explicit, labelled "نموذج أولي / Prototype" preview that
+ * keeps its simulated state entirely client-side and never calls the API.
+ * POSTING stays server-gated (409); a saved draft never mutates stock or AR.
  */
 (function () {
   "use strict";
@@ -20,6 +20,8 @@
     draft: null,
     seq: 0,
     invoiceNos: {},
+    receiptNos: {},
+    entries: null, // cached /ar/entries when role allows
   };
 
   var el = {};
@@ -28,6 +30,10 @@
   function $(id) { return document.getElementById(id); }
   function t(key, fallback) {
     return dict[key] !== undefined ? dict[key] : (fallback !== undefined ? fallback : key);
+  }
+  function todayLocal() {
+    var now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   }
 
   // ---------------------------------------------------------------- i18n
@@ -42,6 +48,10 @@
       var v = dict[node.dataset.i18nPlaceholder];
       if (v !== undefined) node.placeholder = v;
     });
+    document.querySelectorAll("[data-i18n-aria-label]").forEach(function (node) {
+      var v = dict[node.dataset.i18nAriaLabel];
+      if (v !== undefined) node.setAttribute("aria-label", v);
+    });
   }
 
   async function loadI18n(lang) {
@@ -49,6 +59,8 @@
     localStorage.setItem("lang", state.lang);
     var res = await fetch("i18n/" + state.lang + ".json");
     dict = await res.json();
+    var input = $("palette-input");
+    if (input) input.placeholder = t("search_placeholder");
     applyI18n();
   }
 
@@ -97,9 +109,7 @@
     node.dataset.kind = kind || "error";
     node.classList.remove("hidden");
   }
-  function showError(node, message) {
-    showNotice(node, message, "error");
-  }
+  function showError(node, message) { showNotice(node, message, "error"); }
   function clearError(node) {
     node.textContent = "";
     node.classList.add("hidden");
@@ -108,10 +118,9 @@
   // ------------------------------------------------------------- numbers
   function round2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
   function fmt(n) { return (Math.round((Number(n) + Number.EPSILON) * 100) / 100).toFixed(2); }
-  function todayLocal() {
-    var now = new Date();
-    return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  }
+  function fmtQty(n) { return String(Number(n)); }
+  function fmtDate(value) { return value ? String(value).slice(0, 10) : "—"; }
+  function shortId(id) { return id ? String(id).slice(0, 8) + "…" : "—"; }
 
   function productById(id) {
     for (var i = 0; i < state.products.length; i++) {
@@ -125,22 +134,31 @@
     }
     return null;
   }
-  function branchLabel(id) {
+  function branchById(id) {
     for (var i = 0; i < state.branches.length; i++) {
-      if (state.branches[i].id === id) {
-        return state.branches[i].name_ar || state.branches[i].name_en || state.branches[i].code;
-      }
+      if (state.branches[i].id === id) return state.branches[i];
     }
-    return "";
+    return null;
+  }
+  function branchLabel(id) {
+    var b = branchById(id);
+    return b ? (b.name_ar || b.name_en || b.code) : shortId(id);
   }
   function productLabel(product) {
     if (!product) return "";
     return (product.name_ar || product.name_en || product.sku) + " — " + product.sku;
   }
-  function shortId(id) { return id ? String(id).slice(0, 8) + "…" : "—"; }
-  function fmtQty(n) { return String(Number(n)); }
-  function fmtDate(value) { return value ? String(value).slice(0, 10) : "—"; }
+  function customerLabel(c) { return c ? (c.name_ar || c.name_en || c.code) : "—"; }
+  function customerName(id) { var c = customerById(id); return c ? customerLabel(c) : (id || "—"); }
+  var warehouseLabels = {}; // id -> best-known label; never shrinks on a branch refill
+  function rememberWarehouseLabels(warehouses) {
+    warehouses.forEach(function (w) {
+      var label = w.name_ar || w.name_en || w.code;
+      if (!warehouseLabels[w.id] || label) warehouseLabels[w.id] = label;
+    });
+  }
   function warehouseLabel(id) {
+    if (warehouseLabels[id]) return warehouseLabels[id];
     for (var i = 0; i < state.warehouses.length; i++) {
       var warehouse = state.warehouses[i];
       if (warehouse.id === id) return warehouse.name_ar || warehouse.name_en || warehouse.code;
@@ -152,6 +170,9 @@
     return product ? productLabel(product) : shortId(id);
   }
   function methodLabel(method) { return t("method_" + method, method); }
+  function accountTypeLabel(v) { return t("at_" + v, v); }
+  function movementTypeLabel(v) { return t("mv_" + v, v); }
+  function entryTypeLabel(v) { return t("et_" + v, v); }
 
   // Mirrors app/sales/calc.py for the *estimate only*; the server is authoritative.
   function linePreview(line) {
@@ -186,6 +207,7 @@
 
   // ---------------------------------------------------------- master data
   function fillSelect(select, items, label, placeholderKey) {
+    if (!select) return;
     select.innerHTML = "";
     var placeholder = document.createElement("option");
     placeholder.value = "";
@@ -208,16 +230,23 @@
     state.branches = results[0];
     state.customers = results[1];
     state.products = results[2];
-    fillSelect(el.customer, state.customers, function (c) {
-      return (c.name_ar || c.name_en || c.code) + " — " + c.code;
-    }, "select_customer");
     refreshProductSelects();
+    refreshCustomerSelects();
+    fillSelect(el.visitProduct, state.products, productLabel, "select_product");
+    // Warehouse fill for the invoice — best effort (a few roles get 403; the
+    // invoice then shows its "choose warehouse" validation instead of dying).
+    loadWarehouses().catch(function () { /* keep manual-selection UX */ });
   }
 
   async function loadWarehouses(branchId) {
     var path = "/master/warehouses";
     if (branchId) path += "?branch_id=" + encodeURIComponent(branchId);
     state.warehouses = await api(path);
+    rememberWarehouseLabels(state.warehouses);
+    refreshWarehouseSelects();
+  }
+
+  function refreshWarehouseSelects() {
     fillSelect(el.warehouse, state.warehouses, function (w) {
       return (w.name_ar || w.name_en || w.code) + " — " + w.code;
     }, "select_warehouse");
@@ -229,6 +258,634 @@
       fillSelect(select, state.products, productLabel, "select_product");
       select.value = current;
     });
+  }
+
+  function refreshCustomerSelects() {
+    ["customer", "visit-customer", "ledger-customer"].forEach(function (id) {
+      var select = document.getElementById(id);
+      if (!select) return;
+      var current = select.value;
+      fillSelect(select, state.customers, function (c) {
+        return (c.name_ar || c.name_en || c.code) + " — " + (c.code || "");
+      }, "select_customer");
+      select.value = current;
+    });
+  }
+
+  // =========================================================================
+  // VIEW REGISTRY — the agreed APP_FLOW §1 tree with §10 role scoping.
+  // `real:` true items map to dedicated sections hitting the live API; every
+  // other key renders a clearly-labelled prototype preview (module-view).
+  // =========================================================================
+  var REAL_VIEWS = {
+    home: "home-view", invoice: "invoice-view", inventory: "inventory-view",
+    ledger: "ledger-view", balances: "balances-view", collections: "collections-view",
+    customers: "customers-view", products: "products-view", warehouses: "warehouses-view",
+    suppliers: "suppliers-view", accounts: "accounts-view", doctors: "doctors-view",
+    visits: "visits-view",
+  };
+
+  var ROLE_OK = {
+    home: ["*"],
+    invoice: ["owner", "finance", "medical_rep", "sales_manager", "district_manager", "read_only_auditor"],
+    inventory: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
+    ledger: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
+    balances: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
+    collections: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
+    customers: ["*"],
+    products: ["*"],
+    warehouses: ["*"],
+    suppliers: ["owner", "finance", "read_only_auditor"],
+    accounts: ["owner", "finance", "read_only_auditor"],
+    doctors: ["owner", "finance", "medical_rep", "sales_manager", "read_only_auditor"],
+    visits: ["owner", "medical_rep", "sales_manager"],
+    settings: ["owner", "finance"], audit: ["owner", "finance"],
+    alerts: ["*"], import: ["owner", "finance"], pwa: ["*"],
+    reference: ["owner", "finance"], batches: ["owner", "finance"],
+    representatives: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
+    uom: ["owner", "finance"], credit: ["owner", "finance", "sales_manager"],
+    routing: ["owner", "medical_rep", "sales_manager"],
+    transfers: ["owner", "finance", "sales_manager"],
+    returns: ["owner", "medical_rep", "sales_manager"],
+    targets: ["owner", "medical_rep", "sales_manager", "finance"],
+    cover: ["owner", "finance", "sales_manager"], overstock: ["owner", "finance", "sales_manager"],
+    cash: ["owner", "finance"], expenses: ["owner", "finance"], pnl: ["owner", "finance"],
+    payroll: ["owner", "finance"], brandspend: ["owner", "finance"],
+    privateaccounts: ["owner"],
+    objectives: ["owner", "finance", "sales_manager"], purchases: ["owner", "finance"],
+    telegram: ["*"], analytics: ["*"],
+  };
+
+  function roleAllowed(view) {
+    var allowed = ROLE_OK[view] || ["*"];
+    if (allowed.indexOf("*") >= 0) return true;
+    return state.user && allowed.indexOf(state.user.role) >= 0;
+  }
+
+  function applyRoleGating() {
+    var role = state.user ? state.user.role : null;
+    document.querySelectorAll("[data-roles]").forEach(function (node) {
+      var allowed = node.dataset.roles === "*" ? ["*"] : node.dataset.roles.split(",");
+      var ok = allowed.indexOf("*") >= 0 || (role && allowed.indexOf(role) >= 0);
+      if (node.classList.contains("bnav-btn")) {
+        node.style.display = ok ? "" : "none";
+      } else {
+        node.classList.toggle("hidden", !ok);
+      }
+    });
+  }
+
+  // ------------------------------------------------------------- drawers
+  var drawerOpen = false;
+  function setDrawer(open) {
+    drawerOpen = open;
+    el.sidebar.classList.toggle("open", open);
+    el.scrim.classList.toggle("show", open);
+    el.menuToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  // ------------------------------------------------------------- sections
+  var currentSection = "login-view";
+
+  function setActiveNav(name) {
+    document.querySelectorAll(".nav-item, .bnav-btn").forEach(function (btn) {
+      btn.classList.toggle("active", btn.dataset.view === name);
+    });
+  }
+
+  var ALL_SECTIONS = [
+    "login-view", "home-view", "invoice-view", "draft-view", "inventory-view",
+    "ledger-view", "balances-view", "collections-view", "customers-view",
+    "products-view", "warehouses-view", "suppliers-view", "accounts-view",
+    "doctors-view", "visits-view", "module-view",
+  ];
+
+  function hideAllSections() {
+    ALL_SECTIONS.forEach(function (id) {
+      var node = $(id);
+      if (node) node.classList.add("hidden");
+    });
+  }
+
+  function showView(name, fresh) {
+    if (name === "__menu" || name === "draft") return;
+    if (name === "login") {
+      hideAllSections();
+      el.loginView.classList.remove("hidden");
+      currentSection = "login-view";
+      setActiveNav("");
+      return;
+    }
+    if (!roleAllowed(name)) {
+      openPreview("note_no_access");
+      return;
+    }
+    if (REAL_VIEWS[name]) {
+      var section = $(REAL_VIEWS[name]);
+      if (currentSection === REAL_VIEWS[name] && fresh !== true) {
+        setActiveNav(name);
+        return;
+      }
+      hideAllSections();
+      section.classList.remove("hidden");
+      currentSection = REAL_VIEWS[name];
+      setActiveNav(name);
+      if (drawerOpen) setDrawer(false);
+      if (name === "home") loadHome();
+      else if (name === "inventory") loadInventory();
+      else if (name === "ledger") loadLedger();
+      else if (name === "balances") loadBalances();
+      else if (name === "collections") loadCollections();
+      else if (name === "customers") loadCustomers();
+      else if (name === "products") loadProducts();
+      else if (name === "warehouses") loadWarehousesView();
+      else if (name === "suppliers") loadSuppliers();
+      else if (name === "accounts") loadAccounts();
+      else if (name === "doctors") loadDoctors();
+      else if (name === "visits") { renderVisits(); }
+      else if (name === "invoice" && fresh) prepareNewDraft();
+      return;
+    }
+    openPreview(name);
+    if (drawerOpen) setDrawer(false);
+  }
+
+  // =========================================================================
+  // PROTOTYPE PREVIEWS — static, clearly labelled, never calling the API.
+  // =========================================================================
+  function node(tag, className, text) {
+    var n = document.createElement(tag);
+    if (className) n.className = className;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  function mkTable(cols, rows) {
+    var wrap = node("div", "table-wrap");
+    var table = node("table", "grid-table");
+    var thead = node("thead");
+    var trh = node("tr");
+    cols.forEach(function (c) {
+      var th = node("th", c.num ? "num" : "", c.label);
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    var tbody = node("tbody");
+    rows.forEach(function (r) {
+      var tr = node("tr");
+      r.forEach(function (cell, i) {
+        var td = node("td", (cols[i] && cols[i].num ? "num" : "") + (cols[i] && cols[i].codes ? " codes" : ""), cell);
+        td.setAttribute("data-label", cols[i].label);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    return wrap;
+  }
+
+  function previewChrome(kind, texts) {
+    var box = node("div", "");
+    var chips = node("div", "chip-row");
+    chips.appendChild(node("span", "badge proto", t("badge_proto")));
+    (texts.chipsExtra || []).forEach(function (c) { chips.appendChild(node("span", "badge " + (c[1] || "info"), c[0])); });
+    box.appendChild(chips);
+    return box;
+  }
+
+  function buildPreview(container, key) {
+    var pc = (PROTON[key] && PROTON[key][state.lang]) || PROTON[key]["ar"];
+    container.innerHTML = "";
+    container.appendChild(previewChrome(key, pc));
+    var h = node("h3", "", pc.h3);
+    container.appendChild(h);
+    var ul = node("ul");
+    pc.bullets.forEach(function (b) {
+      var liName = node("li", "muted");
+      liName.innerHTML = "";
+      liName.textContent = b;
+      ul.appendChild(liName);
+    });
+    container.appendChild(ul);
+    if (pc.cols && pc.rows) {
+      var head = node("div", "note");
+      head.textContent = t("prototype_sample_note");
+      container.appendChild(head);
+      container.appendChild(mkTable(pc.cols, pc.rows));
+    }
+    if (pc.note) {
+      var n = node("div", "note");
+      n.textContent = pc.note;
+      container.appendChild(n);
+    }
+  }
+
+  function openPreview(key) {
+    hideAllSections();
+    el.moduleView.classList.remove("hidden");
+    currentSection = "module-view";
+    setActiveNav(key);
+    var pc = (PROTON[key] && PROTON[key][state.lang]) || (PROTON[key] && PROTON[key]["ar"]);
+    if (!pc) { key = "analytics"; pc = PROTON[key][state.lang]; }
+    el.moduleTitle.textContent = pc.title;
+    el.moduleDesc.textContent = pc.desc;
+    var badges = $("module-badges"); badges.innerHTML = "";
+    badges.appendChild(node("span", "badge " + (key === "pwa" ? "real" : "proto"), key === "pwa" ? t("badge_real_status") : t("badge_proto")));
+    if (key === "pwa") {
+      buildPwaPreview(el.moduleContent);
+    } else {
+      buildPreview(el.moduleContent, key);
+    }
+  }
+
+  /* Bilingual preview content — all sample values are illustrative only. */
+  var PROTON = {
+    note_no_access: {
+      ar: {
+        title: "غير متاح لدورك",
+        desc: "هذه الشاشة غير مرئية لهذا الدور في هيكلة الصلاحيات المعتمدة.",
+        h3: "دورك الحالي",
+        bullets: ["تُحدد الأدوار (CEO/مالية/مبيعات/مستخدم ميداني) الوحدات الظاهرة لكل مستخدم.", "الخادم يتحقق من كل طلب بصرف النظر عما يظهر في القائمة."],
+      },
+      en: {
+        title: "Not available for your role",
+        desc: "This screen is hidden for this role in the approved permission model.",
+        h3: "Your current role",
+        bullets: ["Roles (CEO / finance / sales / field user) determine visible modules.", "The server enforces every request regardless of the shown menu."],
+      },
+    },
+    settings: {
+      ar: {
+        title: "الإعدادات", desc: "إعدادات الشركة المالية: السنة المالية، ضريبة القيمة المضافة، بيانات الشركة، وتسلسلات الترقيم.",
+        h3: "ما ستوفره الشاشة عند تنفيذها",
+        bullets: ["السنة المالية (بداية/نهاية، مفتوحة/مغلقة) — الفترات المغلقة للقراءة فقط.",
+          "ضريبة القيمة المضافة (النسبة، الرقم الضريبي)؛ النسبة المستخدمة حاليًا في العرض: 14%.",
+          "بيانات الشركة (الاسم، العنوان، البطاقة الضريبية، السجل التجاري).",
+          "تسلسلات الترقيم (فواتير، مستندات ائتمان، تحويلات، أوامر شراء)."],
+        note: "لا توجد واجهات/نقاط خادم للإعدادات بعد — تفاصيلها موثقة في APP_FLOW A2.",
+      },
+      en: {
+        title: "System settings", desc: "Company financial settings: fiscal year, VAT, company profile, and numbering sequences.",
+        h3: "What this screen will provide",
+        bullets: ["Fiscal year (start/end, open/closed) — closed periods read-only.",
+          "VAT configuration (rate, registration number); the demo currently uses 14%.",
+          "Company details (name, address, tax card, commercial registration).",
+          "Numbering sequences (invoices, credit notes, transfers, purchase orders)."],
+        note: "No settings endpoints exist yet — specified in APP_FLOW A2.",
+      },
+    },
+    audit: {
+      ar: {
+        title: "سجل التدقيق", desc: "سجل غير قابل للتعديل لكل عملية (مستخدم، وقت، قيم قبل/بعد).",
+        h3: "ما سيُسجل",
+        bullets: ["إنشاء/تعديل/إبطال/اعتماد كل مستند مع القيم قبل وبعد.", "تسجيل الدخول الناجح/الفاشل مع IP والجهاز.", "عرض فقط — لا يوجد تعديل من الواجهة إطلاقًا."],
+        cols: [{ label: "الوقت" }, { label: "المستخدم" }, { label: "العملية" }, { label: "المرجع" }],
+        rows: [["2026-10-18 12:00", "demo_owner", "إنشاء", "فاتورة DEMO-INV-101"]],
+        note: "قيم توضيحية فقط. الخادم يسجّل التدقيق داخليًا لكن لا توجد نقطة قراءة للسجل بعد.",
+      },
+      en: {
+        title: "Audit log", desc: "Immutable log of every action (who, when, before/after values).",
+        h3: "What gets recorded",
+        bullets: ["Create/edit/void/approve for every document with old and new values.", "Login success/failure with IP and device.", "Strictly read-only."],
+        cols: [{ label: "Time" }, { label: "User" }, { label: "Action" }, { label: "Reference" }],
+        rows: [["2026-10-18 12:00", "demo_owner", "created", "Invoice DEMO-INV-101"]],
+        note: "Illustrative values only. The server writes audit records internally but no read endpoint exists yet.",
+      },
+    },
+    alerts: {
+      ar: {
+        title: "التنبيهات", desc: "مركز التنبيهات: مخزون منخفض/فائض، قرب انتهاء الصلاحية، تجاوز حد الائتمان، فاتورة متأخرة.",
+        h3: "أنواع التنبيهات المتفق عليها",
+        bullets: ["مخزون أقل من الحد الأدنى المُعد.", "فائض مخزون فوق حد أيام الغطاء.", "تشغيلات قريبة من انتهاء الصلاحية.", "تجاوز حد ائتمان العميل.", "فاتورة غير مسددة متأخرة."],
+        cols: [{ label: "النوع" }, { label: "التفاصيل" }, { label: "القناة" }],
+        rows: [["مخزون منخفض", "صنف تجريبي أ → تحت الحد", "داخل التطبيق"]],
+        note: "نموذج أولي — قيم توضيحية؛ التوصيل للتليجرام اختياري لكل نوع (H2).",
+      },
+      en: {
+        title: "Alerts", desc: "Alert center: low/overstock, near-expiry, credit-limit breach, overdue invoice.",
+        h3: "The agreed alert types",
+        bullets: ["Stock below configured minimum.", "Stock cover above threshold.", "Batches nearing expiry.", "Customer credit limit breach.", "Overdue unpaid invoice."],
+        cols: [{ label: "Type" }, { label: "Detail" }, { label: "Channel" }],
+        rows: [["Low stock", "DEMO-001 → under threshold", "In-app"]],
+        note: "Prototype — illustrative values; Telegram delivery optional per alert type (H2).",
+      },
+    },
+    import: {
+      ar: {
+        title: "الاستيراد (Excel/CSV)", desc: "تدفق الاستيراد اليدوي: رفع ملف، تحقق رأس بند/أنواع البيانات، أخطاء لكل صف، معاينة ثم تأكيد.",
+        h3: "الخطوات",
+        bullets: ["رفع ملف CSV/Excel.", "تحقق: الأعمدة المطلوبة، أنواع الحقول، القيم الناقصة.", "رسالة خطأ لكل صف + خيار إصلاح وإعادة المحاولة.", "معاينة نهائية ثم تأكيد الاستيراد."],
+        note: "قاعدة التصدير (D29): الاستيراد من دفاتر إكسل الأصلية يتطلب مراجعة المالك ولا يُنفذ في هذا العرض إطلاقًا.",
+      },
+      en: {
+        title: "Import (Excel/CSV)", desc: "Manual import flow: upload, header/data-type validation, row-level errors, preview then confirm.",
+        h3: "Steps",
+        bullets: ["Upload CSV/Excel file.", "Validate headers, data types, required fields.", "Row-level validation errors + fix & retry.", "Preview then confirm import."],
+        note: "Per decision D29, importing from the original workbooks requires owner review and is never performed in this demo.",
+      },
+    },
+    pwa: {
+      ar: {
+        title: "التطبيق على الهاتف/الجهاز (PWA)", desc: "معلومات حية عن حالة التطبيق على هذا المتصفح — بدون تثبيت من متجر.",
+        h3: "الحالة الآن",
+        bullets: [],
+      },
+      en: {
+        title: "App on device (PWA)", desc: "Live status of the app in this browser — no store installation.",
+        h3: "Status right now",
+        bullets: [],
+      },
+    },
+    reference: {
+      ar: {
+        title: "المجموعات المرجعية", desc: "فئات الأصناف، العلامات، مجموعات العملاء، فئات المصروفات، الحسابات الإيرادية.",
+        h3: "ما ستدار فيه",
+        bullets: ["فئات الأصناف والعلامات التجارية.", "مجموعات العملاء لأغراض الشرائح السعرية.", "فئات المصروفات وحسابات الإيراد لملء المستخدم في الوحدات الأخرى."],
+        note: "لا يوجد نموذج بيانات لهذه المجموعات في قاعدة البيانات بعد (APP_FLOW B3).",
+      },
+      en: {
+        title: "Reference sets", desc: "Product categories, brands, customer groups, expense categories, revenue accounts.",
+        h3: "What it will manage",
+        bullets: ["Product categories and brands.", "Customer groups for pricing tiers.", "Expense categories and revenue accounts feeding other modules."],
+        note: "Not yet modelled in the database (APP_FLOW B3).",
+      },
+    },
+    batches: {
+      ar: {
+        title: "التشغيلات والصلاحية", desc: "لكل صنف/مخزن: رقم تشغيلة، كمية، تاريخ إنتاج/انتهاء، وصرف FEFO.",
+        h3: "القواعد المعتمدة",
+        bullets: ["FEFO — الأنتهاء أولاً يخرج أولاً في البيع والتحويل.", "عرض الأصناف قرب الانتهاء مرتبة تصاعديًا.", "منع بيع تشغيلة منتهية أو تحذير داخل نافذة الانتهاء القريبة."],
+        cols: [{ label: "التشغيلة" }, { label: "الصنف" }, { label: "الانتهاء" }, { label: "الكمية" }],
+        rows: [["BAT-DEMO-X09", "صنف تجريبي أ", "2027-03-01", "120"]],
+        note: "نموذج أولي بقيم توضيحية — لا يوجد نموذج تشغيلات في قاعدة البيانات بعد (B4).",
+      },
+      en: {
+        title: "Batches & expiry", desc: "Per product/warehouse: batch number, qty, produced/expiry dates, FEFO issue.",
+        h3: "The agreed rules",
+        bullets: ["FEFO — first-expired-first-out on sales and transfers.", "'Stock by expiry' sorted ascending.", "Expired batch blocked; near-expiry warning."],
+        cols: [{ label: "Batch" }, { label: "Product" }, { label: "Expiry" }, { label: "Qty" }],
+        rows: [["BAT-DEMO-X09", "DEMO-001", "2027-03-01", "120"]],
+        note: "Prototype with illustrative values — no batch model in the database yet (B4).",
+      },
+    },
+    uom: {
+      ar: {
+        title: "وحدات القياس", desc: "تعريف الوحدات (عبوة، علبة، كرتون) ومعاملات التحويل لكل صنف.",
+        h3: "القواعد",
+        bullets: ["وحدة أساس واحدة لكل صنف.", "تعريف وحدات ثانوية مع معامل تحويل.", "رفض كمية لا تتوزع تحويلها بالتساوي إلى الأساس."],
+        note: "لا يوجد جدول وحدات بعد (B5)؛ السعر الحالي في العرض لكل وحدة أساس.",
+      },
+      en: {
+        title: "Units of measure", desc: "Define UOMs (each, box, carton) and per-product conversion factors.",
+        h3: "Rules",
+        bullets: ["One primary UOM per product.", "Secondary UOMs with conversion factors.", "Secondary quantities must convert cleanly."],
+        note: "No UOM tables yet (B5); demo pricing is per primary unit.",
+      },
+    },
+    credit: {
+      ar: {
+        title: "إدارة حدود الائتمان", desc: "حد ائتمان لكل عميل، الرصيد الحالي، المتاح، ومنع/تحذير عند تجاوز الحد.",
+        h3: "ما سيحدث في الفاتورة",
+        bullets: ["عرض المتاح من الائتمان أثناء إدخال الفاتورة.", "منع أو تحذير (قابل للضبط) عند تجاوز الحد.", "كشف أعمار الذمم + كشف حساب العميل (متوفرة الآن من قيود فعلية في شاشة الذمم)."],
+        note: "حدود الائتمان غير ممثلة في البيانات التجريبية بعد (B6)؛ الرصيد الفعلي متاح في شاشة الذمم.",
+      },
+      en: {
+        title: "Credit management", desc: "Per-customer credit limit, current outstanding, available balance, block/warn on breach.",
+        h3: "In the invoice flow",
+        bullets: ["Show available credit while typing the invoice.", "Block or warn (configurable) on breach.", "AR aging + customer statement (already real from ledger entries in the Receivables screen)."],
+        note: "Credit limits are not represented in demo data yet (B6); real balances are on the Receivables screen.",
+      },
+    },
+    representatives: {
+      ar: {
+        title: "المندوبون والمناطق", desc: "دليل المندوبين: منطقتهم الميدانية، المناطق الفرعية، العملاء المعتمدون، وفروع الميدان مقابل فرع الصرف (ميدان ≠ مخزن).",
+        h3: "بيانات كل مندوب",
+        bullets: ["المنطقة الميدانية واحدة؛ المناطق الفرعية متعددة داخلها.", "العملاء المعتمدون لكل مندوب تُدار من تعيينات المناطق.", "التوجيه للرفع يقرأ فرع الصرف — لا يُفترض تساوي الميدان مع المخزن (2B.1)."],
+        cols: [{ label: "المندوب" }, { label: "الميدان" }, { label: "عدد العملاء", num: true }],
+        rows: [["مندوب تجريبي", "الدقهلية", "14"], ["مندوب تجريبي ٢", "الشرقية", "9"]],
+        note: "نموذج أولي — إدارة المندوبين والتعيينات (B-territories) ليست في شريحة البيانات الأساسية بعد.",
+      },
+      en: {
+        title: "Representatives & territories", desc: "Rep directory: sales territory, sub-areas, assigned customers, and territory vs source-warehouse separation.",
+        h3: "Per representative",
+        bullets: ["One sales territory; multiple sub-areas inside it.", "Assigned customers managed through territory assignments.", "Fulfilment routing reads the source warehouse — territory is never assumed equal to warehouse (2B.1)."],
+        cols: [{ label: "Representative" }, { label: "Territory" }, { label: "Customers", num: true }],
+        rows: [["Demo rep", "Dakahlia", "14"], ["Demo rep 2", "Sharqia", "9"]],
+        note: "Prototype — rep/assignment master-data management is not in the backend slice yet.",
+      },
+    },
+    routing: {
+      ar: {
+        title: "توجيه المخازن", desc: "الميدان المصدر وطريق الصرف حقلا منفصلان؛ التوجيه تلقائي قابل للتجاوز من مدير المبيعات.",
+        h3: "القواعد",
+        bullets: ["ميدان العميل → أقرب مخزن متوفر به رصيد.", "الرجوع للمخزن الرئيسي عند عدم التوفر.", "إمكانية تجاوز التوجيه بواسطة مدير المبيعات."],
+        orgBullets: ["الهيكلة: فرع ← مناطق بيع ← مجالات داخل المنطقة ← مندوبون.", "لكل مندوب مجال متعدد داخل منطقة واحدة ولمجال عملاء تابعين له.", "إدارة المجموعات كأصل بيانات أصلي يتشارك بين الوحدات (التغطية، المستهدفات، الفواتير)."],
+        note: "لا يوجد منطق توجيه في الخادم بعد (C2)؛ اختيار المخزن في الفاتورة يدوي حتي تتم الأتمتة.",
+      },
+      en: {
+        title: "Warehouse routing", desc: "Territory and source warehouse are separate fields; routing automatic, overridable.",
+        h3: "Rules",
+        bullets: ["Customer territory → nearest warehouse with stock.", "Fallback to main warehouse.", "Sales Manager override."],
+        orgBullets: ["Hierarchy: branch → selling territories → areas within a territory → reps.", "A rep has multiple areas within one territory and assigned customers.", "Managed as a master-data set shared by coverage, targets and invoicing."],
+        note: "No routing logic yet (C2); warehouse selection in the invoice is manual until automated.",
+      },
+    },
+    transfers: {
+      ar: {
+        title: "تحويلات بين المخازن", desc: "حركات داخلية بين المخازن — ليست مبيعات؛ الحالة: مسودة ← أثناء النقل ← مستلم.",
+        h3: "القواعد",
+        bullets: ["مصدر + وجهة؛ البنود: صنف، تشغيلة اختيارية (تخصيص FEFO تلقائيًا)، كمية.", "الاستلام يضيف رصيد الوجهة ويخصم المصدر.", "سجل حركة باسم المشغل والتاريخ وخريطة التشغيلات."],
+        note: "لا توجد نقاط خادم للتحويلات بعد (C3).",
+      },
+      en: {
+        title: "Warehouse-to-warehouse transfers", desc: "Internal inventory movements — not sales; Draft → In Transit → Received.",
+        h3: "Rules",
+        bullets: ["Source + destination lines (product, optional batch with auto-FEFO, qty).", "Receive increments destination stock and decrements source.", "Recorded with operator, date, batch mapping."],
+        note: "No transfers endpoints yet (C3).",
+      },
+    },
+    returns: {
+      ar: {
+        title: "المرتجعات", desc: "مرتجع عميل صريح: عميل، صنف، تشغيلة، كمية، سبب مرمّز؛ إشعار ائتماني وتعديل الذمم.",
+        h3: "الخطوات",
+        bullets: ["اختيار العميل مع سحب فواتيره الأخيرة.", "اختيار الصنف/التشغيلة من ما استلمه العميل فعلًا.", "الكمية لا تتجاوز ما استلمه العميل فعلًا.", "الموافقة عند تجاوز حدها؛ ثم إشعار ائتماني يعدل الذمم."],
+        note: "لا توجد نقاط خادم للمرتجعات بعد (C4)؛ أسباب الاعتباط المرتبطة موثقة في A5.",
+      },
+      en: {
+        title: "Returns", desc: "Explicit customer return: customer, product, batch, qty, coded reason; credit note adjusts AR.",
+        h3: "Steps",
+        bullets: ["Pick customer, pull recent invoices.", "Product/batch limited to what the customer received.", "Return quantity capped by received quantity.", "Approval above threshold; credit note adjusts receivables."],
+        note: "No returns endpoints yet (C4); reason codes specified in A5.",
+      },
+    },
+    targets: {
+      ar: {
+        title: "المستهدفات", desc: "مستهدف لكل مندوب/ميدان/صنف/فترة مقابل المحقق الفعلي.",
+        h3: "التفاصيل",
+        bullets: ["شهري/ربع سنوي.", "المندوب يرى مستهدفه فقط؛ المدير ميدانه؛ الرئيس يرى الكل.", "شرائح تقدم في اللوحة الرئيسية عند وجود بيانات."],
+        note: "لا يوجد نموذج مستهدفات بعد (C6).",
+      },
+      en: {
+        title: "Sales targets", desc: "Target per rep/territory/product/period vs actual.",
+        h3: "Details",
+        bullets: ["Monthly / quarterly.", "Rep sees only their own; manager their area; CEO all.", "Progress bars on the dashboard once data exists."],
+        note: "No targets model yet (C6).",
+      },
+    },
+    cover: {
+      ar: {
+        title: "غطاء المخزون", desc: "أيام الغطاء = الرصيد الحالي ÷ متوسط البيع اليومي (نافذة قابلة للضبط).",
+        h3: "تصنيف",
+        bullets: ["غطاء منخفض → داخل عتبة الطلب (مثال: أقل من 7 أيام).", "تظليل القيم الخطر بسلال التنبيه."],
+        cols: [{ label: "الصنف", num: false }, { label: "الغطاء (يوم)", num: true }],
+        rows: [["صنف تجريبي أ", "24"]],
+        note: "نموذج بمعدلات توضيحية؛ متوسط البيع اليومي يحتاج سجل مبيعات أطول من بيانات العرض (D3).",
+      },
+      en: {
+        title: "Stock cover", desc: "Days of cover = current stock ÷ average daily sales (configurable window).",
+        h3: "Classification",
+        bullets: ["Low cover → re-order threshold (e.g. < 7 days).", "Threshold highlighting on watch list."],
+        cols: [{ label: "Product" }, { label: "Cover (days)", num: true }],
+        rows: [["DEMO-001", "24"]],
+        note: "Prototype rates; computing real daily average needs a longer sales history (D3).",
+      },
+    },
+    overstock: {
+      ar: {
+        title: "تنبيه فائض المخزون", desc: "تنبيه الأصناف التي تجاوز غطاؤها عتبة الأيام (مثال: أكثر من 180 يومًا) مع إجراء التصريف.",
+        h3: "الإجراءات",
+        bullets: ["تنبيه على اللوحة الرئيسية + تليجرام اختياري.", "إجراء: تحويل لمخزن التصريف."],
+        note: "نموذج أولي — يحتاج بيانات فترة كاملة (D4).",
+      },
+      en: {
+        title: "Overstock alerts", desc: "Alert products whose cover exceeds the day threshold (e.g. >180) with disposal action.",
+        h3: "Actions",
+        bullets: ["Dashboard alert + optional Telegram.", "Action: transfer to clearance warehouse."],
+        note: "Prototype — needs the full cover computation (D4).",
+      },
+    },
+    cash: {
+      ar: { title: "الصندوق والبنوك", desc: "خزائن نقد وحسابات بنكية؛ عمليات: إيداع/سحب/تحويل + تسوية كشف حساب.", h3: "النطاق", bullets: ["إدارة الحسابات (صندوق/بنك).", "معالجة الحركات وتسوية الكشف."]},
+      en: { title: "Cash & bank", desc: "Cash tills and bank accounts; deposit/withdraw/transfer + reconciliation.", h3: "Scope", bullets: ["Manage cash/bank accounts.", "Process transactions and reconcile statements."]},
+    },
+    expenses: {
+      ar: { title: "المصروفات والإيرادات", desc: "تصنيف من المجموعات المرجعية، موافقة فوق حد، ترحيل إلى الأرباح والخسائر.", h3: "الموافقات", bullets: ["حد الموافقة لكل فئة.", "رفق فاتورة (صورة من الهاتف)."],},
+      en: { title: "Expenses & revenue", desc: "Category from reference sets, approval above threshold, posts to P&L.", h3: "Approvals", bullets: ["Per-category approval threshold.", "Attach receipt (phone camera)."]},
+    },
+    pnl: {
+      ar: { title: "الأرباح والخسائر", desc: "إيرادات − مصروفات حسب الفترة; لكن الفترات المغلقة للقراءة فقط.", h3: "العلامة", bullets: ["شهري، ربع سنوي، حتى تاريخ السنة.", "سلطة الإغلاق للرئيس فقط."],},
+      en: { title: "P&L & balance sheet", desc: "Revenue − expenses by period; closed years read-only.", h3: "Views", bullets: ["Monthly, quarterly, YTD.", "Fiscal close: CEO only."]},
+    },
+    payroll: {
+      ar: {
+        title: "الرواتب", desc: "دورة راتب شهري: تشغيل فترة؛ حساب صافي لكل موظف; مراجعة ثم اعتماد; قائمة دفع.",
+        h3: "المعادلة المعتمدة",
+        bullets: ["الصافي = الأساسي − (ضريبة/تأمين) + المتمرات.", "تشغيل/مراجعة/اعتماد ثم قائمة دفع."],
+        cols: [{ label: "الموظف" }, { label: "الأساسي", num: true }, { label: "الخصومات", num: true }, { label: "الصافي", num: true }],
+        rows: [["موظف تجريبي", "12,000.00", "2,400.00", "9,600.00"]],
+        note: "نموذج توضيحي — تفعيل دورة الرواتب الكاملة مؤجل لبوابة قرار المالك (E4).",
+      },
+      en: {
+        title: "Payroll", desc: "Monthly run: select period; auto net per employee; review → approve → payment list.",
+        h3: "Formula",
+        bullets: ["Net = base − deductions + allowances.", "Run → review → approve → payment list."],
+        cols: [{ label: "Employee" }, { label: "Base", num: true }, { label: "Deductions", num: true }, { label: "Net", num: true }],
+        rows: [["Demo employee", "12,000.00", "2,400.00", "0.00"]],
+        note: "Illustrative model; full payroll activation is an owner gate (E4).",
+      },
+    },
+    privateaccounts: {
+      ar: {
+        title: "الحسابات الخاصة", desc: "دفتر «حسابات خاصه» الحالي من الإكسل: حركات مالية داخلية لا تدخل في دفاتر شركة التوزيع.",
+        h3: "ضوابط مؤقتة حتى قرار المالك",
+        bullets: ["عرض فقط — لا تسجيل حركات في هذا النموذج.", "القرار المعتمد: نفس قاعدة البيانات، وحدة معزولة بمخطط وصلاحيات وتدقيق مستقل (D40).", "الوصول: المالك فقط؛ حركات الشركة (الذمم/المخزن) لا تلامس هذه الوحدة إطلاقًا."],
+        cols: [{ label: "البيان" }, { label: "النوع" }, { label: "القيمة", num: true }],
+        rows: [["حركة تجريبية", "تحويل", "5,000.00"]],
+        note: "نموذج أولي وإحاطي فقط؛ تنفيذ الحد الأمني الفعلي (مخطط + صلاحيات + تدقيق) مطلوب في شريحة الحسابات الخاصة قبل أي تسجيل حقيقي.",
+      },
+      en: {
+        title: "Private accounts", desc: "The current Excel 'hisaabat khassa' notebook: internal cash movements outside the distribution-company books.",
+        h3: "Decided guardrails (D40)",
+        bullets: ["View-only — no movements can be recorded in this prototype.", "Owner decision: same PostgreSQL database, isolated module with separate schema, permissions and audit.", "Access: owner only; company ledgers (AR/stock) never touch this module."],
+        cols: [{ label: "Item" }, { label: "Type" }, { label: "Amount", num: true }],
+        rows: [["Demo entry", "Transfer", "5,000.00"]],
+        note: "Prototype preview only; the real security boundary (schema + permissions + audit) is a required deliverable of the private-accounts backend slice before any real recording.",
+      },
+    },
+    brandspend: {
+      ar: { title: "إنفاق المنتجات/العلامات", desc: "إنفاق مرتبط بصنف أو علامة (حملة، نوع، مبلغ، تاريخ).", h3: "الشكل", bullets: ["مجموع الإنفاق لكل علامة/صنف.", "اربط يقائده من مصروفات النظام."],},
+      en: { title: "Product / brand spend", desc: "Spend linked to a product or brand (campaign, type, amount, date).", h3: "Shape", bullets: ["Aggregated by brand/product.", "Feeds from system expenses."]},
+    },
+    objectives: {
+      ar: { title: "الأهداف و KPI", desc: "هدف الحملة، KPI المتوقع، النتيجة الفعلية، حساب الانحراف/العائد.", h3: "الحساب", bullets: ["KPI الفعلي يُدخل بعد الحملة.", "عائد مخصص أو معادلة فرق تقسيم."],},
+      en: { title: "Objectives & KPIs", desc: "Campaign objective, expected KPI, actual result, variance/ROI.", h3: "Calculation", bullets: ["Actual entered post-campaign.", "Custom ROI formula."]},
+    },
+    purchases: {
+      ar: {
+        title: "أوامر الشراء", desc: "من المورّد، بنود بمواصفات وكميات وسعر، ثم استلام بضاعة بإنشاء تشغيلات بالمخزن.",
+        h3: "الخطوات",
+        bullets: ["أمر شراء → إرسال/مسودة.", "استلام بضاعة → تشغيلات في المخزن (FEFO).", "مطابقة فاتورة المورّد مع أمر الاستلام."],
+        note: "لا توجد نقاط خادم للمشتريات بعد (G2).",
+      },
+      en: {
+        title: "Purchase orders", desc: "Supplier PO with lines, then goods receipt creates batches in inventory.",
+        h3: "Steps",
+        bullets: ["PO → send / save draft.", "Receive goods → batches in inventory (FEFO).", "Match supplier invoice to PO + GRN."],
+        note: "No purchasing endpoints yet (G2); basic visible to all, advanced by role.",
+      },
+    },
+    telegram: {
+      ar: { title: "تكامل تليجرام", desc: "ملخص مبيعات يومي لكل مخزن + دفع التنبيهات لقناتك.", h3: "التصميم المتفق", bullets: ["تليجرام أولًا ثم الواتساب لاحقًا (D6).", "ملخص نصي مختصر مع روابط للشاشات ذات العلاقة."]},
+      en: { title: "Telegram integration", desc: "Daily per-warehouse sales summary + alert pushes.", h3: "Agreed design", bullets: ["Telegram first, WhatsApp later (D6).", "Compact text with links to relevant screens."]},
+    },
+    analytics: {
+      ar: {
+        title: "لوحة عبر الوحدات", desc: "مؤشرات متنوعة (مبيعات، تحصيل، ذمم، مخزون). النسخة الحالية قائمة على بيانات فعلية محدودة النطاق.",
+        h3: "المتوفر الآن (بيانات فعلية)",
+        bullets: ["مبيعات الشهر من قيود الفواتير المُرحّلة (لوحة الرئيسية).", "التحصيلات وأعمار الذمم من قيود الذمم.", "أرصدة المخزون وعدد الأصناف.", "بقية مؤشرات H1 (مبيعات بالفرع، Marketing vs KPI، وصافي الربح) تحتاج وحدات لم تُنفذ بعد."],
+        note: "هذه الشاشة تطابق لوحة الرئيسية في النطاق الفعلي المتوفر حالى.",
+      },
+      en: {
+        title: "Cross-module dashboard", desc: "Combined KPIs (sales, collections, AR, stock). Current build is real but limited.",
+        h3: "Available now (real data)",
+        bullets: ["Month sales from posted invoice entries (Home).", "Collections & AR aging from ledger entries.", "Stock balances and active product count.", "Remaining H1 widgets (sales by branch, marketing vs KPI, profit) need unbuilt modules."],
+        note: "Matches the Home dashboard in currently-available real scope.",
+      },
+    },
+  };
+
+  /* PWA panel is REAL (live service-worker state) */
+  function buildPwaPreview(container) {
+    container.innerHTML = "";
+    var chips = node("div", "chip-row");
+    chips.appendChild(node("span", "badge real", t("badge_real_status")));
+    container.appendChild(chips);
+    container.appendChild(node("h3", "", t("pwa_status")));
+    var ul = node("ul");
+    var liInstalled = node("li", "muted", t("pwa_installed") + ": " + t("pwa_defer"));
+    var liSw = node("li", "muted", t("pwa_sw_active") + ": " + t("pwa_sw_none"));
+    var liCache = node("li", "muted", t("pwa_cache") + ": —");
+    var liOffline = node("li", "muted", t("pwa_offline_note") + ": " + (navigator.onLine ? t("offline_no") : t("offline_yes")));
+    ul.appendChild(liInstalled);
+    ul.appendChild(liSw);
+    ul.appendChild(liCache);
+    ul.appendChild(liOffline);
+    container.appendChild(ul);
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      liSw.textContent = t("pwa_sw_active") + ": " + navigator.serviceWorker.controller.scriptURL.split("/").pop();
+    }
+    if (caches && caches.keys) {
+      caches.keys().then(function (keys) {
+        liCache.textContent = t("pwa_cache") + ": " + (keys.join(", ") || "—");
+      }).catch(function () { liCache.textContent = t("pwa_cache") + ": —"; });
+    }
+    container.appendChild(node("h3", "", t("pwa_install_h")));
+    var ol = node("ol");
+    t("pwa_install_steps").split("||").forEach(function (s) { ol.appendChild(node("li", "", s)); });
+    container.appendChild(ol);
+    container.appendChild(node("div", "note", t("pwa_note")));
   }
 
   // ----------------------------------------------------------- line editor
@@ -260,6 +917,7 @@
     var qtyInput = document.createElement("input");
     qtyInput.id = "line-qty-" + index;
     qtyInput.type = "number";
+    qtyInput.inputMode = "decimal";
     qtyInput.min = "0.001";
     qtyInput.step = "0.001";
     qtyInput.value = line.quantity === "" || line.quantity === undefined ? "1" : String(line.quantity);
@@ -275,6 +933,7 @@
     var discInput = document.createElement("input");
     discInput.id = "line-disc-" + index;
     discInput.type = "number";
+    discInput.inputMode = "decimal";
     discInput.min = "0";
     discInput.max = "100";
     discInput.step = "0.01";
@@ -286,6 +945,7 @@
     var computed = document.createElement("div");
     computed.className = "computed num";
     computed.dataset.role = "computed";
+    computed.setAttribute("data-label", t("line_total"));
     computed.textContent = "0.00";
 
     var remove = document.createElement("button");
@@ -388,6 +1048,7 @@
     el.saveDraft.disabled = true;
     try {
       var draft = await api("/invoices", { method: "POST", body: payload });
+      rememberDraftLocally(draft);
       renderDraft(draft);
     } catch (error) {
       showError(el.formError, messageFor(error));
@@ -402,47 +1063,85 @@
     return "badge draft";
   }
 
+  async function resolveInvoiceNo(id) {
+    if (state.invoiceNos[id]) return state.invoiceNos[id];
+    try {
+      var invoice = await api("/invoices/" + id);
+      state.invoiceNos[id] = invoice.invoice_no;
+      return invoice.invoice_no;
+    } catch (_e) {
+      state.invoiceNos[id] = shortId(id);
+      return state.invoiceNos[id];
+    }
+  }
+
+  function computeAgingFor(entries, balance) {
+    // FIFO-settle debits with credits; remaining open debits bucket by age.
+    var open = [];
+    entries.forEach(function (e) {
+      if (Number(e.debit) > 0) open.push({ date: e.entry_date, amount: Number(e.debit) });
+      if (Number(e.credit) > 0) {
+        var left = Number(e.credit);
+        for (var i = 0; i < open.length && left > 0; i++) {
+          var use = Math.min(open[i].amount, left);
+          open[i].amount -= use; left -= use;
+        }
+      }
+    });
+    open = open.filter(function (item) { return item.amount > 0.004; });
+    var today = new Date();
+    var buckets = [0, 0, 0, 0];
+    open.forEach(function (item) {
+      var age = Math.floor((today - new Date(item.date)) / 86400000);
+      if (age <= 30) buckets[0] += item.amount;
+      else if (age <= 60) buckets[1] += item.amount;
+      else if (age <= 90) buckets[2] += item.amount;
+      else buckets[3] += item.amount;
+    });
+    return { open: open, buckets: buckets, total: balance !== undefined ? Number(balance) : round2(buckets[0] + buckets[1] + buckets[2] + buckets[3]) };
+  }
+
   function renderDraft(draft) {
     state.draft = draft;
     el.draftNo.textContent = draft.invoice_no;
     el.draftCustomer.textContent = customerName(draft.customer_id);
     el.draftWarehouse.textContent = warehouseName(draft.warehouse_id);
+    el.draftDate.textContent = fmtDate(draft.invoice_date);
     el.draftStatus.textContent = t("status_" + String(draft.posting_status).toLowerCase(), draft.posting_status);
     el.draftStatus.className = badgeClass(draft.posting_status);
-    el.draftBefore.textContent = draft.total_before_discount;
-    el.draftDiscount.textContent = draft.total_discount;
-    el.draftNet.textContent = draft.total_net;
-    el.draftVat.textContent = draft.vat_amount;
-    el.draftGrand.textContent = draft.grand_total;
+    el.draftBefore.textContent = fmt(draft.total_before_discount);
+    el.draftDiscount.textContent = fmt(draft.total_discount);
+    el.draftNet.textContent = fmt(draft.total_net);
+    el.draftVat.textContent = fmt(draft.vat_amount);
+    el.draftGrand.textContent = fmt(draft.grand_total);
 
     el.draftLines.innerHTML = "";
     (draft.lines || []).forEach(function (line) {
       var tr = document.createElement("tr");
       var name = productById(line.product_id);
-      [productLabel(name) || line.product_id, line.quantity, line.discount_pct, line.unit_price, line.line_total]
-        .forEach(function (value, i) {
-          var td = document.createElement("td");
-          td.textContent = value;
-          if (i > 0) td.className = "num";
-          tr.appendChild(td);
-        });
+      var cells = [
+        { label: t("product"), text: productLabel(name) || line.product_id },
+        { label: t("quantity"), text: fmtQty(line.quantity), num: true },
+        { label: t("unit_price"), text: fmt(line.unit_price), num: true },
+        { label: t("line_total"), text: fmt(line.line_total), num: true },
+      ];
+      cells.forEach(function (cell) {
+        var td = document.createElement("td");
+        td.textContent = cell.text;
+        td.setAttribute("data-label", cell.label);
+        if (cell.num) td.className = "num";
+        tr.appendChild(td);
+      });
       el.draftLines.appendChild(tr);
     });
 
     clearError(el.draftError);
-    [
-      el.loginView, el.homeView, el.appView,
-      el.inventoryView, el.balancesView, el.collectionsView,
-    ].forEach(function (node) { node.classList.add("hidden"); });
+    hideAllSections();
     el.draftView.classList.remove("hidden");
     currentSection = "draft-view";
     setActiveNav("invoice");
   }
 
-  function customerName(id) {
-    var customer = customerById(id);
-    return customer ? (customer.name_ar || customer.name_en || customer.code) : id;
-  }
   function warehouseName(id) {
     for (var i = 0; i < state.warehouses.length; i++) {
       if (state.warehouses[i].id === id) {
@@ -450,7 +1149,7 @@
         return w.name_ar || w.name_en || w.code;
       }
     }
-    return id;
+    return id || "—";
   }
 
   async function postDraft() {
@@ -461,10 +1160,44 @@
       var draft = await api("/invoices/" + state.draft.id + "/post", { method: "POST" });
       renderDraft(draft);
     } catch (error) {
+      // The 409 gate is part of the demo: show it verbatim; never fake success.
       showError(el.draftError, messageFor(error));
     } finally {
       el.postDraft.disabled = false;
     }
+  }
+
+  async function openSavedDraft(id) {
+    clearError(el.draftError);
+    try {
+      var draft = await api("/invoices/" + id);
+      renderDraft(draft);
+    } catch (error) {
+      forgetDraftLocally(id);
+      showNotice(el.homeError, messageFor(error) + " — " + t("draft_registry_cleaned"), "warn");
+      showView("home");
+    }
+  }
+
+  // Local-only shortcut registry (explicitly labelled on Home).
+  function readRegistry() {
+    try { return JSON.parse(localStorage.getItem("medsys.drafts.v1") || "[]"); }
+    catch (_e) { return []; }
+  }
+  function writeRegistry(rows) {
+    try { localStorage.setItem("medsys.drafts.v1", JSON.stringify(rows.slice(0, 20))); } catch (_e) { }
+  }
+  function rememberDraftLocally(draft) {
+    var rows = readRegistry().filter(function (r) { return r.id !== draft.id; });
+    rows.unshift({
+      id: draft.id, invoice_no: draft.invoice_no,
+      customer: customerName(draft.customer_id),
+      grand_total: draft.grand_total, saved_at: new Date().toISOString(),
+    });
+    writeRegistry(rows);
+  }
+  function forgetDraftLocally(id) {
+    writeRegistry(readRegistry().filter(function (r) { return r.id !== id; }));
   }
 
   function newDraft() {
@@ -480,154 +1213,350 @@
     addLine();
     recalcPreview();
     clearError(el.formError);
+    prepareNewDraftVm();
+  }
+
+  function prepareNewDraftVm() {
+    clearError(el.formError);
     el.draftView.classList.add("hidden");
-    el.appView.classList.remove("hidden");
-    el.invoiceNo.focus();
   }
 
-  // --------------------------------------------------- views & read-only data
-  var currentSection = "login-view";
-
-  function setActiveNav(name) {
-    document.querySelectorAll(".nav-btn").forEach(function (btn) {
-      btn.classList.toggle("active", btn.dataset.view === name);
-    });
+  function prepareNewDraft() {
+    newDraft();
+    hideAllSections();
+    el.invoiceView.classList.remove("hidden");
+    currentSection = "invoice-view";
+    setActiveNav("invoice");
   }
 
-  function showView(name, fresh) {
-    var sectionByName = {
-      login: el.loginView, home: el.homeView, invoice: el.appView,
-      inventory: el.inventoryView, balances: el.balancesView,
-      collections: el.collectionsView,
-    };
-    var section = sectionByName[name];
-    if (!section) return;
-    if (currentSection === name && name !== "home" && name !== "inventory"
-        && name !== "balances" && name !== "collections" && fresh !== true) return;
-    [
-      el.loginView, el.homeView, el.appView, el.draftView,
-      el.inventoryView, el.balancesView, el.collectionsView,
-    ].forEach(function (node) { node.classList.add("hidden"); });
-    section.classList.remove("hidden");
-    currentSection = name;
-    setActiveNav(name);
-    if (name === "home") loadHome();
-    else if (name === "inventory") loadInventory();
-    else if (name === "balances") loadBalances();
-    else if (name === "collections") loadCollections();
-    else if (name === "invoice" && fresh) newDraft();
-  }
-
+  // =========================================================================
+  // REAL LOADERS
+  // =========================================================================
   function renderRows(tbody, rows, build) {
     tbody.innerHTML = "";
     rows.forEach(function (row) { tbody.appendChild(build(row)); });
   }
 
-  function badgeNode(text, className) {
+  function cell(labelText, text, num, codes) {
+    var td = document.createElement("td");
+    td.textContent = text;
+    td.setAttribute("data-label", labelText);
+    td.className = (num ? "num " : "") + (codes ? "codes" : "");
+    return td;
+  }
+  function badgeCell(labelText, text, cls) {
+    var td = document.createElement("td");
+    td.setAttribute("data-label", labelText);
     var span = document.createElement("span");
-    span.className = className;
+    span.className = cls;
     span.textContent = text;
-    return span;
+    td.appendChild(span);
+    return td;
   }
 
-  function loadHome() {
-    clearError(el.homeError);
-    renderRows(el.homeReceipts, [], function () { return null; });
-    return Promise.all([
-      api("/ar/balances"), api("/collections"), api("/inventory/stock"),
-    ]).then(function (results) {
-      var open = results[0].filter(function (row) { return Number(row.balance) > 0.004; });
-      var receipts = results[1];
-      var stock = results[2];
-      el.statAr.textContent = fmt(open.reduce(function (total, row) {
-        return total + Number(row.balance);
-      }, 0));
-      el.statStock.textContent = fmtQty(stock.reduce(function (total, row) {
-        return total + Number(row.quantity);
-      }, 0));
-      el.statProducts.textContent = String(state.products.length);
-      el.statReceipts.textContent = fmt(receipts.reduce(function (total, row) {
-        return total + Number(row.amount);
-      }, 0));
-      var recent = receipts.slice().sort(function (a, b) {
-        return String(b.receipt_date).localeCompare(String(a.receipt_date));
-      }).slice(0, 5);
-      renderRows(el.homeReceipts, recent, receiptRow(false));
-    }).catch(function (error) { showError(el.homeError, messageFor(error)); });
+  function emptyRow(tbody, colCount, messageKey) {
+    var tr = document.createElement("tr");
+    tr.className = "row-empty";
+    var td = document.createElement("td");
+    td.colSpan = colCount;
+    td.textContent = t(messageKey);
+    tr.appendChild(td);
+    tbody.appendChild(tr);
   }
 
-  function receiptRow(withColumns) {
+  function receiptRow(withColumns, labels) {
     return function (row) {
       var tr = document.createElement("tr");
-      var cells = withColumns ? [
-        row.receipt_no, fmtDate(row.receipt_date),
-        state.invoiceNos[row.invoice_id] || shortId(row.invoice_id),
-        customerName(row.customer_id), methodLabel(row.method), fmt(row.amount),
-      ] : [
-        row.receipt_no, fmtDate(row.receipt_date),
-        customerName(row.customer_id), fmt(row.amount),
-      ];
-      cells.forEach(function (value, index) {
-        var td = document.createElement("td");
-        td.textContent = value;
-        if (index === cells.length - 1) td.className = "num";
-        tr.appendChild(td);
-      });
+      tr.appendChild(cell(labels.no, row.receipt_no, false, true));
+      tr.appendChild(cell(labels.date, fmtDate(row.receipt_date), true));
       if (withColumns) {
-        var statusTd = document.createElement("td");
-        statusTd.appendChild(badgeNode(
-          t("badge_active", row.status), row.status === "Active" ? "badge posted" : "badge draft"
-        ));
-        tr.appendChild(statusTd);
+        tr.appendChild(cell(labels.invoice, state.invoiceNos[row.invoice_id] || "…"));
+        tr.appendChild(cell(labels.customer, customerName(row.customer_id)));
+        tr.appendChild(cell(labels.method, methodLabel(row.method)));
+      } else {
+        tr.appendChild(cell(labels.invoice, state.invoiceNos[row.invoice_id] || "…"));
+        tr.appendChild(cell(labels.method, methodLabel(row.method)));
+      }
+      tr.appendChild(cell(labels.amount, fmt(row.amount), true));
+      if (withColumns) {
+        tr.appendChild(badgeCell(labels.status, t("badge_active", row.status), "badge posted"));
       }
       return tr;
     };
   }
 
+  async function loadEntriesIfAllowed() {
+    if (state.entries) return state.entries;
+    try {
+      state.entries = await api("/ar/entries");
+      return state.entries;
+    } catch (_e) {
+      state.entries = [];
+      return state.entries;
+    }
+  }
+
+  async function loadReceiptsIntoCache() {
+    try {
+      var rows = await api("/collections");
+      state.receiptNos = {};
+      rows.forEach(function (r) { state.receiptNos[r.id] = r.receipt_no; });
+      return rows;
+    } catch (_e) {
+      state.receiptNos = {};
+      return [];
+    }
+  }
+
+  function monthWindow() {
+    var now = new Date();
+    var first = new Date(now.getFullYear(), now.getMonth(), 1);
+    return [first, now];
+  }
+
+  function loadHome() {
+    clearError(el.homeError);
+    [el.statAr, el.statStock, el.statReceipts, el.statSales].forEach(function (n) { n.textContent = "—"; });
+    var labels = {
+      no: t("receipt_no"), date: t("receipt_date"), invoice: t("invoice_no"),
+      customer: t("customer"), method: t("method"), amount: t("amount"), status: t("status"),
+    };
+    renderRows(el.homeReceipts, [], function () { return null; });
+    Promise.all([
+      api("/ar/balances"), api("/collections"), api("/inventory/stock").catch(function () { return []; })
+    ]).then(function (results) {
+      state.balancesCache = results[0];
+      var receipts = results[1];
+      var stock = results[2];
+      var open = state.balancesCache.filter(function (row) { return Number(row.balance) > 0.004; });
+      el.statAr.textContent = fmt(open.reduce(function (total, row) {
+        return total + Number(row.balance);
+      }, 0));
+      el.statArSub.textContent = t("stat_ar_sub") + " " + open.length;
+      el.statStock.textContent = fmtQty(stock.reduce(function (total, row) {
+        return total + Number(row.quantity);
+      }, 0));
+      el.statStockSub.textContent = t("stat_stock_sub") + " " + String(state.products.length);
+      el.statReceipts.textContent = fmt(receipts.reduce(function (total, row) {
+        return total + Number(row.amount);
+      }, 0));
+      el.statReceiptsSub.textContent = t("stat_receipts_sub") + " " + receipts.length;
+      var recent = receipts.slice().sort(function (a, b) {
+        return String(b.receipt_date).localeCompare(String(a.receipt_date));
+      }).slice(0, 5);
+      return Promise.all(recent.map(function (r) {
+        return state.invoiceNos[r.invoice_id] ? null : resolveInvoiceNo(r.invoice_id);
+      })).then(function () {
+        renderRows(el.homeReceipts, recent, receiptRow(false, labels));
+      });
+    }).catch(function (error) { showError(el.homeError, messageFor(error)); });
+
+    // Real-entries based widgets (role permitting) are additive: failures here
+    // never block the core tiles above.
+    loadReceiptsIntoCache().then(loadEntriesIfAllowed).then(function (entries) {
+      var win = monthWindow();
+      var sales = 0, invoicesCount = 0;
+      entries.forEach(function (e) {
+        if (e.entry_type !== "invoice") return;
+        var d = new Date(e.entry_date);
+        if (d >= win[0] && d <= win[1]) { sales += Number(e.debit); invoicesCount += 1; }
+      });
+      el.statSales.textContent = fmt(sales);
+      el.statSalesSub.textContent = t("stat_sales_sub") + " " + invoicesCount;
+      // AR aging strip across all customers (owner/finance).
+      var buckets = [0, 0, 0, 0];
+      (state.balancesCache || []).forEach(function (b) {
+        if (Number(b.balance) <= 0.004) return;
+        var ag = computeAgingFor(entries.filter(function (e) { return e.customer_id === b.customer_id; }), b.balance);
+        for (var i = 0; i < 4; i++) buckets[i] += ag.buckets[i];
+      });
+      var strip = $("home-aging");
+      strip.innerHTML = "";
+      [["a_0_30", 0, ""], ["a_31_60", 1, ""], ["a_61_90", 2, "warn"], ["a_90p", 3, "bad"]].forEach(function (def) {
+        var cellEl = document.createElement("span");
+        cellEl.className = "aging-cell" + (def[2] ? " " + def[2] : "");
+        cellEl.appendChild(node("span", "small muted", t(def[0])));
+        cellEl.appendChild(node("span", "num aging-v", fmt(buckets[def[1]])));
+        strip.appendChild(cellEl);
+      });
+    });
+
+    renderHomeDrafts();
+  }
+
+  function renderHomeDrafts() {
+    var labels = { no: t("invoice_no"), customer: t("customer"), total: t("grand_total") };
+    var rows = readRegistry();
+    el.homeDrafts.innerHTML = "";
+    if (!rows.length) { emptyRow(el.homeDrafts, 4, "home_drafts_empty"); return; }
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      tr.appendChild(cell(labels.no, r.invoice_no, false, true));
+      tr.appendChild(cell(labels.customer, r.customer));
+      tr.appendChild(cell(labels.total, fmt(r.grand_total), true));
+      var td = document.createElement("td");
+      td.setAttribute("data-label", t("open"));
+      var open = document.createElement("button");
+      open.type = "button";
+      open.className = "default";
+      open.textContent = t("open");
+      open.addEventListener("click", function () { openSavedDraft(r.id); });
+      td.appendChild(open);
+      tr.appendChild(td);
+      el.homeDrafts.appendChild(tr);
+    });
+  }
+
   function loadInventory() {
     clearError(el.inventoryError);
+    var labels = { wh: t("warehouse"), prod: t("product"), qty: t("quantity"), up: t("updated_at") };
     return api("/inventory/stock").then(function (rows) {
       renderRows(el.stockRows, rows, function (row) {
         var tr = document.createElement("tr");
-        [
-          warehouseLabel(row.warehouse_id), productLineLabel(row.product_id),
-          fmtQty(row.quantity), fmtDate(row.updated_at),
-        ].forEach(function (value, index) {
-          var td = document.createElement("td");
-          td.textContent = value;
-          if (index >= 2) td.className = "num";
-          tr.appendChild(td);
-        });
+        tr.appendChild(cell(labels.wh, warehouseLabel(row.warehouse_id)));
+        tr.appendChild(cell(labels.prod, productLineLabel(row.product_id)));
+        tr.appendChild(cell(labels.qty, fmtQty(row.quantity), true));
+        tr.appendChild(cell(labels.up, fmtDate(row.updated_at), true));
         return tr;
       });
-    }).catch(function (error) { showError(el.inventoryError, messageFor(error)); });
+      if (!rows.length) emptyRow(el.stockRows, 4, "empty_rows");
+    }).catch(function (error) {
+      renderRows(el.stockRows, [], function () { return null; });
+      emptyRow(el.stockRows, 4, "empty_rows");
+      showError(el.inventoryError, messageFor(error));
+    });
   }
 
-  function loadBalances() {
-    clearError(el.balancesError);
-    return api("/ar/balances").then(function (rows) {
-      renderRows(el.balanceRows, rows.slice().sort(function (a, b) {
-        return Number(b.balance) - Number(a.balance);
-      }), function (row) {
+  function loadLedger() {
+    clearError(el.ledgerError);
+    var labels = { d: t("mv_date"), ty: t("mv_type"), wh: t("warehouse"), p: t("product"), q: t("quantity"), n: t("notes") };
+    return api("/inventory/movements").then(function (rows) {
+      rows = rows.slice().sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
+      renderRows(el.movementRows, rows, function (row) {
         var tr = document.createElement("tr");
-        var nameTd = document.createElement("td");
-        nameTd.textContent = customerName(row.customer_id);
-        var balanceTd = document.createElement("td");
-        balanceTd.className = "num";
-        balanceTd.textContent = fmt(row.balance);
-        if (Number(row.balance) <= 0.004) {
-          nameTd.appendChild(badgeNode(t("badge_settled", "settled"), "badge posted"));
-        }
-        tr.appendChild(nameTd);
-        tr.appendChild(balanceTd);
+        tr.appendChild(cell(labels.d, fmtDate(row.created_at), true));
+        tr.appendChild(cell(labels.ty, movementTypeLabel(row.movement_type)));
+        tr.appendChild(cell(labels.wh, warehouseLabel(row.warehouse_id)));
+        tr.appendChild(cell(labels.p, productLineLabel(row.product_id)));
+        tr.appendChild(cell(labels.q, fmtQty(row.quantity), true));
+        tr.appendChild(cell(labels.n, row.note || "—"));
         return tr;
       });
-    }).catch(function (error) { showError(el.balancesError, messageFor(error)); });
+      if (!rows.length) emptyRow(el.movementRows, 6, "empty_rows");
+    }).catch(function (error) {
+      renderRows(el.movementRows, [], function () { return null; });
+      emptyRow(el.movementRows, 6, "empty_rows");
+      showError(el.ledgerError, messageFor(error));
+    });
   }
 
-  function loadCollections() {
+  async function loadBalances() {
+    clearError(el.balancesError);
+    try {
+      var balances = await api("/ar/balances");
+      state.balancesCache = balances;
+      await loadReceiptsIntoCache();
+      var labels = { c: t("customer"), b: t("branch"), bal: t("balance") };
+      el.balanceRows.innerHTML = "";
+      var sorted = balances.slice().sort(function (a, b) { return Number(b.balance) - Number(a.balance); });
+      if (!sorted.length) emptyRow(el.balanceRows, 4, "empty_rows");
+      sorted.forEach(function (row) {
+        var tr = document.createElement("tr");
+        var nameCell = cell(labels.c, customerName(row.customer_id));
+        if (Number(row.balance) <= 0.004) {
+          nameCell.appendChild(badgeNode(t("badge_settled", "settled"), "badge posted"));
+        }
+        tr.appendChild(nameCell);
+        tr.appendChild(cell(labels.b, branchLabel((customerById(row.customer_id) || {}).branch_id)));
+        tr.appendChild(cell(labels.bal, fmt(row.balance), true));
+        var td = document.createElement("td");
+        td.setAttribute("data-label", t("ledger_card_title"));
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "default";
+        button.textContent = t("ledger_card_title");
+        button.addEventListener("click", function () {
+          $("ledger-customer").value = row.customer_id;
+          renderCustomerLedger(row.customer_id);
+        });
+        td.appendChild(button);
+        tr.appendChild(td);
+        el.balanceRows.appendChild(tr);
+      });
+      fillSelect($("ledger-customer"), sorted.map(function (row) {
+        return { id: row.customer_id, name_ar: customerName(row.customer_id) };
+      }), customerLabel, "select_customer_ledger");
+      var prefill = sorted.length ? sorted[0].customer_id : "";
+      $("ledger-customer").value = prefill;
+      renderCustomerLedger(prefill);
+    } catch (error) {
+      showError(el.balancesError, messageFor(error));
+    }
+  }
+
+  async function renderCustomerLedger(customerId) {
+    var tbody = el.entryRows;
+    var summary = el.ledgerSummary;
+    summary.innerHTML = "";
+    tbody.innerHTML = "";
+    if (!customerId) { emptyRow(tbody, 7, "empty_rows"); return; }
+    try {
+      var entries = await loadEntriesIfAllowed();
+      var mine = entries.filter(function (e) { return e.customer_id === customerId; })
+        .sort(function (a, b) { return a.entry_date.localeCompare(b.entry_date) || String(a.created_at).localeCompare(String(b.created_at)); });
+      // Resolve voucher numbers first so the ledger shows real references.
+      await Promise.all(mine.map(function (e) {
+        if (e.entry_type === "invoice" && e.invoice_id && !state.invoiceNos[e.invoice_id]) {
+          return resolveInvoiceNo(e.invoice_id);
+        }
+        return null;
+      }));
+      var balance = 0;
+      var labels = { d: t("mv_date"), ty: t("entry_type"), v: t("voucher"), n: t("notes"), dr: t("debit"), cr: t("credit"), run: t("running") };
+      mine.forEach(function (e) {
+        var debit = Number(e.debit), credit = Number(e.credit);
+        balance = round2(balance + debit - credit);
+        var tr = document.createElement("tr");
+        tr.appendChild(cell(labels.d, fmtDate(e.entry_date), true));
+        tr.appendChild(cell(labels.ty, entryTypeLabel(e.entry_type)));
+        var voucher = "—";
+        if (e.entry_type === "invoice" && e.invoice_id) voucher = state.invoiceNos[e.invoice_id] || "…";
+        else if (e.entry_type === "payment" && e.receipt_id) voucher = state.receiptNos[e.receipt_id] || "…";
+        var voucherTd = cell(labels.v, voucher, false, true);
+        tr.appendChild(voucherTd);
+        tr.appendChild(cell(labels.n, e.note || "—"));
+        tr.appendChild(cell(labels.dr, debit > 0 ? fmt(debit) : "—", true));
+        tr.appendChild(cell(labels.cr, credit > 0 ? fmt(credit) : "—", true));
+        tr.appendChild(cell(labels.run, fmt(balance), true));
+        tbody.appendChild(tr);
+      });
+      if (!mine.length) emptyRow(tbody, 7, "empty_rows");
+      var ag = computeAgingFor(mine, balance);
+      var b = document.createElement("span");
+      b.className = "badge info";
+      b.textContent = t("balance") + ": " + fmt(balance);
+      summary.appendChild(b);
+      [["a_0_30", 0], ["a_31_60", 1], ["a_61_90", 2], ["a_90p", 3]].forEach(function (def) {
+        var chip = document.createElement("span");
+        chip.className = "badge " + (def[1] >= 2 ? "draft" : "info");
+        chip.textContent = t(def[0]) + ": " + fmt(ag.buckets[def[1]]);
+        summary.appendChild(chip);
+      });
+    } catch (error) {
+      showError(el.balancesError, messageFor(error));
+    }
+  }
+
+  async function loadCollections() {
     clearError(el.collectionsError);
-    return api("/collections").then(function (rows) {
+    var labels = {
+      no: t("receipt_no"), date: t("receipt_date"), invoice: t("invoice_no"),
+      customer: t("customer"), method: t("method"), amount: t("amount"), status: t("status"),
+    };
+    try {
+      var rows = await api("/collections");
+      state.receiptNos = {};
+      rows.forEach(function (r) { state.receiptNos[r.id] = r.receipt_no; });
       rows = rows.slice().sort(function (a, b) {
         return String(b.receipt_date).localeCompare(String(a.receipt_date));
       });
@@ -636,27 +1565,313 @@
       rows.forEach(function (row) {
         if (!seen[row.invoice_id]) { seen[row.invoice_id] = true; ids.push(row.invoice_id); }
       });
-      return Promise.all(ids.map(function (id) {
-        if (state.invoiceNos[id]) return null;
-        return api("/invoices/" + id).then(function (invoice) {
-          state.invoiceNos[id] = invoice.invoice_no;
-        }).catch(function () { state.invoiceNos[id] = shortId(id); });
-      })).then(function () {
-        renderRows(el.receiptRows, rows, receiptRow(true));
-      });
-    }).catch(function (error) { showError(el.collectionsError, messageFor(error)); });
+      await Promise.all(ids.map(function (id) {
+        return state.invoiceNos[id] ? null : resolveInvoiceNo(id);
+      }));
+      renderRows(el.receiptRows, rows, receiptRow(true, labels));
+      if (!rows.length) emptyRow(el.receiptRows, 7, "empty_rows");
+    } catch (error) {
+      showError(el.collectionsError, messageFor(error));
+    }
   }
 
-  // --------------------------------------------------------------- auth
+  function loadCustomers() {
+    clearError(el.customersError);
+    var labels = { c: t("code"), n: t("customer"), b: t("branch"), t: t("territory") };
+    return api("/master/customers").then(function (rows) {
+      renderRows(el.customerRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell(labels.c, row.code, false, true));
+        tr.appendChild(cell(labels.n, row.name_ar || row.name_en || row.code));
+        tr.appendChild(cell(labels.b, branchLabel(row.branch_id)));
+        tr.appendChild(cell(labels.t, shortId(row.territory_id)));
+        return tr;
+      });
+      if (!rows.length) emptyRow(el.customerRows, 4, "empty_rows");
+    }).catch(function (error) {
+      renderRows(el.customerRows, [], function () { return null; });
+      emptyRow(el.customerRows, 4, "empty_rows");
+      showError(el.customersError, messageFor(error));
+    });
+  }
+
+  function loadProducts() {
+    clearError(el.productsError);
+    var labels = { s: t("code"), n: t("product"), p: t("base_price"), v: t("vat_pct") };
+    return api("/master/products").then(function (rows) {
+      renderRows(el.productRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell(labels.s, row.sku, false, true));
+        tr.appendChild(cell(labels.n, row.name_ar || row.name_en || row.sku));
+        tr.appendChild(cell(labels.p, fmt(row.base_price), true));
+        tr.appendChild(cell(labels.v, fmtQty(Number(row.vat_rate)) + " %", true));
+        return tr;
+      });
+      if (!rows.length) emptyRow(el.productRows, 4, "empty_rows");
+    }).catch(function (error) {
+      renderRows(el.productRows, [], function () { return null; });
+      emptyRow(el.productRows, 4, "empty_rows");
+      showError(el.productsError, messageFor(error));
+    });
+  }
+
+  async function loadWarehousesView() {
+    clearError(el.warehousesError);
+    var labels = { c: t("code"), n: t("warehouse"), b: t("branch"), a: t("active") };
+    try {
+      var branches = await api("/master/branches");
+      state.branches = branches;
+      var warehouses = await api("/master/warehouses");
+      state.warehouses = warehouses;
+      refreshWarehouseSelects();
+      renderRows(el.warehouseRows, warehouses, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell(labels.c, row.code, false, true));
+        tr.appendChild(cell(labels.n, row.name_ar || row.name_en || row.code));
+        tr.appendChild(cell(labels.b, branchLabel(row.branch_id)));
+        tr.appendChild(cell(labels.a, row.is_active ? "✓" : "—", true));
+        return tr;
+      });
+      if (!warehouses.length) emptyRow(el.warehouseRows, 4, "empty_rows");
+      // Org-hierarchy section is an explicitly labelled prototype preview.
+      var target = $("org-preview");
+      target.innerHTML = "";
+      var box = node("div", "chip-row");
+      box.appendChild(node("span", "badge proto", t("badge_proto")));
+      target.appendChild(box);
+      var pc = PROTON.routing[state.lang];
+      var h = node("h3", "", t("nav_warehouses") + " — " + t("p_org_title"));
+      target.appendChild(h);
+      var ul = node("ul");
+      pc.orgBullets.forEach(function (line) { ul.appendChild(node("li", "muted", line)); });
+      target.appendChild(ul);
+      target.appendChild(node("div", "note", t("p_org_note")));
+    } catch (error) {
+      showError(el.warehousesError, messageFor(error));
+    }
+  }
+
+  function loadSuppliers() {
+    clearError(el.suppliersError);
+    var labels = { c: t("code"), n: t("supplier"), p: t("phone"), a: t("address") };
+    return api("/master/suppliers").then(function (rows) {
+      renderRows(el.supplierRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell(labels.c, row.code, false, true));
+        tr.appendChild(cell(labels.n, row.name_ar || row.name_en || row.code));
+        tr.appendChild(cell(labels.p, row.contact_phone || "—", true));
+        tr.appendChild(cell(labels.a, row.address || "—"));
+        return tr;
+      });
+      if (!rows.length) emptyRow(el.supplierRows, 4, "empty_rows");
+    }).catch(function (error) {
+      renderRows(el.supplierRows, [], function () { return null; });
+      emptyRow(el.supplierRows, 4, "empty_rows");
+      showError(el.suppliersError, messageFor(error));
+    });
+  }
+
+  function loadAccounts() {
+    clearError(el.accountsError);
+    var labels = { c: t("code"), n: t("account_name"), ty: t("account_type") };
+    return api("/master/accounts").then(function (rows) {
+      renderRows(el.accountRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell(labels.c, row.code, false, true));
+        tr.appendChild(cell(labels.n, row.name_ar || row.name_en || row.code));
+        tr.appendChild(cell(labels.ty, accountTypeLabel(row.account_type)));
+        return tr;
+      });
+      if (!rows.length) emptyRow(el.accountRows, 3, "empty_rows");
+    }).catch(function (error) {
+      renderRows(el.accountRows, [], function () { return null; });
+      emptyRow(el.accountRows, 3, "empty_rows");
+      showError(el.accountsError, messageFor(error));
+    });
+  }
+
+  async function loadDoctors() {
+    clearError(el.doctorsError);
+    var labels = { c: t("code"), n: t("doctor"), s: t("specialty"), b: t("branch"), p: t("phone") };
+    try {
+      var rows = await api("/master/doctors");
+      renderRows(el.doctorRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell(labels.c, row.code, false, true));
+        tr.appendChild(cell(labels.n, row.name_ar || row.name_en || row.code));
+        tr.appendChild(cell(labels.s, row.specialty || "—"));
+        tr.appendChild(cell(labels.b, branchLabel(row.branch_id)));
+        tr.appendChild(cell(labels.p, row.contact_phone || "—", true));
+        return tr;
+      });
+      if (!rows.length) emptyRow(el.doctorRows, 5, "empty_rows");
+      var target = $("kolspend-preview");
+      target.innerHTML = "";
+      target.appendChild(node("div", "chip-row")).appendChild(node("span", "badge proto", t("badge_proto")));
+      var pc = PROTON.brandspend[state.lang];
+      var h = node("h3", "", t("p_kol_spend_title"));
+      target.appendChild(h);
+      var ul = node("ul");
+      ul.appendChild(node("li", "muted", pc.desc));
+      target.appendChild(ul);
+      target.appendChild(node("div", "note", t("p_kol_spend_note")));
+    } catch (error) {
+      showError(el.doctorsError, messageFor(error));
+    }
+  }
+
+  // ----------------------------------------------------------- stock visits (proto)
+  var VISITS_KEY = "medsys.visits.v1";
+  function readVisits() {
+    try { return JSON.parse(localStorage.getItem(VISITS_KEY) || "[]"); }
+    catch (_e) { return []; }
+  }
+  function writeVisits(rows) {
+    try { localStorage.setItem(VISITS_KEY, JSON.stringify(rows.slice(0, 50))); } catch (_e) { }
+  }
+  function visitCalc() {
+    var prev = Number($("visit-prev").value) || 0;
+    var del = Number($("visit-del").value) || 0;
+    var ret = Number($("visit-ret").value) || 0;
+    var cur = Number($("visit-cur").value) || 0;
+    return { prev: prev, del: del, ret: ret, cur: cur, st: round2(prev + del - ret - cur) };
+  }
+  function updateVisitCalc() {
+    var calc = visitCalc();
+    el.visitSt.textContent = String(calc.st);
+    if (calc.cur < 0) {
+      showNotice(el.visitWarn, t("visit_warn_neg"), "warn");
+    } else if (calc.st < 0) {
+      showNotice(el.visitWarn, t("visit_warn_st"), "warn");
+    } else {
+      clearError(el.visitWarn);
+    }
+  }
+  function renderVisits() {
+    var labels = { at: t("visit_at"), c: t("customer"), p: t("product"), st: t("visit_sellthrough"), a: t("visit_amount") };
+    var rows = readVisits();
+    el.visitRows.innerHTML = "";
+    if (!rows.length) { emptyRow(el.visitRows, 6, "empty_rows"); return; }
+    rows.slice().reverse().forEach(function (v) {
+      var tr = document.createElement("tr");
+      tr.appendChild(cell(labels.at, new Date(v.at).toLocaleString(), true));
+      tr.appendChild(cell(labels.c, v.customer));
+      tr.appendChild(cell(labels.p, v.product));
+      tr.appendChild(cell(labels.st, fmtQty(v.sell_through), true));
+      tr.appendChild(cell(labels.a, fmt(v.amount), true));
+      var td = document.createElement("td");
+      td.setAttribute("data-label", t("remove_line"));
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "ghost danger";
+      del.textContent = "✕";
+      del.setAttribute("aria-label", t("remove_line"));
+      del.addEventListener("click", function () {
+        writeVisits(readVisits().filter(function (r) { return r.at !== v.at; }));
+        renderVisits();
+      });
+      td.appendChild(del);
+      tr.appendChild(td);
+      el.visitRows.appendChild(tr);
+    });
+  }
+  function saveVisit() {
+    var customerId = el.visitCustomer.value;
+    var productId = el.visitProduct.value;
+    if (!customerId || !productId) {
+      showNotice(el.visitWarn, t("visit_err_pick"), "warn");
+      return;
+    }
+    var calc = visitCalc();
+    if (calc.cur < 0) { showNotice(el.visitWarn, t("visit_warn_neg"), "warn"); return; }
+    var rows = readVisits();
+    rows.push({
+      at: new Date().toISOString(),
+      customer: customerName(customerId),
+      product: productLineLabel(productId),
+      previous: calc.prev, delivered: calc.del, returned: calc.ret, current: calc.cur,
+      sell_through: calc.st,
+      amount: Number(el.visitAmount.value) || 0, method: el.visitMethod.value,
+      notes: el.visitNotes.value,
+    });
+    writeVisits(rows);
+    showNotice(el.visitWarn, t("visit_saved_locally"), "success");
+    renderVisits();
+  }
+
+  // =========================================================================
+  // COMMAND PALETTE (Ctrl+K) — searches nav + real customers/products.
+  // =========================================================================
+  var paletteItems = [];
+  function paletteNavigate(target) {
+    el.palette.close();
+    showView(target.view);
+  }
+  function renderPalette(query) {
+    var list = $("palette-list");
+    list.innerHTML = "";
+    paletteItems = [];
+    var q = query.trim().toLowerCase();
+    if (state.user) {
+      document.querySelectorAll(".sidebar .nav-item").forEach(function (btn) {
+        if (btn.classList.contains("hidden")) return;
+        var labelSpan = btn.querySelector("[data-i18n]");
+        var label = labelSpan ? labelSpan.textContent : btn.textContent.trim();
+        paletteItems.push({
+          kind: t("pal_nav"), label: label, view: btn.dataset.view,
+          hay: (label + " " + (labelSpan ? dict[labelSpan.dataset.i18n] : "")).toLowerCase(),
+        });
+      });
+      state.customers.forEach(function (c) {
+        paletteItems.push({
+          kind: t("customer"), label: c.name_ar || c.name_en || c.code, sub: c.code,
+          view: "customers", hay: ((c.name_ar || "") + (c.name_en || "") + c.code).toLowerCase(),
+        });
+      });
+      state.products.forEach(function (p) {
+        paletteItems.push({
+          kind: t("product"), label: p.name_ar || p.name_en || p.sku, sub: p.sku,
+          view: "products", hay: ((p.name_ar || "") + (p.name_en || "") + p.sku).toLowerCase(),
+        });
+      });
+    }
+    var results = paletteItems.filter(function (item) { return !q || item.hay.indexOf(q) >= 0; }).slice(0, 12);
+    results.forEach(function (item, index) {
+      var li = document.createElement("li");
+      if (index === 0) li.className = "sel";
+      var spanKind = node("span", "badge info small", item.kind);
+      li.appendChild(spanKind);
+      var spanLabel = node("span", "", item.label);
+      li.appendChild(spanLabel);
+      if (item.sub) li.appendChild(node("span", "k num", item.sub));
+      li.addEventListener("click", function () { paletteNavigate(item); });
+      list.appendChild(li);
+    });
+    if (!results.length) list.appendChild(node("li", "muted", t("pal_none")));
+  }
+  function openPalette() {
+    if (!state.user) return;
+    el.paletteInput.value = "";
+    renderPalette("");
+    el.palette.showModal();
+    el.paletteInput.focus();
+  }
+
+  // =========================================================================
+  // AUTH + BOOT
+  // =========================================================================
   async function boot() {
-    el.me = await api("/auth/me");
-    state.user = el.me;
-    el.whoName.textContent = el.me.username;
-    el.whoRole.textContent = el.me.role;
+    var me = await api("/auth/me");
+    state.user = me;
+    el.whoName.textContent = me.username;
+    el.whoRole.textContent = me.role;
     el.who.classList.remove("hidden");
     el.logout.classList.remove("hidden");
-    el.nav.classList.remove("hidden");
+    el.sidebar.classList.remove("hidden");
+    el.bottomnav.classList.remove("hidden");
+    el.bell.classList.remove("hidden");
     el.demoBanner.classList.remove("hidden");
+    applyRoleGating();
     el.invoiceDate.value = todayLocal();
     el.invoiceNo.value = "INV-" + Date.now().toString().slice(-8);
     await loadMaster();
@@ -664,11 +1879,13 @@
       // Non-global roles scope warehouses per branch; labels fall back to ids.
     }
     showView("home");
-    if (el.me.role === "read_only_auditor") {
+    if (me.role === "read_only_auditor") {
       el.saveDraft.disabled = true;
       el.addLine.disabled = true;
       showNotice(el.formError, t("read_only_role"), "warn");
     }
+    // Finance/owner: prime the entries cache for ledger/aging widgets.
+    if (me.role !== "medical_rep") loadEntriesIfAllowed();
   }
 
   async function login(event) {
@@ -695,47 +1912,103 @@
     try { await api("/auth/logout", { method: "POST" }); } catch (_e) { /* best effort */ }
     state.token = null;
     state.user = null;
+    state.entries = null;
+    state.balancesCache = [];
     localStorage.removeItem("token");
     el.who.classList.add("hidden");
     el.logout.classList.add("hidden");
-    el.nav.classList.add("hidden");
+    el.sidebar.classList.add("hidden");
+    el.bottomnav.classList.add("hidden");
+    el.bell.classList.add("hidden");
     el.demoBanner.classList.add("hidden");
     showView("login");
   }
 
-  // --------------------------------------------------------------- init
+  function badgeNode(text, className) {
+    var span = document.createElement("span");
+    span.className = className;
+    span.textContent = text;
+    return span;
+  }
+
   function cacheElements() {
+    el.demoBanner = $("demo-banner");
+    el.menuToggle = $("menu-toggle");
+    el.sidebar = $("sidebar");
+    el.scrim = $("scrim");
+    el.bottomnav = $("bottomnav");
+    el.bell = $("bell");
+    el.offlineChip = $("offline-chip");
+    el.palette = $("palette");
+    el.paletteInput = $("palette-input");
+
     el.loginView = $("login-view");
-    el.appView = $("app-view");
+    el.invoiceView = $("invoice-view");
+    el.invoiceView = $("invoice-view");
     el.draftView = $("draft-view");
     el.homeView = $("home-view");
     el.inventoryView = $("inventory-view");
+    el.ledgerView = $("ledger-view");
     el.balancesView = $("balances-view");
     el.collectionsView = $("collections-view");
-    el.demoBanner = $("demo-banner");
-    el.loginDemo = $("login-demo");
-    el.nav = $("nav");
+    el.customersView = $("customers-view");
+    el.productsView = $("products-view");
+    el.warehousesView = $("warehouses-view");
+    el.suppliersView = $("suppliers-view");
+    el.accountsView = $("accounts-view");
+    el.doctorsView = $("doctors-view");
+    el.visitsView = $("visits-view");
+    el.moduleView = $("module-view");
+    el.moduleTitle = $("module-title");
+    el.moduleDesc = $("module-desc");
+    el.moduleContent = $("module-content");
+
+    el.ledgerError = $("ledger-error");
+    el.customersError = $("customers-error");
+    el.productsError = $("products-error");
+    el.warehousesError = $("warehouses-error");
+    el.suppliersError = $("suppliers-error");
+    el.accountsError = $("accounts-error");
+    el.doctorsError = $("doctors-error");
+    el.movementRows = $("movement-rows");
+    el.customerRows = $("customer-rows");
+    el.productRows = $("product-rows");
+    el.warehouseRows = $("warehouse-rows");
+    el.supplierRows = $("supplier-rows");
+    el.accountRows = $("account-rows");
+    el.doctorRows = $("doctor-rows");
+    el.entryRows = $("entry-rows");
+    el.ledgerSummary = $("ledger-summary");
+
     el.homeError = $("home-error");
     el.inventoryError = $("inventory-error");
     el.balancesError = $("balances-error");
     el.collectionsError = $("collections-error");
     el.statAr = $("stat-ar");
+    el.statArSub = $("stat-ar-sub");
     el.statStock = $("stat-stock");
-    el.statProducts = $("stat-products");
+    el.statStockSub = $("stat-stock-sub");
     el.statReceipts = $("stat-receipts");
+    el.statReceiptsSub = $("stat-receipts-sub");
+    el.statSales = $("stat-sales");
+    el.statSalesSub = $("stat-sales-sub");
     el.homeReceipts = $("home-receipts");
+    el.homeDrafts = $("home-drafts");
     el.stockRows = $("stock-rows");
     el.balanceRows = $("balance-rows");
     el.receiptRows = $("receipt-rows");
+
     el.loginForm = $("login-form");
     el.loginUsername = $("login-username");
     el.loginPassword = $("login-password");
     el.loginSubmit = $("login-submit");
     el.loginError = $("login-error");
+    el.loginDemo = $("login-demo");
     el.who = $("who");
     el.whoName = $("who-name");
     el.whoRole = $("who-role");
     el.logout = $("logout");
+
     el.invoiceForm = $("invoice-form");
     el.invoiceNo = $("invoice-no");
     el.invoiceDate = $("invoice-date");
@@ -753,6 +2026,7 @@
     el.prevVat = $("prev-vat");
     el.prevGrand = $("prev-grand");
     el.draftNo = $("draft-no");
+    el.draftDate = $("draft-date");
     el.draftStatus = $("draft-status");
     el.draftCustomer = $("draft-customer");
     el.draftWarehouse = $("draft-warehouse");
@@ -764,6 +2038,20 @@
     el.draftGrand = $("draft-grand");
     el.draftError = $("draft-error");
     el.postDraft = $("post-draft");
+
+    el.visitCustomer = $("visit-customer");
+    el.visitProduct = $("visit-product");
+    el.visitPrev = $("visit-prev");
+    el.visitDel = $("visit-del");
+    el.visitRet = $("visit-ret");
+    el.visitCur = $("visit-cur");
+    el.visitSt = $("visit-st");
+    el.visitWarn = $("visit-warn");
+    el.visitAmount = $("visit-amount");
+    el.visitMethod = $("visit-method");
+    el.visitNotes = $("visit-notes");
+    el.visitSave = $("visit-save");
+    el.visitRows = $("visit-rows");
     el.lang = $("lang");
   }
 
@@ -773,26 +2061,100 @@
     el.invoiceForm.addEventListener("submit", saveDraft);
     el.addLine.addEventListener("click", function () { addLine(); recalcPreview(); });
     el.postDraft.addEventListener("click", postDraft);
-    document.querySelectorAll(".nav-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () { showView(btn.dataset.view); });
+
+    el.menuToggle.addEventListener("click", function () { setDrawer(!drawerOpen); });
+    el.scrim.addEventListener("click", function () { setDrawer(false); });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && drawerOpen) setDrawer(false);
+      if ((event.ctrlKey || event.metaKey) && String(event.key).toLowerCase() === "k") {
+        event.preventDefault(); openPalette();
+      }
     });
-    document.querySelectorAll("[data-goto]").forEach(function (btn) {
-      btn.addEventListener("click", function () { showView(btn.dataset.goto, true); });
+
+    document.querySelectorAll(".sidebar .nav-item, .bnav-btn, #bell").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (btn.dataset.view === "__menu") { setDrawer(true); return; }
+        showView(btn.dataset.view, btn.dataset.view === "invoice" ? true : undefined);
+      });
+    });
+
+    document.querySelectorAll("[data-goto], [data-view-goto]").forEach(function (btn) {
+      btn.addEventListener("click", function (event) {
+        event.preventDefault();
+        showView(btn.dataset.goto || btn.dataset.viewGoto, true);
+      });
     });
     document.querySelectorAll("[data-refresh]").forEach(function (btn) {
       btn.addEventListener("click", function () { showView(btn.dataset.refresh, true); });
     });
+
     el.customer.addEventListener("change", async function () {
       var customer = customerById(el.customer.value);
       el.branchDisplay.value = customer ? branchLabel(customer.branch_id) : "";
       clearError(el.formError);
-      await loadWarehouses(customer ? customer.branch_id : null);
+      try {
+        await loadWarehouses(customer ? customer.branch_id : null);
+      } catch (_e) {
+        // Role-scoped warehouses keep server-side defaults; ids render later.
+      }
     });
+
     el.lang.addEventListener("click", function () {
       loadI18n(state.lang === "ar" ? "en" : "ar").then(function () {
-        if (state.user) rebuildLines();
+        if (state.user) {
+          rebuildLines();
+          if (currentSection === "module-view") {
+            var key = (moduleKey() || "analytics");
+            openPreview(key);
+          }
+        }
       });
     });
+
+    el.palette.addEventListener("keydown", function (event) {
+      var items = Array.prototype.slice.call($("palette-list").querySelectorAll("li"));
+      if (!items.length) return;
+      var currentIndex = items.findIndex(function (n) { return n.classList.contains("sel"); });
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        if (currentIndex >= 0) items[currentIndex].classList.remove("sel");
+        items[(currentIndex + 1) % items.length].classList.add("sel");
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        if (currentIndex >= 0) items[currentIndex].classList.remove("sel");
+        items[(currentIndex - 1 + items.length) % items.length].classList.add("sel");
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        var sel = items[currentIndex] || items[0];
+        if (sel) sel.click();
+      }
+    });
+    el.paletteInput.addEventListener("input", function () { renderPalette(el.paletteInput.value); });
+    $("open-palette").addEventListener("click", openPalette);
+
+    el.visitPrev.addEventListener("input", updateVisitCalc);
+    el.visitDel.addEventListener("input", updateVisitCalc);
+    el.visitRet.addEventListener("input", updateVisitCalc);
+    el.visitCur.addEventListener("input", updateVisitCalc);
+    el.visitSave.addEventListener("click", saveVisit);
+    $("visits-clear").addEventListener("click", function () {
+      writeVisits([]);
+      renderVisits();
+    });
+
+    $("ledger-customer").addEventListener("change", function () {
+      renderCustomerLedger($("ledger-customer").value);
+    });
+
+    window.addEventListener("online", function () { el.offlineChip.classList.add("hidden"); });
+    window.addEventListener("offline", function () { el.offlineChip.classList.remove("hidden"); });
+    if (!navigator.onLine) el.offlineChip.classList.remove("hidden");
+  }
+
+  function moduleKey() {
+    // The active preview key equals whichever nav button is highlighted.
+    var active = document.querySelector(".nav-item.active, .bnav-btn.active");
+    return active ? active.dataset.view : null;
   }
 
   // Public/cold deployments (e.g. a first-hop tunnel) can fail the very first
@@ -815,7 +2177,8 @@
     }
     wire();
     addLine();
-    recalcPreview();
+    updateVisitCalc();
+    renderVisits();
     var token = localStorage.getItem("token");
     if (token) {
       state.token = token;

@@ -3,11 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="نظام الشركة الطبية — عرض تجريبي (بيانات وهمية): فواتير مبدئية، مخزون، أرصدة العملاء، تحصيلات. Arabic RTL PWA client demo.">
+  <meta name="description" content="نظام الشركة الطبية — عرض تجريبي (بيانات وهمية): فواتير، مخزون، أرصدة، تحصيلات وأدلة رئيسية. Arabic RTL PWA client demo.">
   <title data-i18n="app_name">نظام الشركة الطبية</title>
   <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0F2942">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="styles.css">
-  <meta name="theme-color" content="#0b1220">
 </head>
 <body>
   <a class="skip-link" href="#main" data-i18n="skip_to_content">Skip to content</a>
@@ -16,310 +19,835 @@
     عرض تجريبي — كل البيانات المُعروضة وهمية بالكامل
   </div>
 
-  <header class="app-header">
+  <header class="topbar">
     <div class="brand">
-      <strong data-i18n="app_name">نظام الشركة الطبية</strong>
-      <span class="eyebrow" data-i18n="invoice_eyebrow">Sales · Draft invoices</span>
-    </div>
-    <div class="header-actions">
-      <span class="who hidden" id="who">
-        <span data-i18n="signed_in_as">Signed in as</span>
-        <span id="who-name" class="num"></span>
-        <span class="role-chip" id="who-role"></span>
+      <button type="button" id="menu-toggle" class="iconbtn" aria-label="القائمة" aria-expanded="false" data-i18n-aria-label="menu_aria" aria-controls="sidebar">☰</button>
+      <span class="brand-mark" aria-hidden="true">⚕</span>
+      <span class="brand-text">
+        <strong data-i18n="app_name">نظام الشركة الطبية</strong>
+        <span class="eyebrow" id="eyebrow" data-i18n="invoice_eyebrow">العرض التجريبي · نسخة العميل</span>
       </span>
-      <button id="logout" class="ghost hidden" data-i18n="logout">Sign out</button>
-      <button id="lang" data-i18n="lang_toggle">English</button>
+    </div>
+    <div class="top-actions">
+      <button type="button" id="open-palette" class="searchbtn" data-i18n-aria-label="search_aria">
+        <span aria-hidden="true">🔍</span>
+        <span class="search-label" data-i18n="search_placeholder">بحث (عملاء، أصناف، شاشات)…</span>
+        <kbd>Ctrl K</kbd>
+      </button>
+      <span id="offline-chip" class="offline-chip hidden" data-i18n="offline_chip">وضع عدم الاتصال</span>
+      <button type="button" id="bell" class="iconbtn hidden" data-view="alerts" data-i18n-aria-label="alerts_aria" title="التنبيهات">🔔</button>
+      <span class="who hidden" id="who">
+        <span data-i18n="signed_in_as">مسجّل الدخول باسم</span>
+        <span id="who-name" class="num"></span>
+        <span class="role-chip num" id="who-role"></span>
+      </span>
+      <button id="logout" class="ghost hidden" data-i18n="logout">تسجيل الخروج</button>
+      <button id="lang" class="default num" data-i18n="lang_toggle">English</button>
     </div>
   </header>
 
-  <nav id="nav" class="app-nav hidden" aria-label="Feature switcher">
-    <button type="button" class="nav-btn" data-view="home" data-i18n="nav_home">الرئيسية</button>
-    <button type="button" class="nav-btn" data-view="invoice" data-i18n="nav_invoice">فاتورة جديدة</button>
-    <button type="button" class="nav-btn" data-view="inventory" data-i18n="nav_inventory">المخزون</button>
-    <button type="button" class="nav-btn" data-view="balances" data-i18n="nav_balances">أرصدة العملاء</button>
-    <button type="button" class="nav-btn" data-view="collections" data-i18n="nav_collections">التحصيلات</button>
-  </nav>
+  <div class="app-shell">
+    <!-- ============================================================ sidebar
+         The agreed APP_FLOW §1 tree, role-filtered (§10). PROTO items carry a dot;
+         their pages open labelled previews; real items are wired to the API. -->
+    <aside id="sidebar" class="sidebar hidden" aria-label="الوحدات">
+      <button type="button" class="nav-item" data-view="home">
+        <span class="glyph" aria-hidden="true">🏠</span><span data-i18n="nav_home">الرئيسية</span>
+      </button>
 
-  <main id="main">
-    <!-- ---------- Login ---------- -->
-    <section id="login-view" class="login-wrap" aria-labelledby="login-title">
-      <div class="card">
-        <h1 id="login-title" data-i18n="login_title">Sign in</h1>
-        <p class="muted small" data-i18n="login_hint">Use your company account to open the invoice desk.</p>
-        <div id="login-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <div id="login-demo" class="alert hidden" data-kind="info" data-i18n="demo_hint"></div>
-        <form id="login-form" novalidate>
-          <div class="field" style="margin-bottom: var(--space-3);">
-            <label for="login-username" data-i18n="username">Username</label>
-            <input id="login-username" name="username" autocomplete="username" required>
-          </div>
-          <div class="field" style="margin-bottom: var(--space-4);">
-            <label for="login-password" data-i18n="password">Password</label>
-            <input id="login-password" name="password" type="password" autocomplete="current-password" required>
-          </div>
-          <button type="submit" id="login-submit" class="primary" data-i18n="sign_in">Sign in</button>
-        </form>
-      </div>
-    </section>
+      <div class="sidebar-group-title" data-i18n="group_platform">المنصة</div>
+      <button type="button" class="nav-item sub" data-view="settings" data-roles="owner,finance">
+        <span class="glyph" aria-hidden="true">⚙️</span><span data-i18n="nav_settings">الإعدادات</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="audit" data-roles="owner,finance">
+        <span class="glyph" aria-hidden="true">🧾</span><span data-i18n="nav_audit">سجل التدقيق</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="alerts">
+        <span class="glyph" aria-hidden="true">🔔</span><span data-i18n="nav_alerts">التنبيهات</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="import" data-roles="owner,finance">
+        <span class="glyph" aria-hidden="true">📥</span><span data-i18n="nav_import">الاستيراد</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="pwa">
+        <span class="glyph" aria-hidden="true">📱</span><span data-i18n="nav_pwa">التطبيق/PWA</span>
+      </button>
 
-    <!-- ---------- Home / dashboard ---------- -->
-    <section id="home-view" class="hidden" aria-labelledby="home-title">
-      <div class="section-head">
-        <h1 id="home-title" data-i18n="home_title">لوحة العرض</h1>
-        <span class="muted small" data-i18n="demo_note_numbers">كل الأرقام واردة من الخادم، والبيانات تجريبية.</span>
-      </div>
-      <div id="home-error" class="alert hidden" role="alert" data-kind="error"></div>
-      <div class="stat-grid">
-        <div class="card stat">
-          <span class="stat-label" data-i18n="stat_open_ar">أرصدة العملاء المستحقة</span>
-          <span class="stat-value num" id="stat-ar">—</span>
-        </div>
-        <div class="card stat">
-          <span class="stat-label" data-i18n="stat_stock_units">وحدات في المخازن</span>
-          <span class="stat-value num" id="stat-stock">—</span>
-        </div>
-        <div class="card stat">
-          <span class="stat-label" data-i18n="stat_products">الأصناف النشطة</span>
-          <span class="stat-value num" id="stat-products">—</span>
-        </div>
-        <div class="card stat">
-          <span class="stat-label" data-i18n="stat_collected">إجمالي التحصيلات</span>
-          <span class="stat-value num" id="stat-receipts">—</span>
-        </div>
-      </div>
-      <div class="card" style="margin-top: var(--space-5);">
-        <div class="section-head">
-          <h2 data-i18n="home_recent_receipts">أحدث سندات القبض</h2>
-          <button type="button" class="ghost" data-goto="collections" data-i18n="nav_collections">التحصيلات</button>
-        </div>
-        <table class="line-table">
-          <thead>
-            <tr>
-              <th data-i18n="receipt_no">سند القبض</th>
-              <th data-i18n="receipt_date">التاريخ</th>
-              <th data-i18n="customer">العميل</th>
-              <th class="num" data-i18n="amount">المبلغ</th>
-            </tr>
-          </thead>
-          <tbody id="home-receipts"></tbody>
-        </table>
-        <p class="muted small" style="margin-top: var(--space-3);" data-i18n="demo_note_ledger">
-          سندات القبض هذه معطيات افتتاحية تجريبية مُدرجة مباشرة، لا ناتج عمل النظام.
-        </p>
-      </div>
-      <div class="card" style="margin-top: var(--space-5);">
-        <div class="section-head">
-          <h2 data-i18n="home_start_title">ابدأ من هنا</h2>
-        </div>
-        <p class="muted small" data-i18n="home_start_hint">
-          أنشئ فاتورة مبدئية من الأصناف والمخازن التجريبية؛ يحسب الخادم إجمالياتها النهائية.
-        </p>
-        <button type="button" class="primary" data-goto="invoice" data-i18n="home_start_action">فاتورة بيع جديدة</button>
-      </div>
-    </section>
+      <div class="sidebar-group-title" data-i18n="group_master">البيانات الأساسية</div>
+      <button type="button" class="nav-item sub" data-view="customers">
+        <span class="glyph" aria-hidden="true">🏥</span><span data-i18n="nav_customers">العملاء</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="products">
+        <span class="glyph" aria-hidden="true">💊</span><span data-i18n="nav_products">الأصناف والأسعار</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="warehouses">
+        <span class="glyph" aria-hidden="true">🏬</span><span data-i18n="nav_warehouses">الفروع والمخازن</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="representatives" data-roles="owner,finance,sales_manager,medical_rep">
+        <span class="glyph" aria-hidden="true">🧑‍⚕️</span><span data-i18n="nav_representatives">المندوبون والمناطق</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="reference" data-roles="owner,finance">
+        <span class="glyph" aria-hidden="true">📚</span><span data-i18n="nav_reference">المجموعات المرجعية</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="batches" data-roles="owner,finance,sales_manager">
+        <span class="glyph" aria-hidden="true">⏳</span><span data-i18n="nav_batches">التشغيلات والصلاحية</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="uom" data-roles="owner,finance">
+        <span class="glyph" aria-hidden="true">📐</span><span data-i18n="nav_uom">وحدات القياس</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="credit" data-roles="owner,finance,sales_manager">
+        <span class="glyph" aria-hidden="true">🛡️</span><span data-i18n="nav_credit">إدارة حدود الائتمان</span><span class="proto-dot">نموذج</span>
+      </button>
 
-    <!-- ---------- New invoice ---------- -->
-    <section id="app-view" class="hidden" aria-labelledby="new-invoice-title">
-      <div class="card">
-        <div class="section-head">
-          <h1 id="new-invoice-title" data-i18n="new_invoice">New sales invoice (draft)</h1>
-          <span class="muted small" data-i18n="draft_only_note">Drafts only — posting is disabled.</span>
+      <div class="sidebar-group-title" data-i18n="group_sales">المبيعات</div>
+      <button type="button" class="nav-item sub" data-view="invoice">
+        <span class="glyph" aria-hidden="true">🧮</span><span data-i18n="nav_invoice">الفواتير (مبيعات)</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="routing" data-roles="owner,medical_rep,sales_manager">
+        <span class="glyph" aria-hidden="true">🗺️</span><span data-i18n="nav_routing">توجيه المخازن</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="transfers" data-roles="owner,finance,sales_manager">
+        <span class="glyph" aria-hidden="true">🔁</span><span data-i18n="nav_transfers">التحويلات بين المخازن</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="returns" data-roles="owner,medical_rep,sales_manager">
+        <span class="glyph" aria-hidden="true">↩️</span><span data-i18n="nav_returns">المرتجعات</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="balances">
+        <span class="glyph" aria-hidden="true">📊</span><span data-i18n="nav_balances">الذمم وكشوف العملاء</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="targets" data-roles="owner,medical_rep,sales_manager">
+        <span class="glyph" aria-hidden="true">🎯</span><span data-i18n="nav_targets">المستهدفات</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="visits" data-roles="owner,medical_rep,sales_manager">
+        <span class="glyph" aria-hidden="true">🚶</span><span data-i18n="nav_visits">زيارات المخزون</span><span class="proto-dot">نموذج</span>
+      </button>
+
+      <div class="sidebar-group-title" data-i18n="group_inventory">المخزون</div>
+      <button type="button" class="nav-item sub" data-view="inventory">
+        <span class="glyph" aria-hidden="true">📦</span><span data-i18n="nav_inventory">أرصدة المخزون</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="ledger">
+        <span class="glyph" aria-hidden="true">🧮</span><span data-i18n="nav_ledger">حركة المخزن (الدفتر)</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="cover" data-roles="owner,finance,sales_manager">
+        <span class="glyph" aria-hidden="true">🗓️</span><span data-i18n="nav_cover">غطاء المخزون</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="overstock" data-roles="owner,finance,sales_manager">
+        <span class="glyph" aria-hidden="true">📈</span><span data-i18n="nav_overstock">تنبيه فائض المخزون</span><span class="proto-dot">نموذج</span>
+      </button>
+
+      <div class="sidebar-group-title" data-i18n="group_finance">المالية</div>
+      <button type="button" class="nav-item sub" data-view="cash" data-roles="owner,finance">
+        <span class="glyph" aria-hidden="true">💰</span><span data-i18n="nav_cash">الصندوق والبنوك</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="collections">
+        <span class="glyph" aria-hidden="true">🧾</span><span data-i18n="nav_collections">التحصيلات (سندات القبض)</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="expenses" data-roles="owner,finance">
+        <span class="glyph" aria-hidden="true">🧾</span><span data-i18n="nav_expenses">المصروفات والإيرادات</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="pnl" data-roles="owner,finance">
+        <span class="glyph" aria-hidden="true">📈</span><span data-i18n="nav_pnl">الأرباح والخسائر</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="payroll" data-roles="owner,finance">
+        <span class="glyph" aria-hidden="true">👥</span><span data-i18n="nav_payroll">الرواتب</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="accounts" data-roles="owner,finance">
+        <span class="glyph" aria-hidden="true">📒</span><span data-i18n="nav_accounts">دليل الحسابات</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="privateaccounts" data-roles="owner">
+        <span class="glyph" aria-hidden="true">🔐</span><span data-i18n="nav_privateaccounts">الحسابات الخاصة</span><span class="proto-dot">نموذج</span>
+      </button>
+
+      <div class="sidebar-group-title" data-i18n="group_marketing">التسويق</div>
+      <button type="button" class="nav-item sub" data-view="doctors">
+        <span class="glyph" aria-hidden="true">🩺</span><span data-i18n="nav_doctors">أطباء/KOL</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="brandspend" data-roles="owner,finance">
+        <span class="glyph" aria-hidden="true">🏷️</span><span data-i18n="nav_brandspend">إنفاق المنتجات/العلامات</span><span class="proto-dot">نموذج</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="objectives" data-roles="owner,finance,sales_manager">
+        <span class="glyph" aria-hidden="true">🎯</span><span data-i18n="nav_objectives">الأهداف وKPI</span><span class="proto-dot">نموذج</span>
+      </button>
+
+      <div class="sidebar-group-title" data-i18n="group_purchasing">المشتريات</div>
+      <button type="button" class="nav-item sub" data-view="suppliers" data-roles="owner,finance">
+        <span class="glyph" aria-hidden="true">🚚</span><span data-i18n="nav_suppliers">المورّدون</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="purchases" data-roles="owner,finance">
+        <span class="glyph" aria-hidden="true">🛒</span><span data-i18n="nav_purchases">أوامر الشراء</span><span class="proto-dot">نموذج</span>
+      </button>
+
+      <div class="sidebar-group-title" data-i18n="group_analytics">التحليلات</div>
+      <button type="button" class="nav-item sub" data-view="analytics">
+        <span class="glyph" aria-hidden="true">📈</span><span data-i18n="nav_analytics">لوحة عبر الوحدات</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="telegram">
+        <span class="glyph" aria-hidden="true">✈️</span><span data-i18n="nav_telegram">تكامل تليجرام</span><span class="proto-dot">نموذج</span>
+      </button>
+
+      <div class="sidebar-version">PWA · v6 · النموذج التجريبي</div>
+    </aside>
+
+    <div class="scrim" id="scrim" aria-hidden="true"></div>
+
+    <main id="main">
+      <!-- ---------- Login ---------- -->
+      <section id="login-view" class="login-wrap" aria-labelledby="login-title">
+        <div class="login-brand">
+          <span class="brand-mark" aria-hidden="true">⚕</span>
+          <strong data-i18n="app_name">نظام الشركة الطبية</strong>
         </div>
-        <div id="form-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <form id="invoice-form" novalidate>
-          <div class="grid-3">
+        <div class="card">
+          <h1 id="login-title" data-i18n="login_title">تسجيل الدخول</h1>
+          <p class="muted small" data-i18n="login_hint">استخدم حساب الشركة للوصول إلى النظام.</p>
+          <div id="login-error" class="alert hidden" role="alert" data-kind="error"></div>
+          <div id="login-demo" class="alert hidden" data-kind="info" data-i18n="demo_hint"></div>
+          <form id="login-form" novalidate>
             <div class="field">
-              <label for="invoice-no" data-i18n="invoice_no">Invoice number</label>
-              <input id="invoice-no" name="invoice_no" required maxlength="30">
+              <label for="login-username" data-i18n="username">اسم المستخدم</label>
+              <input id="login-username" name="username" autocomplete="username" required>
             </div>
-            <div class="field">
-              <label for="invoice-date" data-i18n="invoice_date">Invoice date</label>
-              <input id="invoice-date" name="invoice_date" type="date" required>
+            <div class="field" style="margin-top: var(--space-3);">
+              <label for="login-password" data-i18n="password">كلمة المرور</label>
+              <input id="login-password" name="password" type="password" autocomplete="current-password" required>
             </div>
-            <div class="field">
-              <label for="customer" data-i18n="customer">Customer</label>
-              <select id="customer" name="customer_id" required></select>
-            </div>
-          </div>
+            <button type="submit" id="login-submit" class="primary block" style="margin-top: var(--space-4);" data-i18n="sign_in">دخول</button>
+          </form>
+        </div>
+      </section>
 
-          <div class="grid-3" style="margin-top: var(--space-4);">
-            <div class="field">
-              <label for="branch-display" data-i18n="branch">Branch</label>
-              <input id="branch-display" disabled>
-            </div>
-            <div class="field">
-              <label for="warehouse" data-i18n="warehouse">Source warehouse</label>
-              <select id="warehouse" name="warehouse_id" required></select>
-            </div>
-            <div class="field">
-              <label for="notes" data-i18n="notes">Notes</label>
-              <textarea id="notes" name="notes" maxlength="4000"></textarea>
-            </div>
+      <!-- ---------- Home / dashboard (real, server-sourced) ---------- -->
+      <section id="home-view" class="hidden" aria-labelledby="home-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="home-title" data-i18n="home_title">لوحة المؤشرات</h1>
+            <p class="desc" data-i18n="home_desc">مؤشرات مأخوذة مباشرة من قاعدة البيانات التجريبية العزلة — لا أرقام مُختلقة في هذه الشاشة.</p>
           </div>
+          <div class="proto-chip-row">
+            <span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+            <button type="button" class="default" data-refresh="home" data-i18n="refresh">تحديث</button>
+          </div>
+        </div>
+        <div id="home-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="stat-grid">
+          <div class="stat navy">
+            <span class="stat-label" data-i18n="stat_sales_month">مبيعات الشهر (مُرحّلة)</span>
+            <span class="stat-value num" id="stat-sales">—</span>
+            <span class="stat-sub num" id="stat-sales-sub"></span>
+          </div>
+          <div class="stat navy">
+            <span class="stat-label" data-i18n="stat_ar">أرصدة العملاء المستحقة</span>
+            <span class="stat-value num" id="stat-ar">—</span>
+            <span class="stat-sub" id="stat-ar-sub"></span>
+          </div>
+          <div class="stat teal">
+            <span class="stat-label" data-i18n="stat_collected">التحصيلات (إجمالي)</span>
+            <span class="stat-value num" id="stat-receipts">—</span>
+            <span class="stat-sub num" id="stat-receipts-sub"></span>
+          </div>
+          <div class="stat teal">
+            <span class="stat-label" data-i18n="stat_stock_units">وحدات في المخازن</span>
+            <span class="stat-value num" id="stat-stock">—</span>
+            <span class="stat-sub num" id="stat-stock-sub"></span>
+          </div>
+        </div>
+        <div class="card stack" style="margin-top: var(--space-5);">
+          <div class="section-head">
+            <h2 data-i18n="home_aging_title">أعمار الذمم (من قيود فعلية)</h2>
+            <a class="ghost" href="#balances" data-view-goto="balances" data-i18n="nav_balances">الذمم</a>
+          </div>
+          <div class="aging-strip" id="home-aging"></div>
+        </div>
+        <div class="card" style="margin-top: var(--space-5);">
+          <div class="section-head">
+            <h2 data-i18n="home_recent_receipts">أحدث سندات القبض</h2>
+            <button type="button" class="ghost" data-goto="collections" data-i18n="nav_collections">التحصيلات</button>
+          </div>
+          <div class="table-wrap">
+            <table class="grid-table">
+              <thead>
+                <tr>
+                  <th data-i18n="receipt_no">سند القبض</th>
+                  <th data-i18n="receipt_date">التاريخ</th>
+                  <th data-i18n="invoice_no">الفاتورة</th>
+                  <th data-i18n="method">الطريقة</th>
+                  <th class="num" data-i18n="amount">المبلغ</th>
+                </tr>
+              </thead>
+              <tbody id="home-receipts"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card" style="margin-top: var(--space-5);">
+          <div class="section-head">
+            <h2 data-i18n="home_drafts_title">مسوداتي المحفوظة على هذا الجهاز</h2>
+            <button type="button" class="primary" data-goto="invoice" data-i18n="home_start_action">فاتورة بيع جديدة</button>
+          </div>
+          <p class="muted small" data-i18n="home_drafts_hint">اختصار للجهاز الحالي فقط؛ كل سجل يُفتح من الخادم (GET /invoices/{id}) عند الضغط عليه.</p>
+          <div class="table-wrap">
+            <table class="grid-table">
+              <thead>
+                <tr>
+                  <th data-i18n="invoice_no">رقم الفاتورة</th>
+                  <th data-i18n="customer">العميل</th>
+                  <th class="num" data-i18n="grand_total">الإجمالي</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="home-drafts"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-          <div class="section-head" style="margin-top: var(--space-5);">
-            <h2 data-i18n="lines_title">Lines</h2>
-            <button type="button" id="add-line" class="ghost" data-i18n="add_line">Add line</button>
+      <!-- ---------- New invoice (real draft flow) ---------- -->
+      <section id="invoice-view" class="hidden" aria-labelledby="new-invoice-title">
+        <div class="card">
+          <div class="view-head">
+            <div class="titles">
+              <h1 id="new-invoice-title" data-i18n="new_invoice">فاتورة بيع جديدة (مبدئية)</h1>
+              <p class="desc" data-i18n="draft_only_note">مبدئية فقط — الترحيل معطّل بوابة الأمان؛ المسودة لا تخصم المخزون ولا تغيّر الذمم.</p>
+            </div>
+            <span class="badge draft" data-i18n="status_draft">مبدئية</span>
           </div>
-          <div class="line-head" aria-hidden="true">
-            <span data-i18n="product">Product</span>
-            <span data-i18n="quantity">Quantity</span>
-            <span data-i18n="discount_pct">Discount %</span>
-            <span data-i18n="line_total">Line total</span>
-            <span></span>
-          </div>
-          <div id="lines" class="lines"></div>
+          <div id="form-error" class="alert hidden" role="alert" data-kind="error"></div>
+          <form id="invoice-form" novalidate>
+            <div class="grid-3">
+              <div class="field">
+                <label for="invoice-no" data-i18n="invoice_no">رقم الفاتورة</label>
+                <input id="invoice-no" name="invoice_no" required maxlength="30">
+              </div>
+              <div class="field">
+                <label for="invoice-date" data-i18n="invoice_date">تاريخ الفاتورة</label>
+                <input id="invoice-date" name="invoice_date" type="date" required>
+              </div>
+              <div class="field">
+                <label for="customer" data-i18n="customer">العميل</label>
+                <select id="customer" name="customer_id" required></select>
+              </div>
+            </div>
+            <div class="grid-3" style="margin-top: var(--space-4);">
+              <div class="field">
+                <label for="branch-display" data-i18n="branch">الفرع</label>
+                <input id="branch-display" disabled>
+              </div>
+              <div class="field">
+                <label for="warehouse" data-i18n="warehouse">مخزن الصرف</label>
+                <select id="warehouse" name="warehouse_id" required></select>
+              </div>
+              <div class="field">
+                <label for="notes" data-i18n="notes">ملاحظات</label>
+                <textarea id="notes" name="notes" maxlength="4000"></textarea>
+              </div>
+            </div>
 
+            <div class="section-head" style="margin-top: var(--space-5);">
+              <h2 data-i18n="lines_title">البنود</h2>
+              <button type="button" id="add-line" class="default" data-i18n="add_line">إضافة بند</button>
+            </div>
+            <div class="line-head" aria-hidden="true">
+              <span data-i18n="product">الصنف</span>
+              <span data-i18n="quantity">الكمية</span>
+              <span data-i18n="discount_pct">الخصم %</span>
+              <span data-i18n="line_total">إجمالي البند</span>
+              <span></span>
+            </div>
+            <div id="lines" class="lines"></div>
+
+            <div class="invoice-tape" aria-live="polite">
+              <h3 data-i18n="totals_title">الإجماليات التقديرية</h3>
+              <div class="tape-row"><span class="label" data-i18n="total_before_discount">قبل الخصم</span><span class="value num" id="prev-before">0.00</span></div>
+              <div class="tape-row discount"><span class="label" data-i18n="total_discount">الخصم</span><span class="value num" id="prev-discount">0.00</span></div>
+              <div class="tape-row"><span class="label" data-i18n="total_net">الصافي (قبل الضريبة)</span><span class="value num" id="prev-net">0.00</span></div>
+              <div class="tape-row"><span class="label" data-i18n="vat_amount">ضريبة القيمة المضافة</span><span class="value num" id="prev-vat">0.00</span></div>
+              <div class="tape-row grand"><span class="label" data-i18n="grand_total">الإجمالي</span><span class="value num" id="prev-grand">0.00</span></div>
+            </div>
+
+            <div style="margin-top: var(--space-4);">
+              <button type="submit" id="save-draft" class="primary" data-i18n="save_draft">حفظ كمسودة</button>
+              <span class="muted small" id="totals-note" data-i18n="server_totals_note">يعيد الخادم حساب الإجماليات ويخزّنها كمرجع نهائي.</span>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ---------- Saved draft ---------- -->
+      <section id="draft-view" class="hidden" aria-labelledby="draft-title">
+        <div class="card">
+          <div class="view-head">
+            <div class="titles">
+              <h1 id="draft-title" data-i18n="draft_saved">المسودة المحفوظة</h1>
+              <p class="desc" data-i18n="draft_scope_note">المسودة لا تخصم من المخزون ولا تؤثر على الذمم؛ لا يُقيد الأثر إلا عند الترحيل.</p>
+            </div>
+            <span id="draft-status" class="badge draft">—</span>
+          </div>
+          <dl class="saved-grid">
+            <div><dt data-i18n="invoice_no">رقم الفاتورة</dt><dd class="num" id="draft-no">—</dd></div>
+            <div><dt data-i18n="customer">العميل</dt><dd id="draft-customer">—</dd></div>
+            <div><dt data-i18n="warehouse">مخزن الصرف</dt><dd id="draft-warehouse">—</dd></div>
+            <div><dt data-i18n="invoice_date">تاريخ الفاتورة</dt><dd class="num" id="draft-date">—</dd></div>
+          </dl>
+          <div class="table-wrap">
+            <table class="grid-table">
+              <thead>
+                <tr>
+                  <th data-i18n="product">الصنف</th>
+                  <th class="num" data-i18n="quantity">الكمية</th>
+                  <th class="num" data-i18n="unit_price">سعر الوحدة</th>
+                  <th class="num" data-i18n="line_total">إجمالي البند</th>
+                </tr>
+              </thead>
+              <tbody id="draft-lines"></tbody>
+            </table>
+          </div>
           <div class="invoice-tape" aria-live="polite">
-            <h3 data-i18n="totals_title">Estimated totals</h3>
-            <div class="tape-row"><span class="label" data-i18n="total_before_discount">Before discount</span><span class="value num" id="prev-before">0.00</span></div>
-            <div class="tape-row discount"><span class="label" data-i18n="total_discount">Discount</span><span class="value num" id="prev-discount">0.00</span></div>
-            <div class="tape-row"><span class="label" data-i18n="total_net">Net (ex-VAT)</span><span class="value num" id="prev-net">0.00</span></div>
-            <div class="tape-row"><span class="label" data-i18n="vat_amount">VAT</span><span class="value num" id="prev-vat">0.00</span></div>
-            <div class="tape-row grand"><span class="label" data-i18n="grand_total">Grand total</span><span class="value num" id="prev-grand">0.00</span></div>
+            <h3 data-i18n="server_totals_title">إجماليات الخادم</h3>
+            <div class="tape-row"><span class="label" data-i18n="total_before_discount">قبل الخصم</span><span class="value num" id="draft-before">0.00</span></div>
+            <div class="tape-row discount"><span class="label" data-i18n="total_discount">الخصم</span><span class="value num" id="draft-discount">0.00</span></div>
+            <div class="tape-row"><span class="label" data-i18n="total_net">الصافي (قبل الضريبة)</span><span class="value num" id="draft-net">0.00</span></div>
+            <div class="tape-row"><span class="label" data-i18n="vat_amount">ضريبة القيمة المضافة</span><span class="value num" id="draft-vat">0.00</span></div>
+            <div class="tape-row grand"><span class="label" data-i18n="grand_total">الإجمالي</span><span class="value num" id="draft-grand">0.00</span></div>
           </div>
-
+          <div id="draft-error" class="alert hidden" role="alert" data-kind="warn" style="margin-top: var(--space-4);"></div>
           <div style="margin-top: var(--space-4);">
-            <button type="submit" id="save-draft" class="primary" data-i18n="save_draft">Save draft</button>
-            <span class="muted small" id="totals-note" data-i18n="server_totals_note">The server recalculates and stores the authoritative totals.</span>
+            <button type="button" id="post-draft" class="primary" data-i18n="post_invoice">ترحيل الفاتورة</button>
+            <button type="button" class="default" data-goto="invoice" data-i18n="new_draft">مسودة جديدة</button>
+            <span class="muted small" data-i18n="posting_disabled_hint">الترحيل معطّل بواسطة بوابة الأمان (HTTP 409) — لن يُحاكى ترحيل ناجح بهذا العرض.</span>
           </div>
-          <p class="muted small" style="margin-top: var(--space-3);" data-i18n="draft_scope_note">
-            الحفظ كمُسودة لا يخصم من المخزون ولا يؤثر على الذمم؛ تُقيَّد الأثر عند ترحيل الفاتورة فقط.
-          </p>
-        </form>
-      </div>
-    </section>
-
-    <!-- ---------- Saved draft ---------- -->
-    <section id="draft-view" class="hidden" aria-labelledby="draft-title">
-      <div class="card">
-        <div class="section-head">
-          <h1 id="draft-title" data-i18n="draft_saved">Draft saved</h1>
-          <span>
-            <button type="button" class="ghost" data-goto="invoice" data-i18n="new_draft">New draft</button>
-          </span>
         </div>
-        <dl class="saved-grid">
-          <div><dt data-i18n="invoice_no">Invoice number</dt><dd class="num" id="draft-no">—</dd></div>
-          <div><dt data-i18n="status">Status</dt><dd><span id="draft-status" class="badge draft">Draft</span></dd></div>
-          <div><dt data-i18n="customer">Customer</dt><dd id="draft-customer">—</dd></div>
-          <div><dt data-i18n="warehouse">Source warehouse</dt><dd id="draft-warehouse">—</dd></div>
-        </dl>
+      </section>
 
-        <table class="line-table">
-          <thead>
-            <tr>
-              <th data-i18n="product">Product</th>
-              <th class="num" data-i18n="quantity">Quantity</th>
-              <th class="num" data-i18n="discount_pct">Discount %</th>
-              <th class="num" data-i18n="unit_price">Unit price</th>
-              <th class="num" data-i18n="line_total">Line total</th>
-            </tr>
-          </thead>
-          <tbody id="draft-lines"></tbody>
-        </table>
-
-        <div class="invoice-tape" aria-live="polite">
-          <h3 data-i18n="server_totals_title">Server totals</h3>
-          <div class="tape-row"><span class="label" data-i18n="total_before_discount">Before discount</span><span class="value num" id="draft-before">0.00</span></div>
-          <div class="tape-row discount"><span class="label" data-i18n="total_discount">Discount</span><span class="value num" id="draft-discount">0.00</span></div>
-          <div class="tape-row"><span class="label" data-i18n="total_net">Net (ex-VAT)</span><span class="value num" id="draft-net">0.00</span></div>
-          <div class="tape-row"><span class="label" data-i18n="vat_amount">VAT</span><span class="value num" id="draft-vat">0.00</span></div>
-          <div class="tape-row grand"><span class="label" data-i18n="grand_total">Grand total</span><span class="value num" id="draft-grand">0.00</span></div>
-        </div>
-
-        <p class="muted small" style="margin: var(--space-4) 0 0;" data-i18n="draft_scope_note">
-          الحفظ كمُسودة لا يخصم من المخزون ولا يؤثر على الذمم.
-        </p>
-
-        <div id="draft-error" class="alert hidden" role="alert" data-kind="warn" style="margin-top: var(--space-4);"></div>
-        <div style="margin-top: var(--space-4);">
-          <button type="button" id="post-draft" data-i18n="post_invoice">Post invoice</button>
-          <span class="muted small" data-i18n="posting_disabled_hint">Posting is disabled by the server safety gate (HTTP 409).</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- ---------- Inventory (read-only) ---------- -->
-    <section id="inventory-view" class="hidden" aria-labelledby="inventory-title">
-      <div class="card">
-        <div class="section-head">
-          <h1 id="inventory-title" data-i18n="inventory_title">المخزون</h1>
-          <button type="button" class="ghost" data-refresh="inventory" data-i18n="refresh">تحديث</button>
+      <!-- ---------- Stock balances (real) ---------- -->
+      <section id="inventory-view" class="hidden" aria-labelledby="inventory-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="inventory-title" data-i18n="inventory_title">أرصدة المخزون</h1>
+            <p class="desc" data-i18n="demo_note_stock">أرصدة افتتاحية تجريبية مُدرجة مسبقًا في قاعدة بيانات العزلة.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="inventory" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="inventory-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <table class="line-table">
-          <thead>
-            <tr>
-              <th data-i18n="warehouse">المخزن</th>
-              <th data-i18n="product">الصنف</th>
-              <th class="num" data-i18n="quantity">الكمية</th>
-              <th class="num" data-i18n="updated_at">آخر تحديث</th>
-            </tr>
-          </thead>
-          <tbody id="stock-rows"></tbody>
-        </table>
-        <p class="muted small" style="margin-top: var(--space-3);" data-i18n="demo_note_stock">
-          أرصدة الافتتاح التجريبية أساسها حركات إدخال تجريبية مُدرجة مباشرة في قاعدة البيانات العرض.
-        </p>
-      </div>
-    </section>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead>
+              <tr>
+                <th data-i18n="warehouse">المخزن</th>
+                <th data-i18n="product">الصنف</th>
+                <th class="num" data-i18n="quantity">الكمية</th>
+                <th class="num" data-i18n="updated_at">آخر تحديث</th>
+              </tr>
+            </thead>
+            <tbody id="stock-rows"></tbody>
+          </table>
+        </div>
+      </section>
 
-    <!-- ---------- Customer balances (read-only) ---------- -->
-    <section id="balances-view" class="hidden" aria-labelledby="balances-title">
-      <div class="card">
-        <div class="section-head">
-          <h1 id="balances-title" data-i18n="balances_title">أرصدة العملاء</h1>
-          <button type="button" class="ghost" data-refresh="balances" data-i18n="refresh">تحديث</button>
+      <!-- ---------- Stock ledger (real movements) ---------- -->
+      <section id="ledger-view" class="hidden" aria-labelledby="ledger-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="ledger-title" data-i18n="ledger_title">حركة المخزن (الدفتر)</h1>
+            <p class="desc" data-i18n="ledger_desc">كل حركة إدخال/صرف مُسجلة في قاعدة البيانات مع مرجعها.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="ledger" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="ledger-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead>
+              <tr>
+                <th data-i18n="mv_date">التاريخ</th>
+                <th data-i18n="mv_type">نوع الحركة</th>
+                <th data-i18n="warehouse">المخزن</th>
+                <th data-i18n="product">الصنف</th>
+                <th class="num" data-i18n="quantity">الكمية</th>
+                <th data-i18n="notes">ملاحظة</th>
+              </tr>
+            </thead>
+            <tbody id="movement-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- AR balances + customer ledger card (real) ---------- -->
+      <section id="balances-view" class="hidden" aria-labelledby="balances-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="balances-title" data-i18n="balances_title">الذمم وكشوف العملاء</h1>
+            <p class="desc" data-i18n="balances_note">الرصيد = مجموع القيود الفعلية (فواتير مُرحّلة + أرصدة افتتاحية تجريبية − تحصيلات)؛ حفظ المسودة لا يغيّره.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="balances" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="balances-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <table class="line-table">
-          <thead>
-            <tr>
-              <th data-i18n="customer">العميل</th>
-              <th class="num" data-i18n="balance">الرصيد</th>
-            </tr>
-          </thead>
-          <tbody id="balance-rows"></tbody>
-        </table>
-        <p class="muted small" style="margin-top: var(--space-3);" data-i18n="balances_note">
-          الرصيد = مجموع القيود (فواتير مُرحّلة + أرصدة افتتاحية − سندات القبض)؛ القيود نفسها تجريبية.
-        </p>
-      </div>
-    </section>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="grid-table">
+              <thead>
+                <tr>
+                  <th data-i18n="customer">العميل</th>
+                  <th data-i18n="branch">الفرع</th>
+                  <th class="num" data-i18n="balance">الرصيد</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="balance-rows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card" style="margin-top: var(--space-5);">
+          <div class="section-head">
+            <h2 data-i18n="ledger_card_title">دفتر العميل (بطاقة الحساب)</h2>
+          </div>
+          <div class="field" style="max-width: 420px; margin-bottom: var(--space-3);">
+            <label for="ledger-customer" data-i18n="select_customer_ledger">اختر عميلًا لعرض دفتره</label>
+            <select id="ledger-customer"></select>
+          </div>
+          <div id="ledger-summary" class="chip-row"></div>
+          <div class="table-wrap">
+            <table class="grid-table">
+              <thead>
+                <tr>
+                  <th data-i18n="mv_date">التاريخ</th>
+                  <th data-i18n="entry_type">نوع القيد</th>
+                  <th data-i18n="voucher">المستند</th>
+                  <th data-i18n="notes">البيان</th>
+                  <th class="num" data-i18n="debit">مدين</th>
+                  <th class="num" data-i18n="credit">دائن</th>
+                  <th class="num" data-i18n="running">الرصيد</th>
+                </tr>
+              </thead>
+              <tbody id="entry-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-    <!-- ---------- Collections (read-only) ---------- -->
-    <section id="collections-view" class="hidden" aria-labelledby="collections-title">
-      <div class="card">
-        <div class="section-head">
-          <h1 id="collections-title" data-i18n="collections_title">التحصيلات</h1>
-          <button type="button" class="ghost" data-refresh="collections" data-i18n="refresh">تحديث</button>
+      <!-- ---------- Collections (real receipts) ---------- -->
+      <section id="collections-view" class="hidden" aria-labelledby="collections-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="collections-title" data-i18n="collections_title">التحصيلات (سندات القبض)</h1>
+            <p class="desc" data-i18n="demo_note_receipts">سندات القبض افتتاحية تجريبية؛ بوابة الأمان تمنع إنشاء/إبطال سندات جديدة (409).</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="collections" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="collections-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <table class="line-table">
-          <thead>
-            <tr>
-              <th data-i18n="receipt_no">سند القبض</th>
-              <th data-i18n="receipt_date">التاريخ</th>
-              <th data-i18n="invoice_no">الفاتورة</th>
-              <th data-i18n="customer">العميل</th>
-              <th data-i18n="method">الطريقة</th>
-              <th class="num" data-i18n="amount">المبلغ</th>
-              <th data-i18n="status">الحالة</th>
-            </tr>
-          </thead>
-          <tbody id="receipt-rows"></tbody>
-        </table>
-        <p class="muted small" style="margin-top: var(--space-3);" data-i18n="demo_note_receipts">
-          سندات القبض مدرجة كمعطيات افتتاحية تجريبية في قاعدة البيانات؛ الترحيل مُعطّل فلن يُنشئ النظام سندات جديدة.
-        </p>
-      </div>
-    </section>
-  </main>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead>
+              <tr>
+                <th data-i18n="receipt_no">سند القبض</th>
+                <th data-i18n="receipt_date">التاريخ</th>
+                <th data-i18n="invoice_no">الفاتورة</th>
+                <th data-i18n="customer">العميل</th>
+                <th data-i18n="method">الطريقة</th>
+                <th class="num" data-i18n="amount">المبلغ</th>
+                <th data-i18n="status">الحالة</th>
+              </tr>
+            </thead>
+            <tbody id="receipt-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Customers (real) ---------- -->
+      <section id="customers-view" class="hidden" aria-labelledby="customers-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="customers-title" data-i18n="customers_title">العملاء</h1>
+            <p class="desc" data-i18n="customers_desc">دليل العملاء الفعلي المسجل — حسب الفرع والمنطقة؛ الإضافة والتعديل لاحقًا (شاهد الفاتورة للاستخدام الفعلي).</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="customers" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="customers-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead>
+              <tr>
+                <th data-i18n="code">الكود</th>
+                <th data-i18n="customer">العميل</th>
+                <th data-i18n="branch">الفرع</th>
+                <th data-i18n="territory">المنطقة</th>
+              </tr>
+            </thead>
+            <tbody id="customer-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Products (real) ---------- -->
+      <section id="products-view" class="hidden" aria-labelledby="products-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="products-title" data-i18n="products_title">الأصناف والأسعار</h1>
+            <p class="desc" data-i18n="products_desc">كتالوج الأصناف الفعلي مع سعر الأساس ونسبة القيمة المضافة.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="products" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="products-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead>
+              <tr>
+                <th data-i18n="code">SKU</th>
+                <th data-i18n="product">الصنف</th>
+                <th class="num" data-i18n="base_price">سعر الأساس</th>
+                <th class="num" data-i18n="vat_pct">القيمة المضافة %</th>
+              </tr>
+            </thead>
+            <tbody id="product-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Branches & warehouses (real) + org preview ---------- -->
+      <section id="warehouses-view" class="hidden" aria-labelledby="warehouses-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="warehouses-title" data-i18n="warehouses_title">الفروع والمخازن</h1>
+            <p class="desc" data-i18n="warehouses_desc">الفروع والمخازن المسجلة فعليًا؛ هيكلة المناطق (مناطق → مجالات → مندوبين) نموذج أولي أدناه.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="warehouses" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="warehouses-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="grid-table">
+              <thead>
+                <tr>
+                  <th data-i18n="code">الكود</th>
+                  <th data-i18n="warehouse">المخزن</th>
+                  <th data-i18n="branch">الفرع</th>
+                  <th data-i18n="active">نشِط</th>
+                </tr>
+              </thead>
+              <tbody id="warehouse-rows"></tbody>
+            </table>
+          </div>
+          <div id="org-preview"></div>
+        </div>
+      </section>
+
+      <!-- ---------- Suppliers (real) ---------- -->
+      <section id="suppliers-view" class="hidden" aria-labelledby="suppliers-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="suppliers-title" data-i18n="suppliers_title">المورّدون</h1>
+            <p class="desc" data-i18n="suppliers_desc">دليل المورّدين الفعلي — بيانات تجريبية بالكامل.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="suppliers" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="suppliers-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead>
+              <tr>
+                <th data-i18n="code">الكود</th>
+                <th data-i18n="supplier">المورّد</th>
+                <th data-i18n="phone">الهاتف</th>
+                <th data-i18n="address">العنوان</th>
+              </tr>
+            </thead>
+            <tbody id="supplier-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- COA (real) ---------- -->
+      <section id="accounts-view" class="hidden" aria-labelledby="accounts-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="accounts-title" data-i18n="accounts_title">دليل الحسابات</h1>
+            <p class="desc" data-i18n="accounts_desc">الحسابات المسجلة فعليًا في دليل الحسابات (أصول/التزامات/حقوق/إيرادات/مصروفات).</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="accounts" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="accounts-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead>
+              <tr>
+                <th data-i18n="code">الحساب</th>
+                <th data-i18n="account_name">الاسم</th>
+                <th data-i18n="account_type">النوع</th>
+              </tr>
+            </thead>
+            <tbody id="account-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Doctors/KOL (real directory + spend preview) ---------- -->
+      <section id="doctors-view" class="hidden" aria-labelledby="doctors-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="doctors-title" data-i18n="doctors_title">أطباء / KOL</h1>
+            <p class="desc" data-i18n="doctors_desc">دليل الأطباء الفعلي؛ سجل الإنفاق الترويجي نموذج أولي أدناه.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="doctors" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="doctors-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead>
+              <tr>
+                <th data-i18n="code">الكود</th>
+                <th data-i18n="doctor">الطبيب</th>
+                <th data-i18n="specialty">التخصص</th>
+                <th data-i18n="branch">الفرع</th>
+                <th data-i18n="phone">الهاتف</th>
+              </tr>
+            </thead>
+            <tbody id="doctor-rows"></tbody>
+          </table>
+        </div>
+        <div id="kolspend-preview"></div>
+      </section>
+
+      <!-- ---------- Stock visits (interactive PROTOTYPE) ---------- -->
+      <section id="visits-view" class="hidden" aria-labelledby="visits-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="visits-title" data-i18n="visits_title">زيارات المخزون (الميدان)</h1>
+            <p class="desc" data-i18n="visits_desc">المسار الأول للهاتف: تسجيل رصيد الصيدلية، المسحوب، والتحصيل لكل صنف في الزيارة.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge proto" data-i18n="badge_proto">نموذج أولي — حفظ محلي فقط</span></span>
+        </div>
+        <div id="visits-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="visit-card">
+          <div class="grid-2">
+            <div class="field">
+              <label for="visit-customer" data-i18n="customer">العميل</label>
+              <select id="visit-customer"></select>
+            </div>
+            <div class="field">
+              <label for="visit-product" data-i18n="product">الصنف</label>
+              <select id="visit-product"></select>
+            </div>
+          </div>
+          <div class="grid-4" style="margin-top: var(--space-3);">
+            <div class="field">
+              <label for="visit-prev" data-i18n="visit_prev">رصيد سابق</label>
+              <input id="visit-prev" type="number" inputmode="decimal" min="0" step="1" value="25">
+            </div>
+            <div class="field">
+              <label for="visit-del" data-i18n="visit_del">توريد هذا اليوم</label>
+              <input id="visit-del" type="number" inputmode="decimal" min="0" step="1" value="10">
+            </div>
+            <div class="field">
+              <label for="visit-ret" data-i18n="visit_ret">مرتجعات الزيارة</label>
+              <input id="visit-ret" type="number" inputmode="decimal" min="0" step="1" value="0">
+            </div>
+            <div class="field">
+              <label for="visit-cur" data-i18n="visit_cur">الرصيد الحالي الفعلي</label>
+              <input id="visit-cur" type="number" inputmode="decimal" min="0" step="1" value="12">
+            </div>
+          </div>
+          <div class="visit-computed" style="margin-top: var(--space-3);" aria-live="polite">
+            <span data-i18n="visit_sellthrough">المسحوب الفعلي المحسوب</span>
+            <span class="num" id="visit-st">23</span>
+          </div>
+          <div id="visit-warn" class="alert hidden" role="alert" data-kind="warn" style="margin-top: var(--space-3);"></div>
+          <div class="grid-3" style="margin-top: var(--space-3);">
+            <div class="field">
+              <label for="visit-amount" data-i18n="visit_amount">تحصيل مسدد</label>
+              <input id="visit-amount" type="number" inputmode="decimal" min="0" step="0.01" value="0">
+            </div>
+            <div class="field">
+              <label for="visit-method" data-i18n="method">طريقة السداد</label>
+              <select id="visit-method">
+                <option value="cash" data-i18n="method_cash">نقدًا</option>
+                <option value="check" data-i18n="method_check">شيك</option>
+                <option value="transfer" data-i18n="method_transfer">حوالة</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="visit-notes" data-i18n="notes">ملاحظات الزيارة</label>
+              <input id="visit-notes" maxlength="300">
+            </div>
+          </div>
+          <button type="button" id="visit-save" class="primary block" style="margin-top: var(--space-4);" data-i18n="visit_save">حفظ الزيارة (توضيحي)</button>
+          <p class="muted small" style="margin-top: var(--space-2);" data-i18n="visit_save_note">نموذج أولي: الحفظ على هذا الجهاز محليًا فقط ولا يمسّ المخزون أو الذمم أو الخادم.</p>
+        </div>
+        <div class="card" style="margin-top: var(--space-5);">
+          <div class="section-head">
+            <h2 data-i18n="visit_saved_title">زياراتي المحفوظة (هذا الجهاز)</h2>
+            <button type="button" class="default" id="visits-clear" data-i18n="visit_clear">تفريغ القائمة</button>
+          </div>
+          <div class="table-wrap">
+            <table class="grid-table">
+              <thead>
+                <tr>
+                  <th data-i18n="visit_at">الوقت</th>
+                  <th data-i18n="customer">العميل</th>
+                  <th data-i18n="product">الصنف</th>
+                  <th class="num" data-i18n="visit_sellthrough">المسحوب</th>
+                  <th class="num" data-i18n="visit_amount">تحصيل</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="visit-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- Generic module/preview shell ---------- -->
+      <section id="module-view" class="hidden">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="module-title"></h1>
+            <p class="desc" id="module-desc"></p>
+          </div>
+          <span class="proto-chip-row" id="module-badges"></span>
+        </div>
+        <div id="module-content" class="card preview-body"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Bottom quick navigation (phones, brief §8) -->
+  <nav id="bottomnav" class="bottom-nav hidden" aria-label="شريط التنقل السريع">
+    <button type="button" class="bnav-btn" data-view="home" data-roles="*">
+      <span class="glyph" aria-hidden="true">🏠</span><span data-i18n="nav_home">الرئيسية</span>
+    </button>
+    <button type="button" class="bnav-btn" data-view="invoice" data-roles="*">
+      <span class="glyph" aria-hidden="true">🧮</span><span data-i18n="nav_invoice_short">فواتير</span>
+    </button>
+    <button type="button" class="bnav-btn" data-view="visits" data-roles="owner,medical_rep,sales_manager">
+      <span class="glyph" aria-hidden="true">🚶</span><span data-i18n="nav_visits_short">زيارات</span>
+    </button>
+    <button type="button" class="bnav-btn" data-view="inventory" data-roles="owner,finance,sales_manager">
+      <span class="glyph" aria-hidden="true">📦</span><span data-i18n="nav_inventory_short">مخزون</span>
+    </button>
+    <button type="button" class="bnav-btn" data-view="balances" data-roles="owner,finance,sales_manager">
+      <span class="glyph" aria-hidden="true">📊</span><span data-i18n="nav_balances_short">ذمم</span>
+    </button>
+    <button type="button" class="bnav-btn" data-view="__menu" data-roles="*">
+      <span class="glyph" aria-hidden="true">☰</span><span data-i18n="nav_more">المزيد</span>
+    </button>
+  </nav>
+
+  <!-- Command palette (Ctrl+K) -->
+  <dialog id="palette" class="palette">
+    <div class="palette-in">
+      <input id="palette-input" type="search" autocomplete="off" placeholder="...">
+    </div>
+    <ul id="palette-list" class="palette-list"></ul>
+  </dialog>
 
   <script src="app.js"></script>
   <script>
-    // Keep the PWA installable; app logic lives in app.js.
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
   </script>
 </body>
