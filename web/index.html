@@ -134,6 +134,15 @@
       <button type="button" class="nav-item sub" data-view="targets" data-roles="owner,finance,sales_manager,district_manager,medical_rep,read_only_auditor">
         <span class="glyph" aria-hidden="true">🎯</span><span data-i18n="nav_targets">الأهداف</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
       </button>
+      <button type="button" class="nav-item sub" data-view="batches" data-roles="owner,finance,sales_manager,district_manager,read_only_auditor">
+        <span class="glyph" aria-hidden="true">⏳</span><span data-i18n="nav_batches">التشغيلات والصلاحية</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="cover" data-roles="owner,finance,sales_manager">
+        <span class="glyph" aria-hidden="true">🗓️</span><span data-i18n="nav_cover">غطاء المخزون</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="audit" data-roles="owner,finance,read_only_auditor">
+        <span class="glyph" aria-hidden="true">📜</span><span data-i18n="nav_audit">سجل التدقيق</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
+      </button>
       <button type="button" class="nav-item sub" data-view="cover" data-roles="owner,finance,sales_manager">
         <span class="glyph" aria-hidden="true">🗓️</span><span data-i18n="nav_cover">غطاء المخزون</span><span class="proto-dot">نموذج</span>
       </button>
@@ -744,6 +753,81 @@
               </tr>
             </thead>
             <tbody id="target-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Batches (real) ---------- -->
+      <section id="batches-view" class="hidden" aria-labelledby="batches-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="batches-title" data-i18n="batches_title">التشغيلات والصلاحية</h1>
+            <p class="desc" data-i18n="batches_desc">لقطات التشغيلات مرتبة حسب تاريخ الانتهاء (بيانات فعلية).</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="batches" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="batches-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th data-i18n="batch_no">رقم التشغيلة</th>
+              <th data-i18n="product">المنتج</th>
+              <th data-i18n="warehouse">المستودع</th>
+              <th data-i18n="expiry_date">تاريخ الانتهاء</th>
+              <th class="num" data-i18n="quantity">الكمية</th>
+            </tr></thead>
+            <tbody id="batch-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Cover (real) ---------- -->
+      <section id="cover-view" class="hidden" aria-labelledby="cover-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="cover-title" data-i18n="cover_title">غطاء المخزون</h1>
+            <p class="desc" data-i18n="cover_desc">أيام التغطية حسب المبيعات الفعلية (بيانات فعلية).</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="cover" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="cover-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th data-i18n="warehouse">المستودع</th>
+              <th data-i18n="product">المنتج</th>
+              <th class="num" data-i18n="on_hand">المخزون</th>
+              <th class="num" data-i18n="sold_in_window">المباع</th>
+              <th class="num" data-i18n="cover_days">أيام التغطية</th>
+              <th data-i18n="status">الحالة</th>
+            </tr></thead>
+            <tbody id="cover-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Audit (real) ---------- -->
+      <section id="audit-view" class="hidden" aria-labelledby="audit-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="audit-title" data-i18n="audit_title">سجل التدقيق</h1>
+            <p class="desc" data-i18n="audit_desc">سجل العمليات (بيانات فعلية من الخادم).</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="audit" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="audit-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th data-i18n="date">التاريخ</th>
+              <th data-i18n="actor">المنفذ</th>
+              <th data-i18n="action">العملية</th>
+              <th data-i18n="entity_type">الكيان</th>
+            </tr></thead>
+            <tbody id="audit-rows"></tbody>
           </table>
         </div>
       </section>

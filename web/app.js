@@ -282,7 +282,8 @@
     ledger: "ledger-view", invoicelist: "invoicelist-view", balances: "balances-view", collections: "collections-view",
     customers: "customers-view", products: "products-view", warehouses: "warehouses-view",
     suppliers: "suppliers-view", accounts: "accounts-view", doctors: "doctors-view",
-    visits: "visits-view", targets: "targets-view",
+    visits: "visits-view", targets: "targets-view", batches: "batches-view",
+    cover: "cover-view", audit: "audit-view",
   };
 
   var ROLE_OK = {
@@ -397,6 +398,9 @@
       else if (name === "ledger") loadLedger();
       else if (name === "invoicelist") loadInvoiceList();
       else if (name === "targets") loadTargets();
+      else if (name === "batches") loadBatches();
+      else if (name === "cover") loadCover();
+      else if (name === "audit") loadAudit();
       else if (name === "balances") loadBalances();
       else if (name === "collections") loadCollections();
       else if (name === "customers") loadCustomers();
@@ -1607,6 +1611,74 @@
     });
   }
 
+  function loadBatches() {
+    clearError(el.batchesError);
+    el.batchRows.innerHTML = "";
+    var loading = document.createElement("tr");
+    var tdLoad = document.createElement("td");
+    tdLoad.colSpan = 5; tdLoad.className = "muted"; tdLoad.textContent = "…";
+    loading.appendChild(tdLoad);
+    el.batchRows.appendChild(loading);
+    return api("/inventory/batches").then(function (rows) {
+      if (!rows.length) { emptyRow(el.batchRows, 5, "empty_rows"); return; }
+      renderRows(el.batchRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell("batch", row.batch_no));
+        tr.appendChild(cell("product", productLineLabel(row.product_id)));
+        tr.appendChild(cell("warehouse", warehouseLabel(row.warehouse_id)));
+        tr.appendChild(cell("expiry", fmtDate(row.expiry_date)));
+        tr.appendChild(cell("qty", fmtQty(row.quantity), true));
+        return tr;
+      });
+    }).catch(function (error) { showError(el.batchesError, messageFor(error)); });
+  }
+
+  function loadCover() {
+    clearError(el.coverError);
+    el.coverRows.innerHTML = "";
+    var loading = document.createElement("tr");
+    var tdLoad = document.createElement("td");
+    tdLoad.colSpan = 6; tdLoad.className = "muted"; tdLoad.textContent = "…";
+    loading.appendChild(tdLoad);
+    el.coverRows.appendChild(loading);
+    return api("/inventory/cover").then(function (rows) {
+      if (!rows.length) { emptyRow(el.coverRows, 6, "empty_rows"); return; }
+      renderRows(el.coverRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell("wh", warehouseLabel(row.warehouse_id)));
+        tr.appendChild(cell("product", productLineLabel(row.product_id)));
+        tr.appendChild(cell("onhand", fmtQty(row.on_hand), true));
+        tr.appendChild(cell("sold", row.sold_in_window == null ? "—" : fmtQty(row.sold_in_window), true));
+        tr.appendChild(cell("cover", row.cover_days == null ? "—" : fmtQty(row.cover_days), true));
+        var td = document.createElement("td");
+        td.appendChild(Object.assign(document.createElement("span"), { className: "badge " + (row.status === "overstock" ? "posted" : "draft"), textContent: row.status }));
+        tr.appendChild(td);
+        return tr;
+      });
+    }).catch(function (error) { showError(el.coverError, messageFor(error)); });
+  }
+
+  function loadAudit() {
+    clearError(el.auditError);
+    el.auditRows.innerHTML = "";
+    var loading = document.createElement("tr");
+    var tdLoad = document.createElement("td");
+    tdLoad.colSpan = 4; tdLoad.className = "muted"; tdLoad.textContent = "…";
+    loading.appendChild(tdLoad);
+    el.auditRows.appendChild(loading);
+    return api("/audit?limit=50").then(function (rows) {
+      if (!rows.length) { emptyRow(el.auditRows, 4, "empty_rows"); return; }
+      renderRows(el.auditRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell("date", fmtDate(row.created_at)));
+        tr.appendChild(cell("actor", row.actor_user_id || "—"));
+        tr.appendChild(cell("action", row.action));
+        tr.appendChild(cell("entity", row.entity_type));
+        return tr;
+      });
+    }).catch(function (error) { showError(el.auditError, messageFor(error)); });
+  }
+
   async function loadBalances() {
     clearError(el.balancesError);
     try {
@@ -2110,9 +2182,18 @@
     el.doctorsView = $("doctors-view");
     el.visitsView = $("visits-view");
     el.targetsView = $("targets-view");
+    el.batchesView = $("batches-view");
+    el.coverView = $("cover-view");
+    el.auditView = $("audit-view");
     el.moduleView = $("module-view");
     el.targetsError = $("targets-error");
     el.targetRows = $("target-rows");
+    el.batchesError = $("batches-error");
+    el.batchRows = $("batch-rows");
+    el.coverError = $("cover-error");
+    el.coverRows = $("cover-rows");
+    el.auditError = $("audit-error");
+    el.auditRows = $("audit-rows");
     el.moduleDesc = $("module-desc");
     el.moduleContent = $("module-content");
 

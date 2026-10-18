@@ -248,5 +248,20 @@
   "targets_desc": "Rep targets by month (live server data).",
   "target_quantity": "Target",
   "actual_quantity": "Actual",
-  "period": "Month"
+  "period": "Month",
+  "batches_title": "Batches",
+  "batches_desc": "Batch snapshots ordered by expiry (live data).",
+  "cover_title": "Stock cover",
+  "cover_desc": "Cover days from real sales (live data).",
+  "audit_title": "Audit log",
+  "audit_desc": "Operation log (live server data).",
+  "batch_no": "Batch no.",
+  "expiry_date": "Expiry date",
+  "on_hand": "On hand",
+  "sold_in_window": "Sold in window",
+  "cover_days": "Cover days",
+  "actor": "Actor",
+  "action": "Action",
+  "entity_type": "Entity",
+  "date": "Date"
 }
