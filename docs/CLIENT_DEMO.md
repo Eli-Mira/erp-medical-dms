@@ -45,6 +45,25 @@ Find the PC's LAN address (`ipconfig` → IPv4, e.g. `192.168.1.20`), then on th
 phone (Chrome/Android or Safari/iOS) open **http://192.168.1.20:8018/app/** and
 use **Add to Home screen** — the app series PWA, RTL, standalone window.
 
+## Temporary public link (Cloudflare quick tunnel)
+
+For a remote client without any deployment: tunnel the local server out.
+
+1. Server must be running (startup above; `127.0.0.1` binding is fine).
+2. Run the tunnel (no account needed):
+   ```powershell
+   & "$env:LOCALAPPDATA\cloudflared\cloudflared.exe" tunnel --url http://127.0.0.1:8018 --no-autoupdate
+   ```
+3. It prints a random address such as
+   `https://andale-colorado-farm-queen.trycloudflare.com` — the client opens
+   `<that-address>/app/` and signs in with the demo credentials above.
+4. The link is **temporary**: it changes every time the tunnel restarts, and it
+   works only while this PC is on and both the server and the tunnel processes
+   are running. Close it by stopping the `cloudflared` process.
+5. Safety posture: only the isolated synthetic `medical_demo` database is
+   reachable, posting stays server-gated (409), and the tunnel is inbound-free
+   (outbound cloudflared connection only).
+
 ## Device support & verification status
 
 - **PC (Chrome/Edge/Firefox)**: fully verified — the complete walkthrough was

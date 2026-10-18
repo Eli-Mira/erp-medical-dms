@@ -795,15 +795,24 @@
     });
   }
 
+  // Public/cold deployments (e.g. a first-hop tunnel) can fail the very first
+  // /meta fetch; the hint is cosmetic, so retry once and otherwise stay quiet.
+  async function fetchMeta() {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try { return await api("/meta"); } catch (_e) {
+        await new Promise(function (resolve) { setTimeout(resolve, 700); });
+      }
+    }
+    return null;
+  }
+
   async function init() {
     cacheElements();
     await loadI18n(localStorage.getItem("lang") || "ar");
-    try {
-      var meta = await api("/meta");
-      if (meta && meta.demo_mode && currentSection === "login-view") {
-        el.loginDemo.classList.remove("hidden");
-      }
-    } catch (_e) { /* /meta unavailable: the hint simply stays hidden */ }
+    var meta = await fetchMeta();
+    if (meta && meta.demo_mode && currentSection === "login-view") {
+      el.loginDemo.classList.remove("hidden");
+    }
     wire();
     addLine();
     recalcPreview();
