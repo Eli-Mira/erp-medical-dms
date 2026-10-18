@@ -1,6 +1,6 @@
 # Invoice/Collection milestone — current code PASS; deployment NOT READY
 
-**2026-10-18 current gate:** independent current-code SPEC/QUALITY/SECURITY review delivered PASS and parent intake is complete; no worker remains active. Fresh candidate and final post-integration full suites each passed all 315 cases on separate disposable databases, with unchanged source/config/Excel, default OFF and verified removal. Accepted source is staged/read back; authorized local commit/readback is the next operation, not another review. Canonical evidence: `finalization-20261018/{FINAL_ACCEPTANCE.md,REVIEW_INTAKE.md,SOURCE_INTEGRATION.json}`. Recovery and publication remain separately unapproved.
+**2026-10-18 current gate:** independent current-code SPEC/QUALITY/SECURITY review delivered PASS and parent intake is complete; no worker remains active. Fresh candidate and final post-integration full suites each passed all 315 cases on separate disposable databases, with unchanged source/config/Excel, default OFF and verified removal. Accepted source and evidence are committed as **`d233893425bc23df9d344bd9e0b88c6f501b4828`**; Git tree `158b71380626ec777c58b8f46d8c14200cc19518` and all 17 source blobs were read back and matched to the tested candidate. Raw evidence bytes were preserved. No pending review/worker remains. Canonical evidence: `finalization-20261018/{FINAL_ACCEPTANCE.md,REVIEW_INTAKE.md,SOURCE_INTEGRATION.json}`. Recovery and publication remain separately unapproved.
 
 ## Historical pre-finalization handoff — superseded below
 

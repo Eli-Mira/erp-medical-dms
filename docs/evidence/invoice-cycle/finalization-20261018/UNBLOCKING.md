@@ -1,5 +1,7 @@
 # ElsebaeyPharma ERP — review unblock and recovery boundary
 
+**Terminal source result (2026-10-18): PASS, committed `d233893425bc23df9d344bd9e0b88c6f501b4828`.** The single fresh reviewer delivered a usable current-code PASS; no direct fallback or additional review was needed. Candidate and post-integration full suites each passed all 315 cases on separate disposable databases; committed source/evidence readback matched. No recovery, production activation or push was performed. Latest acceptance: `FINAL_ACCEPTANCE.md`; original failure diagnosis and proposed-only recovery details below remain historical/approval context, not an active review hold.
+
 ## Held candidate and exact NO_VERDICT diagnosis
 
 There is **no held commit object**. HEAD is the pre-milestone base `f85b8f964b5b4b54139cbdf614e37a91bd6a45a4` on `milestone/invoice-collection-20261017`; the 17-file implementation/test/runner delta is still uncommitted. Its complete 22-hunk diff is `review.delta.txt`, SHA-256 `37e099d4c503dde8774d121a96dd0b3be00cf4567f6379c445016814200ba378`. Per-file source/diff bindings are in `../review-input/manifest.json`; freshly checked current-source/native-proof bindings are in `preflight.json`.
