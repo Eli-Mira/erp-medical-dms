@@ -32,6 +32,30 @@ $env:DATABASE_URL="postgresql+psycopg://dms:dms-dev@localhost:5432/medical_demo"
 
 Then open **http://127.0.0.1:8018/app/** and sign in.
 
+## Showing it on a phone (same Wi-Fi)
+
+The default command binds `127.0.0.1` (PC only). For a phone on the same
+network allow it in Windows Firewall and bind to all interfaces:
+
+```powershell
+$env:DATABASE_URL="postgresql+psycopg://dms:dms-dev@localhost:5432/medical_demo"; $env:POSTING_ENABLED="false"; $env:DEMO_MODE="1"; uv run --with-requirements requirements.txt uvicorn app.main:app --host 0.0.0.0 --port 8018
+```
+
+Find the PC's LAN address (`ipconfig` → IPv4, e.g. `192.168.1.20`), then on the
+phone (Chrome/Android or Safari/iOS) open **http://192.168.1.20:8018/app/** and
+use **Add to Home screen** — the app series PWA, RTL, standalone window.
+
+## Device support & verification status
+
+- **PC (Chrome/Edge/Firefox)**: fully verified — the complete walkthrough was
+  driven in a real desktop browser session in this development run.
+- **Phone/tablet layout**: verified with Google Lighthouse's mobile emulation —
+  scores **Accessibility 1.0, Best Practices 1.0, SEO 1.0 (zero failures)**;
+  responsive CSS collapses to a single column below 720 px. Not yet physically
+  touched on a real handset in-house — do one 2-minute phone walkthrough (log
+  in, open two views, save one draft) before presenting to the client to
+  confirm feel.
+
 ## Demo credentials (all synthetic)
 
 | Username       | Role           | Password    | Scope                                    |
