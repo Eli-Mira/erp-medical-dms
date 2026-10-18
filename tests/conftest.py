@@ -27,6 +27,7 @@ def isolated_financial_database(request):
         "test_invoice_cycle",
         "test_invoice_cycle_controls",
         "test_invoice_cycle_safety",
+        "test_invoice_list",
         "test_master_api",
         "test_master_data_b",
     }:

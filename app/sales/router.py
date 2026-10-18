@@ -1,10 +1,11 @@
 """Draft-only invoices. Posting is guarded in the API and the database."""
 
 import ipaddress
-from typing import Annotated
+from datetime import date
+from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -16,7 +17,7 @@ from app.db import get_db
 from app.inventory.service import InsufficientStock
 from app.sales import repo, service
 from app.sales.calc import invoice_totals, line_calc
-from app.sales.schemas import DraftIn, DraftUpdate, InvoiceOut, VoidIn
+from app.sales.schemas import DraftIn, DraftUpdate, InvoiceListOut, InvoiceOut, VoidIn
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 Db = Annotated[Session, Depends(get_db)]
@@ -320,6 +321,49 @@ def create_invoice(
     except Exception:
         db.rollback()
         raise
+
+
+@router.get("")
+def list_invoices_view(
+    db: Db,
+    current: CurrentUser,
+    customer_id: UUID | None = None,
+    status: Literal["Draft", "Posted", "Voided"] | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+) -> InvoiceListOut:
+    role = _role(current)
+    territories = created_by = None
+    posted_only = False
+    if role != "owner":
+        territories = [
+            row[0]
+            for row in db.execute(
+                text(
+                    "SELECT territory_id FROM platform.user_territory WHERE user_id=:uid"
+                ),
+                {"uid": current["id"]},
+            ).fetchall()
+        ]
+        if role == "medical_rep":
+            created_by = current["id"]
+        if role == "read_only_auditor":
+            posted_only = True
+    items, total = repo.list_invoices(
+        db,
+        customer_id=customer_id,
+        status=status,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
+        offset=offset,
+        territories=territories,
+        created_by=created_by,
+        posted_only=posted_only,
+    )
+    return InvoiceListOut(items=[InvoiceOut.model_validate(r) for r in items], total=total)
 
 
 @router.get("/{invoice_id}")

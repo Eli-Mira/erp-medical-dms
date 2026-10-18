@@ -14,6 +14,34 @@ def fetch_invoice(db, invoice_id, *, lock=False):
     return result
 
 
+def list_invoices(db, *, customer_id, status, date_from, date_to, limit, offset,
+                  territories, created_by, posted_only):
+    """Scoped invoice listing WHERE conditions come only from fixed literals."""
+    conditions, params = [], {"limit": limit, "offset": offset}
+    if customer_id is not None:
+        conditions.append("i.customer_id = :customer_id"); params["customer_id"] = customer_id
+    if status is not None:
+        conditions.append("i.posting_status = :status"); params["status"] = status
+    if date_from is not None:
+        conditions.append("i.invoice_date >= :date_from"); params["date_from"] = date_from
+    if date_to is not None:
+        conditions.append("i.invoice_date <= :date_to"); params["date_to"] = date_to
+    if territories is not None:
+        conditions.append("i.territory_id = ANY(:territories)"); params["territories"] = territories
+    if created_by is not None:
+        conditions.append("i.created_by = :created_by"); params["created_by"] = created_by
+    if posted_only:
+        conditions.append("i.posted_at IS NOT NULL")
+    clause = (" WHERE " + " AND ".join(conditions)) if conditions else ""
+    rows = db.execute(text(
+        "SELECT i.*, count(*) OVER () AS total_count FROM sales.sales_invoice i" + clause +
+        " ORDER BY i.invoice_date DESC, i.created_at DESC LIMIT :limit OFFSET :offset"
+    ), params).mappings().all()
+    total = int(rows[0]["total_count"]) if rows else 0
+    # Rows are header snapshots only; lines stay empty — use GET /invoices/{id}.
+    return [dict(r, lines=[]) for r in rows], total
+
+
 def insert_invoice(db, values):
     return db.execute(text("""
         INSERT INTO sales.sales_invoice

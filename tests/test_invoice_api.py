@@ -71,6 +71,7 @@ def test_invoice_routes_require_authentication():
     with TestClient(app) as client:
         paths = [
             ("POST", "/invoices"),
+            ("GET", "/invoices"),
             ("GET", "/invoices/00000000-0000-0000-0000-000000000001"),
             ("PUT", "/invoices/00000000-0000-0000-0000-000000000001"),
             ("POST", "/invoices/00000000-0000-0000-0000-000000000001/post"),

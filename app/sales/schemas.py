@@ -84,3 +84,10 @@ class InvoiceOut(BaseModel):
     voided_by: UUID | None
     void_reason_id: UUID | None
     lines: list[LineOut]
+
+
+class InvoiceListOut(BaseModel):
+    """Invoice-header snapshots (no lines); fetch /invoices/{id} for lines."""
+
+    total: int
+    items: list[InvoiceOut]
