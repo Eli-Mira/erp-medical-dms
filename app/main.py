@@ -29,6 +29,9 @@ app.include_router(collections_router)
 from app.master.router import router as master_router
 
 app.include_router(master_router)
+from app.settings.router import router as settings_router
+
+app.include_router(settings_router)
 
 from fastapi.staticfiles import StaticFiles
 
