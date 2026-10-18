@@ -225,8 +225,6 @@
   "pal_none": "No matching results",
   "p_org_title": "Territory hierarchy (prototype)",
   "p_org_note": "Full hierarchy is specified in APP_FLOW B1; implementing territories/areas/reps needs a data model not built yet.",
-  "p_kol_spend_title": "KOL spend ledger",
-  "p_kol_spend_note": "Per-doctor/per-campaign promotional spend is not implemented yet (F1); the directory above is real data.",
   "prototype_sample_note": "Values here are illustrative only — not from the database or the server.",
   "pwa_status": "Status right now",
   "pwa_installed": "Installation",

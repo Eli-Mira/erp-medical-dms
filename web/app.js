@@ -614,20 +614,30 @@
     },
     batches: {
       ar: {
-        title: "التشغيلات والصلاحية", desc: "لكل صنف/مخزن: رقم تشغيلة، كمية، تاريخ إنتاج/انتهاء، وصرف FEFO.",
+        title: "التشغيلات والصلاحية", desc: "لكل صنف/مخزن: رقم تشغيلة، كمية، تاريخ إنتاج/انتهاء، وصرف FEFO — مرتبة تصاعديًا حسب الانتهاء.",
         h3: "القواعد المعتمدة",
-        bullets: ["FEFO — الأنتهاء أولاً يخرج أولاً في البيع والتحويل.", "عرض الأصناف قرب الانتهاء مرتبة تصاعديًا.", "منع بيع تشغيلة منتهية أو تحذير داخل نافذة الانتهاء القريبة."],
-        cols: [{ label: "التشغيلة" }, { label: "الصنف" }, { label: "الانتهاء" }, { label: "الكمية" }],
-        rows: [["BAT-DEMO-X09", "صنف تجريبي أ", "2027-03-01", "120"]],
-        note: "نموذج أولي بقيم توضيحية — لا يوجد نموذج تشغيلات في قاعدة البيانات بعد (B4).",
+        bullets: ["FEFO — الأنتهاء أولاً يخرج أولاً في البيع والتحويل.", "عرض الأصناف قرب الانتهاء مرتبة تصاعديًا.", "منع صرف تشغيلة منتهية؛ تحذير داخل نافذة قرب الانتهاء (العتبة قابلة للضبط، لا ثابت شنفه في الشفرة).", "التحقق الفعلي من الصلاحية مقابل تاريخ الفاتورة موجود الآن في ترحيل الفاتورة على الخادم."],
+        cols: [{ label: "التشغيلة" }, { label: "الصنف" }, { label: "الانتهاء" }, { label: "الحالة" }, { label: "الكمية", num: true }],
+        rows: [
+          ["BAT-DEMO-X01", "صنف تجريبي أ", "2026-10-05", "منتهية — منع الصرف", "14"],
+          ["BAT-DEMO-X07", "صنف تجريبي أ", "2026-11-30", "تحذير قرب الانتهاء (42 يوم)", "66"],
+          ["BAT-DEMO-X12", "صنف تجريبي ب", "2027-01-15", "طبيعية (88 يوم)", "240"],
+          ["BAT-DEMO-X09", "صنف تجريبي أ", "2027-03-01", "طبيعية (133 يوم)", "120"],
+        ],
+        note: "نموذج أولي بقيم توضيحية — لا يوجد نموذج تشغيلات/عرض صلاحية في قاعدة البيانات بعد (B4).",
       },
       en: {
-        title: "Batches & expiry", desc: "Per product/warehouse: batch number, qty, produced/expiry dates, FEFO issue.",
+        title: "Batches & expiry", desc: "Per product/warehouse: batch number, qty, produced/expiry dates, FEFO issue — sorted by expiry ascending.",
         h3: "The agreed rules",
-        bullets: ["FEFO — first-expired-first-out on sales and transfers.", "'Stock by expiry' sorted ascending.", "Expired batch blocked; near-expiry warning."],
-        cols: [{ label: "Batch" }, { label: "Product" }, { label: "Expiry" }, { label: "Qty" }],
-        rows: [["BAT-DEMO-X09", "DEMO-001", "2027-03-01", "120"]],
-        note: "Prototype with illustrative values — no batch model in the database yet (B4).",
+        bullets: ["FEFO — first-expired-first-out on sales and transfers.", "'Stock by expiry' sorted ascending.", "Expired batch blocked from issue; near-expiry warning window (threshold configurable, never hardcoded).", "Real expiry-vs-invoice-date validation already exists server-side on posting."],
+        cols: [{ label: "Batch" }, { label: "Product" }, { label: "Expiry" }, { label: "Status" }, { label: "Qty", num: true }],
+        rows: [
+          ["BAT-DEMO-X01", "DEMO-001", "2026-10-05", "Expired — blocked", "14"],
+          ["BAT-DEMO-X07", "DEMO-001", "2026-11-30", "Near-expiry warning (42 days)", "66"],
+          ["BAT-DEMO-X12", "DEMO-002", "2027-01-15", "Fine (88 days)", "240"],
+          ["BAT-DEMO-X09", "DEMO-001", "2027-03-01", "Fine (133 days)", "120"],
+        ],
+        note: "Prototype with illustrative values — no batch/expiry-view model in the database yet (B4).",
       },
     },
     uom: {
@@ -736,17 +746,17 @@
     },
     cover: {
       ar: {
-        title: "غطاء المخزون", desc: "أيام الغطاء = الرصيد الحالي ÷ متوسط البيع اليومي (نافذة قابلة للضبط).",
+        title: "غطاء المخزون", desc: "أيام الغطاء = الرصيد الحالي ÷ متوسط البيع اليومي — نافذة الحساب الافتراضية 30 يومًا متحركًا (معتمدة D41، قابلة للضبط).",
         h3: "تصنيف",
-        bullets: ["غطاء منخفض → داخل عتبة الطلب (مثال: أقل من 7 أيام).", "تظليل القيم الخطر بسلال التنبيه."],
+        bullets: ["المتوسط اليومي يُحسب من نافذة 30 يومًا متحركًا (D41).", "غطاء منخفض → عتبة الطلب القابلة للضبط لكل صنف (UQ-5: لا افتراض عام ثابت).", "تظليل القيم الخطر بسلال التنبيه."],
         cols: [{ label: "الصنف", num: false }, { label: "الغطاء (يوم)", num: true }],
         rows: [["صنف تجريبي أ", "24"]],
         note: "نموذج بمعدلات توضيحية؛ متوسط البيع اليومي يحتاج سجل مبيعات أطول من بيانات العرض (D3).",
       },
       en: {
-        title: "Stock cover", desc: "Days of cover = current stock ÷ average daily sales (configurable window).",
+        title: "Stock cover", desc: "Days of cover = current stock ÷ average daily sales over a 30-day rolling window (D41 default, configurable).",
         h3: "Classification",
-        bullets: ["Low cover → re-order threshold (e.g. < 7 days).", "Threshold highlighting on watch list."],
+        bullets: ["Daily average computed from a 30-day rolling window (D41).", "Low cover → per-product configurable reorder threshold (UQ-5: no flat default).", "Threshold highlighting on watch list."],
         cols: [{ label: "Product" }, { label: "Cover (days)", num: true }],
         rows: [["DEMO-001", "24"]],
         note: "Prototype rates; computing real daily average needs a longer sales history (D3).",
@@ -754,15 +764,15 @@
     },
     overstock: {
       ar: {
-        title: "تنبيه فائض المخزون", desc: "تنبيه الأصناف التي تجاوز غطاؤها عتبة الأيام (مثال: أكثر من 180 يومًا) مع إجراء التصريف.",
+        title: "تنبيه فائض المخزون", desc: "تنبيه الأصناف التي تجاوز غطاؤها العتبة المعتمدة (180 يومًا — D41) مع إجراء التصريف.",
         h3: "الإجراءات",
-        bullets: ["تنبيه على اللوحة الرئيسية + تليجرام اختياري.", "إجراء: تحويل لمخزن التصريف."],
+        bullets: ["العتبة الافتراضية: غطاء يزيد عن 180 يومًا (D41)؛ قابلة للضبط لكل صنف أو على مستوى الشركة.", "تنبيه على اللوحة الرئيسية + تليجرام اختياري.", "إجراء: تحويل لمخزن التصريف."],
         note: "نموذج أولي — يحتاج بيانات فترة كاملة (D4).",
       },
       en: {
-        title: "Overstock alerts", desc: "Alert products whose cover exceeds the day threshold (e.g. >180) with disposal action.",
+        title: "Overstock alerts", desc: "Alert products whose cover exceeds the approved threshold (180 days, D41) with disposal action.",
         h3: "Actions",
-        bullets: ["Dashboard alert + optional Telegram.", "Action: transfer to clearance warehouse."],
+        bullets: ["Default threshold: cover above 180 days (D41); configurable per product or company-wide.", "Dashboard alert + optional Telegram.", "Action: transfer to clearance warehouse."],
         note: "Prototype — needs the full cover computation (D4).",
       },
     },
@@ -814,13 +824,77 @@
         note: "Prototype preview only; the real security boundary (schema + permissions + audit) is a required deliverable of the private-accounts backend slice before any real recording.",
       },
     },
+    kolspend: {
+      ar: {
+        title: "إنفاق الأطباء/KOL", desc: "كل نشاط ترويجي يُربط له: الطبيب، التخصص، الميدان/المنطقة، التاريخ، المبلغ، نوع النشاط، وملاحظات (2B.16).",
+        h3: "حقول سجل الإنفاق",
+        bullets: ["الربط للطبيب يتم من دليل الأطباء الفعلي أعلاه — لا إدخال حر للأسماء.", "النوع من مجموعات مرجعية (زيارة، عينة، لقاء علمي…) قابلة للضبط.", "الميدان يأتي من التعيينات الرسمية للمندوب لا من اختيار حر."],
+        cols: [{ label: "الطبيب" }, { label: "التخصص" }, { label: "الميدان" }, { label: "النوع" }, { label: "التاريخ" }, { label: "المبلغ", num: true }],
+        rows: [
+          ["د. الطبيب التجريبي", "باطنة", "الدقهلية", "لقاء علمي", "2026-09-20", "1,200.00"],
+          ["د. الطبيب التجريبي ٢", "جراحة", "الشرقية", "عينة", "2026-10-05", "450.00"],
+        ],
+        note: "نموذج توضيحي مرتبط بالدليل الفعلي أعلاه — لا يوجد سجل إنفاق في الخادم بعد (2B.16).",
+      },
+      en: {
+        title: "Doctor / KOL spend", desc: "Every promotional activity links: doctor, specialty, area/territory, date, amount, activity type, notes (2B.16).",
+        h3: "Spend record fields",
+        bullets: ["Doctor linkage comes from the real directory above — no free-typed names.", "Type from configurable reference sets (visit, sample, scientific meeting...).", "Territory comes from official rep assignments, not free choice."],
+        cols: [{ label: "Doctor" }, { label: "Specialty" }, { label: "Territory" }, { label: "Type" }, { label: "Date" }, { label: "Amount", num: true }],
+        rows: [
+          ["Dr. Demo doctor", "Internal medicine", "Dakahlia", "Scientific meeting", "2026-09-20", "1,200.00"],
+          ["Dr. Demo doctor 2", "Surgery", "Sharqia", "Sample", "2026-10-05", "450.00"],
+        ],
+        note: "Illustrative prototype bound to the real directory above — no spend ledger on the server yet (2B.16).",
+      },
+    },
     brandspend: {
-      ar: { title: "إنفاق المنتجات/العلامات", desc: "إنفاق مرتبط بصنف أو علامة (حملة، نوع، مبلغ، تاريخ).", h3: "الشكل", bullets: ["مجموع الإنفاق لكل علامة/صنف.", "اربط يقائده من مصروفات النظام."],},
-      en: { title: "Product / brand spend", desc: "Spend linked to a product or brand (campaign, type, amount, date).", h3: "Shape", bullets: ["Aggregated by brand/product.", "Feeds from system expenses."]},
+      ar: {
+        title: "إنفاق المنتجات/العلامات", desc: "إنفاق مرتبط بصنف أو علامة: الحملة، النوع، التاريخ، المبلغ — رابط صارم منظم لا استنتاج من نص حر (2B.17).",
+        h3: "حقول الربط المنظم",
+        bullets: ["الربط بالمنتج/العلامة حقل منظم إلزامي لا يُستنتج لاحقًا من وصف حر (2B.17).", "التغذية من مصروفات النظام: المصنف، المبلغ، الموافقة فوق الحد.", "عرض مجمّع لكل علامة/صنف لمقارنة الإنفاق بالمبيعات."],
+        cols: [{ label: "الحملة/النشاط" }, { label: "العلامة/الصنف" }, { label: "النوع" }, { label: "التاريخ" }, { label: "المبلغ", num: true }],
+        rows: [
+          ["حملة تجريبية — الدقهلية", "علامة تجريبية أ", "فساد طبي", "2026-09-14", "3,500.00"],
+          ["زيارة تعريفية", "صنف تجريبي ب", "عينة", "2026-10-02", "800.00"],
+        ],
+        note: "نموذج توضيحي — لا يوجد سجل إنفاق مرتبط بالأصناف في الخادم بعد؛ القيم ليست من مصروفات فعلية.",
+      },
+      en: {
+        title: "Product / brand spend", desc: "Spend linked to a product or brand: campaign, type, date, amount — an explicit structured link, never inferred from free text (2B.17).",
+        h3: "Structured link fields",
+        bullets: ["Product/brand linkage is a mandatory structured field, not inferred later from free text (2B.17).", "Fed from system expenses: classification, amount, above-threshold approval.", "Aggregated per brand/product to compare spend against sales."],
+        cols: [{ label: "Campaign/activity" }, { label: "Brand/product" }, { label: "Type" }, { label: "Date" }, { label: "Amount", num: true }],
+        rows: [
+          ["Demo campaign — Dakahlia", "Demo brand A", "Medical visit", "2026-09-14", "3,500.00"],
+          ["Intro visit", "Demo product B", "Sample", "2026-10-02", "800.00"],
+        ],
+        note: "Illustrative prototype — no product/brand-linked spend ledger on the server yet; values are not real expenses.",
+      },
     },
     objectives: {
-      ar: { title: "الأهداف و KPI", desc: "هدف الحملة، KPI المتوقع، النتيجة الفعلية، حساب الانحراف/العائد.", h3: "الحساب", bullets: ["KPI الفعلي يُدخل بعد الحملة.", "عائد مخصص أو معادلة فرق تقسيم."],},
-      en: { title: "Objectives & KPIs", desc: "Campaign objective, expected KPI, actual result, variance/ROI.", h3: "Calculation", bullets: ["Actual entered post-campaign.", "Custom ROI formula."]},
+      ar: {
+        title: "الأهداف و KPI", desc: "لكل نشاط تسويقي: الهدف، KPI المتوقع، النتيجة الفعلية، ملاحظات المتابعة، العلامة/الصنف، والطبيب/هدف النشاط عند وجوده (2B.18).",
+        h3: "دورة النشاط",
+        bullets: ["يُدخل الهدف والـ KPI المتوقع قبل النشاط؛ النتيجة الفعلية بعد الحملة.", "عائد مخصص أو معادلة فرق تقسيم — بلا نموذج ROI معقد في V1 (2B.18).", "نتائج النشاط تغذي تحليل عائد التسويق لاحقًا دون فرض نموذج معقد."],
+        cols: [{ label: "النشاط" }, { label: "الهدف" }, { label: "KPI المتوقع" }, { label: "النتيجة الفعلية" }, { label: "المتابعة" }],
+        rows: [
+          ["حملة تجريبية — الدقهلية", "رفع مبيعات الصنف ب", "150 وحدة/شهر", "—" , "لم تبدأ"],
+          ["زيارات تعريفية — الشرقية", "تعيين 10 أطباء", "10 أطباء", "7", "3 مواعيد متبقية"],
+        ],
+        note: "نموذج توضيحي — حقول الهدف/KPI/النتيجة غير مُخزنة في الخادم بعد؛ القيم ليست بيانات فعلية.",
+      },
+      en: {
+        title: "Objectives & KPIs", desc: "Per marketing activity: objective, expected KPI, actual result, follow-up notes, product/brand, and doctor/KOL or activity target where applicable (2B.18).",
+        h3: "Activity cycle",
+        bullets: ["Objective and expected KPI entered before the activity; actual result after the campaign.", "Custom ROI formula or variance split — no complex ROI model in V1 (2B.18).", "Results feed later marketing-ROI analysis without forcing a complex model."],
+        cols: [{ label: "Activity" }, { label: "Objective" }, { label: "Expected KPI" }, { label: "Actual" }, { label: "Follow-up" }],
+        rows: [
+          ["Demo campaign — Dakahlia", "Lift product B sales", "150 units/month", "—", "Not started"],
+          ["Intro visits — Sharqia", "Assign 10 doctors", "10 doctors", "7", "3 appointments left"],
+        ],
+        note: "Illustrative prototype — objective/KPI/actual fields not stored on the server yet; values are not real data.",
+      },
     },
     purchases: {
       ar: {
@@ -1710,13 +1784,7 @@
       var target = $("kolspend-preview");
       target.innerHTML = "";
       target.appendChild(node("div", "chip-row")).appendChild(node("span", "badge proto", t("badge_proto")));
-      var pc = PROTON.brandspend[state.lang];
-      var h = node("h3", "", t("p_kol_spend_title"));
-      target.appendChild(h);
-      var ul = node("ul");
-      ul.appendChild(node("li", "muted", pc.desc));
-      target.appendChild(ul);
-      target.appendChild(node("div", "note", t("p_kol_spend_note")));
+      buildPreview(target, "kolspend");
     } catch (error) {
       showError(el.doctorsError, messageFor(error));
     }
