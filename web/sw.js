@@ -6,7 +6,7 @@
  * the cache — the server is authoritative (a previous cache-first shell caused
  * stale screens after deploys). Bumping CACHE invalidates older copies.
  */
-const CACHE = "medsys-shell-v8";
+const CACHE = "medsys-shell-v9";
 const SHELL = [
   "/app/", "/app/index.html", "/app/manifest.webmanifest",
   "/app/icon.svg", "/app/styles.css", "/app/app.js",

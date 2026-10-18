@@ -128,6 +128,9 @@
       <button type="button" class="nav-item sub" data-view="ledger">
         <span class="glyph" aria-hidden="true">🧮</span><span data-i18n="nav_ledger">حركة المخزن (الدفتر)</span>
       </button>
+      <button type="button" class="nav-item sub" data-view="invoicelist">
+        <span class="glyph" aria-hidden="true">📄</span><span data-i18n="nav_invoicelist">قائمة الفواتير</span>
+      </button>
       <button type="button" class="nav-item sub" data-view="cover" data-roles="owner,finance,sales_manager">
         <span class="glyph" aria-hidden="true">🗓️</span><span data-i18n="nav_cover">غطاء المخزون</span><span class="proto-dot">نموذج</span>
       </button>
@@ -713,6 +716,48 @@
           </table>
         </div>
         <div id="kolspend-preview"></div>
+      </section>
+
+      <!-- ---------- Invoice list (real, header snapshots) ---------- -->
+      <section id="invoicelist-view" class="hidden" aria-labelledby="invoicelist-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="invoicelist-title" data-i18n="invoicelist_title">قائمة الفواتير</h1>
+            <p class="desc" data-i18n="invoicelist_desc">لقطات رؤوس من الخادم؛ افتح الفاتورة لعرض بنودها.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="invoicelist" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="invoicelist-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="il-status" data-i18n="il_status">الحالة</label>
+            <select id="il-status"></select>
+          </div>
+          <span class="field">
+            <label for="il-from" data-i18n="il_from">من تاريخ</label>
+            <input type="date" id="il-from" />
+          </span>
+          <span class="field">
+            <label for="il-to" data-i18n="il_to">إلى تاريخ</label>
+            <input type="date" id="il-to" />
+          </span>
+        </div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead>
+              <tr>
+                <th data-i18n="invoice_no">رقم الفاتورة</th>
+                <th data-i18n="invoice_date">التاريخ</th>
+                <th data-i18n="customer">العميل</th>
+                <th class="num" data-i18n="grand_total">الإجمالي</th>
+                <th data-i18n="status">الحالة</th>
+                <th data-i18n="open">فتح</th>
+              </tr>
+            </thead>
+            <tbody id="invoice-rows"></tbody>
+          </table>
+        </div>
       </section>
 
       <!-- ---------- Stock visits (interactive PROTOTYPE) ---------- -->

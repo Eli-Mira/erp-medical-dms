@@ -279,7 +279,7 @@
   // =========================================================================
   var REAL_VIEWS = {
     home: "home-view", invoice: "invoice-view", inventory: "inventory-view",
-    ledger: "ledger-view", balances: "balances-view", collections: "collections-view",
+    ledger: "ledger-view", invoicelist: "invoicelist-view", balances: "balances-view", collections: "collections-view",
     customers: "customers-view", products: "products-view", warehouses: "warehouses-view",
     suppliers: "suppliers-view", accounts: "accounts-view", doctors: "doctors-view",
     visits: "visits-view",
@@ -290,6 +290,7 @@
     invoice: ["owner", "finance", "medical_rep", "sales_manager", "district_manager", "read_only_auditor"],
     inventory: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
     ledger: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
+    invoicelist: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
     balances: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
     collections: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
     customers: ["*"],
@@ -394,6 +395,7 @@
       if (name === "home") loadHome();
       else if (name === "inventory") loadInventory();
       else if (name === "ledger") loadLedger();
+      else if (name === "invoicelist") loadInvoiceList();
       else if (name === "balances") loadBalances();
       else if (name === "collections") loadCollections();
       else if (name === "customers") loadCustomers();
@@ -1521,6 +1523,43 @@
     });
   }
 
+  function loadInvoiceList() {
+    clearError(el.invoicelistError);
+    var qs = "?limit=50";
+    if (el.ilStatus.value) qs += "&status=" + encodeURIComponent(el.ilStatus.value);
+    if (el.ilFrom.value) qs += "&date_from=" + el.ilFrom.value;
+    if (el.ilTo.value) qs += "&date_to=" + el.ilTo.value;
+    el.invoiceRows.innerHTML = "";
+    var loading = document.createElement("tr");
+    var tdLoad = document.createElement("td");
+    tdLoad.colSpan = 6; tdLoad.className = "muted"; tdLoad.textContent = "…";
+    loading.appendChild(tdLoad);
+    el.invoiceRows.appendChild(loading);
+    return api("/invoices" + qs).then(function (data) {
+      var labels = { no: t("invoice_no"), d: t("invoice_date"), c: t("customer"), g: t("grand_total"), s: t("il_status"), o: t("open") };
+      if (!data.items.length) { emptyRow(el.invoiceRows, 6, "empty_rows"); return; }
+      renderRows(el.invoiceRows, data.items, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell(labels.no, row.invoice_no, false, true));
+        tr.appendChild(cell(labels.d, fmtDate(row.invoice_date)));
+        tr.appendChild(cell(labels.c, customerName(row.customer_id)));
+        tr.appendChild(cell(labels.g, fmt(row.grand_total), true));
+        var td = document.createElement("td");
+        td.setAttribute("data-label", labels.s);
+        td.appendChild(Object.assign(document.createElement("span"), { className: "badge " + badgeClass(row.posting_status), textContent: row.posting_status }));
+        tr.appendChild(td);
+        var open = document.createElement("td");
+        open.setAttribute("data-label", labels.o);
+        var btn = document.createElement("button");
+        btn.type = "button"; btn.className = "default"; btn.textContent = t("open");
+        btn.addEventListener("click", function () { openSavedDraft(row.id); });
+        open.appendChild(btn);
+        tr.appendChild(open);
+        return tr;
+      });
+    }).catch(function (error) { showError(el.invoicelistError, messageFor(error)); });
+  }
+
   function loadLedger() {
     clearError(el.ledgerError);
     var labels = { d: t("mv_date"), ty: t("mv_type"), wh: t("warehouse"), p: t("product"), q: t("quantity"), n: t("notes") };
@@ -2052,6 +2091,11 @@
     el.moduleContent = $("module-content");
 
     el.ledgerError = $("ledger-error");
+    el.invoicelistError = $("invoicelist-error");
+    el.ilStatus = $("il-status");
+    el.ilFrom = $("il-from");
+    el.ilTo = $("il-to");
+    el.invoiceRows = $("invoice-rows");
     el.customersError = $("customers-error");
     el.productsError = $("products-error");
     el.warehousesError = $("warehouses-error");
@@ -2150,6 +2194,16 @@
     el.addLine.addEventListener("click", function () { addLine(); recalcPreview(); });
     el.postDraft.addEventListener("click", postDraft);
     el.printInvoice.addEventListener("click", function () { window.print(); });
+
+    [["", "il_all"], ["Draft", "status_draft"], ["Posted", "status_posted"], ["Voided", "status_voided"]]
+      .forEach(function (opt) {
+        var o = document.createElement("option");
+        o.value = opt[0]; o.textContent = t(opt[1]);
+        el.ilStatus.appendChild(o);
+      });
+    [el.ilStatus, el.ilFrom, el.ilTo].forEach(function (n) {
+      n.addEventListener("change", function () { loadInvoiceList(); });
+    });
 
     el.menuToggle.addEventListener("click", function () { setDrawer(!drawerOpen); });
     el.scrim.addEventListener("click", function () { setDrawer(false); });

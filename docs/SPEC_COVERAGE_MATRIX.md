@@ -108,7 +108,7 @@ not ship while any §2B item is absent or misrepresented.
 2. Upgrade §2B holes that are presentation-level: transfers (3), returns (12) principle, targets (13), stock cover (14) + overstock (15), brand spend (17), objectives/KPI (18), expiry view (7) — all as honest labelled prototypes with company-correct wording.
 3. Add missing master-data screens: representatives & assignments; private accounts (flag security boundary first).
 4. Print/PDF for invoices honoring zero-quantity hiding (2B.4).
-5. Backend slices (not prototype scope): invoice list/search API, batch/expiry read views, then targets/cover/overstock from real ledgers — each behind its own verified slice + disposable-DB tests.
+5. ~~Backend slices~~ invoice list/search API **DONE 2026-10-19**: `GET /invoices` with customer/status/date filters + pagination, scoping mirroring single-fetch grants (territory `ANY`, rep own-created, auditor posted-only), header snapshots without lines; **351 passed** via the verified runner (`docs/evidence/invoice-cycle/invoice_list_search_20261019/`), and the PWA gained a REAL "Invoice list" screen consuming it. Remaining backend slices: batch/expiry read views, then targets/cover/overstock from real ledgers — each behind its own verified slice + disposable-DB tests.
 6. Reconciliation/import engine follows the approved migration plan (V1 §12) — never proto that.
 
 **Rule for every step:** nothing moves from PROTO to REAL without: real POSTgreSQL slice test via the approved runner + posted evidence directory that actually exists.
