@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="6" failures="0" skipped="0" tests="6" time="0.644" timestamp="2026-10-17T19:36:13.157636+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_invoice_reversal" name="test_reverse_invoice_atomic_restores_stock_and_ar" time="0.074"><error message="failed on setup with &quot;UnboundLocalError: cannot access local variable 'app' where it is not associated with a value&quot;">tests\test_invoice_reversal.py:67: in reversal_env
+    app.dependency_overrides[get_db] = get_test_db
+    ^^^
+E   UnboundLocalError: cannot access local variable 'app' where it is not associated with a value</error></testcase><testcase classname="tests.test_invoice_reversal" name="test_reversal_requires_active_void_reversal_reason" time="0.035"><error message="failed on setup with &quot;UnboundLocalError: cannot access local variable 'app' where it is not associated with a value&quot;">tests\test_invoice_reversal.py:67: in reversal_env
+    app.dependency_overrides[get_db] = get_test_db
+    ^^^
+E   UnboundLocalError: cannot access local variable 'app' where it is not associated with a value</error></testcase><testcase classname="tests.test_invoice_reversal" name="test_reversal_refused_when_active_receipts_exist" time="0.036"><error message="failed on setup with &quot;UnboundLocalError: cannot access local variable 'app' where it is not associated with a value&quot;">tests\test_invoice_reversal.py:67: in reversal_env
+    app.dependency_overrides[get_db] = get_test_db
+    ^^^
+E   UnboundLocalError: cannot access local variable 'app' where it is not associated with a value</error></testcase><testcase classname="tests.test_invoice_reversal" name="test_reverse_endpoint_owner_finance_only" time="0.014"><error message="failed on setup with &quot;UnboundLocalError: cannot access local variable 'app' where it is not associated with a value&quot;">tests\test_invoice_reversal.py:67: in reversal_env
+    app.dependency_overrides[get_db] = get_test_db
+    ^^^
+E   UnboundLocalError: cannot access local variable 'app' where it is not associated with a value</error></testcase><testcase classname="tests.test_invoice_reversal" name="test_reverse_endpoint_medical_rep_denied" time="0.042"><error message="failed on setup with &quot;UnboundLocalError: cannot access local variable 'app' where it is not associated with a value&quot;">tests\test_invoice_reversal.py:67: in reversal_env
+    app.dependency_overrides[get_db] = get_test_db
+    ^^^
+E   UnboundLocalError: cannot access local variable 'app' where it is not associated with a value</error></testcase><testcase classname="tests.test_invoice_reversal" name="test_reversal_preserves_original_vat_and_line_snapshots" time="0.038"><error message="failed on setup with &quot;UnboundLocalError: cannot access local variable 'app' where it is not associated with a value&quot;">tests\test_invoice_reversal.py:67: in reversal_env
+    app.dependency_overrides[get_db] = get_test_db
+    ^^^
+E   UnboundLocalError: cannot access local variable 'app' where it is not associated with a value</error></testcase></testsuite></testsuites>

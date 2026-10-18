@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="6" time="1.220" timestamp="2026-10-17T19:56:37.446527+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_invoice_reversal" name="test_reverse_invoice_atomic_restores_stock_and_ar" time="0.194"><failure message="AssertionError: assert UUID('fec05f39-b8f6-4f5e-9894-cb8dde39ca60') == 'fec05f39-b8f6-4f5e-9894-cb8dde39ca60'&#10; +  where 'fec05f39-b8f6-4f5e-9894-cb8dde39ca60' = str(UUID('fec05f39-b8f6-4f5e-9894-cb8dde39ca60'))">tests\test_invoice_reversal.py:128: in test_reverse_invoice_atomic_restores_stock_and_ar
+    assert reversed_inv["voided_by"] == str(ids["owner"])
+E   AssertionError: assert UUID('fec05f39-b8f6-4f5e-9894-cb8dde39ca60') == 'fec05f39-b8f6-4f5e-9894-cb8dde39ca60'
+E    +  where 'fec05f39-b8f6-4f5e-9894-cb8dde39ca60' = str(UUID('fec05f39-b8f6-4f5e-9894-cb8dde39ca60'))</failure></testcase><testcase classname="tests.test_invoice_reversal" name="test_reversal_requires_active_void_reversal_reason" time="0.080"><failure message="Failed: DID NOT RAISE ValueError">tests\test_invoice_reversal.py:161: in test_reversal_requires_active_void_reversal_reason
+    with pytest.raises(ValueError, match="Only a Posted invoice can be reversed"):
+E   Failed: DID NOT RAISE ValueError</failure></testcase><testcase classname="tests.test_invoice_reversal" name="test_reversal_refused_when_active_receipts_exist" time="0.081" /><testcase classname="tests.test_invoice_reversal" name="test_reverse_endpoint_owner_finance_only" time="0.116"><failure message="KeyError: 'id'">tests\test_invoice_reversal.py:221: in test_reverse_endpoint_owner_finance_only
+    post_resp = client.post(f"/invoices/{invoice['id']}/post", headers=headers("finance_user"))
+                                         ^^^^^^^^^^^^^
+E   KeyError: 'id'</failure></testcase><testcase classname="tests.test_invoice_reversal" name="test_reverse_endpoint_medical_rep_denied" time="0.051"><failure message="KeyError: 'other'">tests\test_invoice_reversal.py:248: in test_reverse_endpoint_medical_rep_denied
+    rep_auth = headers("other")  # won't work without session, just test 403
+               ^^^^^^^^^^^^^^^^
+tests\test_invoice_reversal.py:74: in headers
+    ), {"sid": sid, "uid": ids[user]})
+                           ^^^^^^^^^
+E   KeyError: 'other'</failure></testcase><testcase classname="tests.test_invoice_reversal" name="test_reversal_preserves_original_vat_and_line_snapshots" time="0.073"><failure message="sqlalchemy.exc.IntegrityError: (psycopg.errors.CheckViolation) new row for relation &quot;sales_invoice&quot; violates check constraint &quot;ck_invoice_totals&quot;&#10;DETAIL:  Failing row contains (3ec844c6-e2cf-4bc2-9736-0be9f6d0c5b1, R-894ff21f88824c7b9b3f, 5030eb4a-4573-4f41-9185-261858061ee4, dd5562c3-1c90-4063-b2b7-ac068909fea8, 6c2f4f65-1bb3-4f9a-9af1-acc3fcb2be26, null, 2026-10-17, Posted, 314.00, 14.00, 300.00, 33.00, 333.00, null, 2026-10-17 16:56:38.345156+00, d957be65-7ad5-426f-afeb-fcc765f3ec37, 2026-10-17 16:56:38.345156+00, null, null, 3188a703-01ac-4047-8aad-3269733649fa, 2, 2026-10-17 16:56:38.345156+00, d957be65-7ad5-426f-afeb-fcc765f3ec37, null, d957be65-7ad5-426f-afeb-fcc765f3ec37).&#10;[SQL: UPDATE sales.sales_invoice SET grand_total=333.00, vat_amount=33.00, total_net=300.00, total_before_discount=314.00, total_discount=14.00 WHERE id=%(i)s]&#10;[parameters: {'i': UUID('3ec844c6-e2cf-4bc2-9736-0be9f6d0c5b1')}]&#10;(Background on this error at: https://sqlalche.me/e/20/gkpj)">C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.CheckViolation: new row for relation "sales_invoice" violates check constraint "ck_invoice_totals"
+E   DETAIL:  Failing row contains (3ec844c6-e2cf-4bc2-9736-0be9f6d0c5b1, R-894ff21f88824c7b9b3f, 5030eb4a-4573-4f41-9185-261858061ee4, dd5562c3-1c90-4063-b2b7-ac068909fea8, 6c2f4f65-1bb3-4f9a-9af1-acc3fcb2be26, null, 2026-10-17, Posted, 314.00, 14.00, 300.00, 33.00, 333.00, null, 2026-10-17 16:56:38.345156+00, d957be65-7ad5-426f-afeb-fcc765f3ec37, 2026-10-17 16:56:38.345156+00, null, null, 3188a703-01ac-4047-8aad-3269733649fa, 2, 2026-10-17 16:56:38.345156+00, d957be65-7ad5-426f-afeb-fcc765f3ec37, null, d957be65-7ad5-426f-afeb-fcc765f3ec37).
+
+The above exception was the direct cause of the following exception:
+tests\test_invoice_reversal.py:271: in test_reversal_preserves_original_vat_and_line_snapshots
+    db.execute(text(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.IntegrityError: (psycopg.errors.CheckViolation) new row for relation "sales_invoice" violates check constraint "ck_invoice_totals"
+E   DETAIL:  Failing row contains (3ec844c6-e2cf-4bc2-9736-0be9f6d0c5b1, R-894ff21f88824c7b9b3f, 5030eb4a-4573-4f41-9185-261858061ee4, dd5562c3-1c90-4063-b2b7-ac068909fea8, 6c2f4f65-1bb3-4f9a-9af1-acc3fcb2be26, null, 2026-10-17, Posted, 314.00, 14.00, 300.00, 33.00, 333.00, null, 2026-10-17 16:56:38.345156+00, d957be65-7ad5-426f-afeb-fcc765f3ec37, 2026-10-17 16:56:38.345156+00, null, null, 3188a703-01ac-4047-8aad-3269733649fa, 2, 2026-10-17 16:56:38.345156+00, d957be65-7ad5-426f-afeb-fcc765f3ec37, null, d957be65-7ad5-426f-afeb-fcc765f3ec37).
+E   [SQL: UPDATE sales.sales_invoice SET grand_total=333.00, vat_amount=33.00, total_net=300.00, total_before_discount=314.00, total_discount=14.00 WHERE id=%(i)s]
+E   [parameters: {'i': UUID('3ec844c6-e2cf-4bc2-9736-0be9f6d0c5b1')}]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)</failure></testcase></testsuite></testsuites>

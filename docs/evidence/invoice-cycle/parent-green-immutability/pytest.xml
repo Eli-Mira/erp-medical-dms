@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="0.749" timestamp="2026-10-17T20:45:21.589604+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_invoice_cycle_controls" name="test_posted_invoice_rejects_raw_snapshot_mutation" time="0.721" /></testsuite></testsuites>

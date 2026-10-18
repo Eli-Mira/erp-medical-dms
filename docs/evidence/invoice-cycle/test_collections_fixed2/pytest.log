@@ -1,0 +1,647 @@
+FF.FF.FFF..                                                              [100%]
+================================== FAILURES ===================================
+_____________________ test_create_receipt_partial_payment _____________________
+tests\test_collections.py:123: in test_create_receipt_partial_payment
+    resp = client.post("/collections", json={
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:555: in post
+    return super().post(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1209: in post
+    return self.request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:454: in request
+    return super().request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:803: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:985: in send
+    response = self._send_handling_auth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1013: in _send_handling_auth
+    response = self._send_handling_redirects(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1048: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1081: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:356: in handle_request
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:353: in handle_request
+    portal.call(self.app, scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\applications.py:90: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:660: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:680: in app
+    await route.handle(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:276: in handle
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:119: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:105: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:431: in app
+    raw_response = await run_endpoint_function(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:315: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\concurrency.py:34: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\to_thread.py:65: in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:2706: in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:1100: in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+app\finance\payment_router.py:132: in create_receipt
+    _audit(db, request, current, "created", None, receipt)
+app\finance\payment_router.py:190: in _audit
+    new.model_dump(mode="json") if old is None else None,
+    ^^^^^^^^^^^^^^
+E   AttributeError: 'dict' object has no attribute 'model_dump'
+______________________ test_create_receipt_final_payment ______________________
+tests\test_collections.py:157: in test_create_receipt_final_payment
+    resp = client.post("/collections", json={
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:555: in post
+    return super().post(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1209: in post
+    return self.request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:454: in request
+    return super().request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:803: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:985: in send
+    response = self._send_handling_auth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1013: in _send_handling_auth
+    response = self._send_handling_redirects(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1048: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1081: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:356: in handle_request
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:353: in handle_request
+    portal.call(self.app, scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\applications.py:90: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:660: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:680: in app
+    await route.handle(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:276: in handle
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:119: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:105: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:431: in app
+    raw_response = await run_endpoint_function(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:315: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\concurrency.py:34: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\to_thread.py:65: in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:2706: in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:1100: in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+app\finance\payment_router.py:132: in create_receipt
+    _audit(db, request, current, "created", None, receipt)
+app\finance\payment_router.py:190: in _audit
+    new.model_dump(mode="json") if old is None else None,
+    ^^^^^^^^^^^^^^
+E   AttributeError: 'dict' object has no attribute 'model_dump'
+_______________ test_partial_then_final_sum_rejects_overpayment _______________
+tests\test_collections.py:210: in test_partial_then_final_sum_rejects_overpayment
+    client.post("/collections", json={
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:555: in post
+    return super().post(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1209: in post
+    return self.request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:454: in request
+    return super().request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:803: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:985: in send
+    response = self._send_handling_auth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1013: in _send_handling_auth
+    response = self._send_handling_redirects(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1048: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1081: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:356: in handle_request
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:353: in handle_request
+    portal.call(self.app, scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\applications.py:90: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:660: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:680: in app
+    await route.handle(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:276: in handle
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:119: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:105: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:431: in app
+    raw_response = await run_endpoint_function(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:315: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\concurrency.py:34: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\to_thread.py:65: in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:2706: in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:1100: in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+app\finance\payment_router.py:132: in create_receipt
+    _audit(db, request, current, "created", None, receipt)
+app\finance\payment_router.py:190: in _audit
+    new.model_dump(mode="json") if old is None else None,
+    ^^^^^^^^^^^^^^
+E   AttributeError: 'dict' object has no attribute 'model_dump'
+____________________ test_receipt_number_unique_per_branch ____________________
+tests\test_collections.py:239: in test_receipt_number_unique_per_branch
+    resp = client.post("/collections", json={
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:555: in post
+    return super().post(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1209: in post
+    return self.request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:454: in request
+    return super().request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:803: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:985: in send
+    response = self._send_handling_auth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1013: in _send_handling_auth
+    response = self._send_handling_redirects(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1048: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1081: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:356: in handle_request
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:353: in handle_request
+    portal.call(self.app, scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\applications.py:90: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:660: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:680: in app
+    await route.handle(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:276: in handle
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:119: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:105: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:431: in app
+    raw_response = await run_endpoint_function(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:315: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\concurrency.py:34: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\to_thread.py:65: in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:2706: in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:1100: in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+app\finance\payment_router.py:132: in create_receipt
+    _audit(db, request, current, "created", None, receipt)
+app\finance\payment_router.py:190: in _audit
+    new.model_dump(mode="json") if old is None else None,
+    ^^^^^^^^^^^^^^
+E   AttributeError: 'dict' object has no attribute 'model_dump'
+___________________ test_void_receipt_appends_ar_adjustment ___________________
+tests\test_collections.py:297: in test_void_receipt_appends_ar_adjustment
+    create = client.post("/collections", json={
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:555: in post
+    return super().post(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1209: in post
+    return self.request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:454: in request
+    return super().request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:803: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:985: in send
+    response = self._send_handling_auth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1013: in _send_handling_auth
+    response = self._send_handling_redirects(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1048: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1081: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:356: in handle_request
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:353: in handle_request
+    portal.call(self.app, scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\applications.py:90: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:660: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:680: in app
+    await route.handle(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:276: in handle
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:119: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:105: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:431: in app
+    raw_response = await run_endpoint_function(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:315: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\concurrency.py:34: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\to_thread.py:65: in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:2706: in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:1100: in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+app\finance\payment_router.py:132: in create_receipt
+    _audit(db, request, current, "created", None, receipt)
+app\finance\payment_router.py:190: in _audit
+    new.model_dump(mode="json") if old is None else None,
+    ^^^^^^^^^^^^^^
+E   AttributeError: 'dict' object has no attribute 'model_dump'
+___________________ test_duplicate_void_receipt_returns_409 ___________________
+tests\test_collections.py:334: in test_duplicate_void_receipt_returns_409
+    create = client.post("/collections", json={
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:555: in post
+    return super().post(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1209: in post
+    return self.request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:454: in request
+    return super().request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:803: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:985: in send
+    response = self._send_handling_auth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1013: in _send_handling_auth
+    response = self._send_handling_redirects(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1048: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1081: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:356: in handle_request
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:353: in handle_request
+    portal.call(self.app, scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\applications.py:90: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:660: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:680: in app
+    await route.handle(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:276: in handle
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:119: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:105: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:431: in app
+    raw_response = await run_endpoint_function(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:315: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\concurrency.py:34: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\to_thread.py:65: in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:2706: in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:1100: in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+app\finance\payment_router.py:132: in create_receipt
+    _audit(db, request, current, "created", None, receipt)
+app\finance\payment_router.py:190: in _audit
+    new.model_dump(mode="json") if old is None else None,
+    ^^^^^^^^^^^^^^
+E   AttributeError: 'dict' object has no attribute 'model_dump'
+__________________________ test_list_receipts_scoped __________________________
+tests\test_collections.py:365: in test_list_receipts_scoped
+    client.post("/collections", json={
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:555: in post
+    return super().post(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1209: in post
+    return self.request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:454: in request
+    return super().request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:803: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:985: in send
+    response = self._send_handling_auth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1013: in _send_handling_auth
+    response = self._send_handling_redirects(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1048: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1081: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:356: in handle_request
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:353: in handle_request
+    portal.call(self.app, scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\applications.py:90: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:660: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:680: in app
+    await route.handle(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:276: in handle
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:119: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:105: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:431: in app
+    raw_response = await run_endpoint_function(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:315: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\concurrency.py:34: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\to_thread.py:65: in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:2706: in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:1100: in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+app\finance\payment_router.py:132: in create_receipt
+    _audit(db, request, current, "created", None, receipt)
+app\finance\payment_router.py:190: in _audit
+    new.model_dump(mode="json") if old is None else None,
+    ^^^^^^^^^^^^^^
+E   AttributeError: 'dict' object has no attribute 'model_dump'
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_collections.py::test_create_receipt_partial_payment - Attri...
+FAILED tests/test_collections.py::test_create_receipt_final_payment - Attribu...
+FAILED tests/test_collections.py::test_partial_then_final_sum_rejects_overpayment
+FAILED tests/test_collections.py::test_receipt_number_unique_per_branch - Att...
+FAILED tests/test_collections.py::test_void_receipt_appends_ar_adjustment - A...
+FAILED tests/test_collections.py::test_duplicate_void_receipt_returns_409 - A...
+FAILED tests/test_collections.py::test_list_receipts_scoped - AttributeError:...
+7 failed, 4 passed, 1 warning in 2.99s

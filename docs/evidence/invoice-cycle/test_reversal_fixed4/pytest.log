@@ -1,0 +1,256 @@
+EEEEEE                                                                   [100%]
+=================================== ERRORS ====================================
+_____ ERROR at setup of test_reverse_invoice_atomic_restores_stock_and_ar _____
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.ForeignKeyViolation: insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(629d6431-510f-4386-8d4b-3d13089f182c) is not present in table "master_territory".
+
+The above exception was the direct cause of the following exception:
+tests\test_invoice_reversal.py:36: in reversal_env
+    db.execute(text(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(629d6431-510f-4386-8d4b-3d13089f182c) is not present in table "master_territory".
+E   [SQL: INSERT INTO platform.user_territory(user_id,territory_id) VALUES (%(uid)s,%(tid)s)]
+E   [parameters: {'uid': UUID('53e14bda-bcf5-4900-9611-f189c290d991'), 'tid': UUID('629d6431-510f-4386-8d4b-3d13089f182c')}]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+_______ ERROR at setup of test_reversal_requires_active_reversal_reason _______
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.ForeignKeyViolation: insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(79fb55de-958e-4893-810a-e7c4ff45651b) is not present in table "master_territory".
+
+The above exception was the direct cause of the following exception:
+tests\test_invoice_reversal.py:36: in reversal_env
+    db.execute(text(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(79fb55de-958e-4893-810a-e7c4ff45651b) is not present in table "master_territory".
+E   [SQL: INSERT INTO platform.user_territory(user_id,territory_id) VALUES (%(uid)s,%(tid)s)]
+E   [parameters: {'uid': UUID('8da7142a-1096-41ca-b929-0c77b837e979'), 'tid': UUID('79fb55de-958e-4893-810a-e7c4ff45651b')}]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+_____ ERROR at setup of test_reversal_refused_when_active_receipts_exist ______
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.ForeignKeyViolation: insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(04c1c112-0388-445c-9857-5f9a8981be50) is not present in table "master_territory".
+
+The above exception was the direct cause of the following exception:
+tests\test_invoice_reversal.py:36: in reversal_env
+    db.execute(text(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(04c1c112-0388-445c-9857-5f9a8981be50) is not present in table "master_territory".
+E   [SQL: INSERT INTO platform.user_territory(user_id,territory_id) VALUES (%(uid)s,%(tid)s)]
+E   [parameters: {'uid': UUID('991bdec2-d6ad-498a-bd6d-1fdd1f32802e'), 'tid': UUID('04c1c112-0388-445c-9857-5f9a8981be50')}]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+__________ ERROR at setup of test_reverse_endpoint_owner_and_finance __________
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.ForeignKeyViolation: insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(827cd2da-56ba-4ad5-abab-a36cdc8bdb6b) is not present in table "master_territory".
+
+The above exception was the direct cause of the following exception:
+tests\test_invoice_reversal.py:36: in reversal_env
+    db.execute(text(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(827cd2da-56ba-4ad5-abab-a36cdc8bdb6b) is not present in table "master_territory".
+E   [SQL: INSERT INTO platform.user_territory(user_id,territory_id) VALUES (%(uid)s,%(tid)s)]
+E   [parameters: {'uid': UUID('3e2d0d07-01da-4cab-84d0-fb321496dc5e'), 'tid': UUID('827cd2da-56ba-4ad5-abab-a36cdc8bdb6b')}]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+_________ ERROR at setup of test_reverse_endpoint_medical_rep_denied __________
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.ForeignKeyViolation: insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(dbb403a2-73d6-4340-accb-2d0c57498d02) is not present in table "master_territory".
+
+The above exception was the direct cause of the following exception:
+tests\test_invoice_reversal.py:36: in reversal_env
+    db.execute(text(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(dbb403a2-73d6-4340-accb-2d0c57498d02) is not present in table "master_territory".
+E   [SQL: INSERT INTO platform.user_territory(user_id,territory_id) VALUES (%(uid)s,%(tid)s)]
+E   [parameters: {'uid': UUID('bf1f9cae-2221-48ec-97cd-c2c6cc65c734'), 'tid': UUID('dbb403a2-73d6-4340-accb-2d0c57498d02')}]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+__ ERROR at setup of test_reversal_preserves_original_vat_and_line_snapshots __
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.ForeignKeyViolation: insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(5752caf3-6736-4226-a999-eaa15d3c2226) is not present in table "master_territory".
+
+The above exception was the direct cause of the following exception:
+tests\test_invoice_reversal.py:36: in reversal_env
+    db.execute(text(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(5752caf3-6736-4226-a999-eaa15d3c2226) is not present in table "master_territory".
+E   [SQL: INSERT INTO platform.user_territory(user_id,territory_id) VALUES (%(uid)s,%(tid)s)]
+E   [parameters: {'uid': UUID('8543acf9-1945-49f8-9e2b-dbcb28aef7b4'), 'tid': UUID('5752caf3-6736-4226-a999-eaa15d3c2226')}]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+ERROR tests/test_invoice_reversal.py::test_reverse_invoice_atomic_restores_stock_and_ar
+ERROR tests/test_invoice_reversal.py::test_reversal_requires_active_reversal_reason
+ERROR tests/test_invoice_reversal.py::test_reversal_refused_when_active_receipts_exist
+ERROR tests/test_invoice_reversal.py::test_reverse_endpoint_owner_and_finance
+ERROR tests/test_invoice_reversal.py::test_reverse_endpoint_medical_rep_denied
+ERROR tests/test_invoice_reversal.py::test_reversal_preserves_original_vat_and_line_snapshots
+1 warning, 6 errors in 2.11s

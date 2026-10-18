@@ -3,22 +3,32 @@
 Current scope: service scaffold + health probe. Auth/RBAC, audit logging,
 settings, posting states and PWA shell are added progressively in Phase 2.
 """
+
 from fastapi import FastAPI
 
 app = FastAPI(title="Medical Company System", version="0.1.0")
 
-from app.auth.router import router as auth_router  # noqa: E402  (import after app)
-app.include_router(auth_router)
-from app.auth.rbac import rbac_router  # noqa: E402
-app.include_router(rbac_router)
-from app.sales.router import router as invoice_router  # noqa: E402
-app.include_router(invoice_router)
-from app.inventory.router import router as inventory_router  # noqa: E402
-app.include_router(inventory_router)
-from app.finance.router import router as ar_router  # noqa: E402
-app.include_router(ar_router)
+from app.auth.router import router as auth_router
 
-from fastapi.staticfiles import StaticFiles  # noqa: E402
+app.include_router(auth_router)
+from app.auth.rbac import rbac_router
+
+app.include_router(rbac_router)
+from app.sales.router import router as invoice_router
+
+app.include_router(invoice_router)
+from app.inventory.router import router as inventory_router
+
+app.include_router(inventory_router)
+from app.finance.router import router as ar_router
+
+app.include_router(ar_router)
+from app.finance.payment_router import router as collections_router
+
+app.include_router(collections_router)
+
+from fastapi.staticfiles import StaticFiles
+
 app.mount("/app", StaticFiles(directory="web", html=True), name="pwa")
 
 

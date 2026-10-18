@@ -1,0 +1,15 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_________________ test_reversal_links_exact_original_entries __________________
+tests\test_invoice_cycle_controls.py:160: in test_reversal_links_exact_original_entries
+    assert counter["reverses_movement_id"] == sale["id"]
+E   AssertionError: assert None == UUID('4035018f-91a9-466b-b8d6-8f218d24e9f3')
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_invoice_cycle_controls.py::test_reversal_links_exact_original_entries
+1 failed, 1 warning in 1.10s

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.659" timestamp="2026-10-17T20:57:32.422764+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_invoice_cycle_safety" name="test_concurrent_financial_operations[post]" time="1.624"><failure message="sqlalchemy.exc.OperationalError: (psycopg.errors.DeadlockDetected) deadlock detected&#10;DETAIL:  Process 18899 waits for ShareLock on transaction 31669; blocked by process 18898.&#10;Process 18898 waits for ShareLock on transaction 31670; blocked by process 18899.&#10;HINT:  See server log for query details.&#10;CONTEXT:  while locking tuple (0,1) in relation &quot;sales_invoice&quot;&#10;[SQL: SELECT * FROM sales.sales_invoice WHERE id=%(id)s FOR UPDATE]&#10;[parameters: {'id': UUID('83d1f292-5a92-4929-adaa-c2d0fbeea30f')}]&#10;(Background on this error at: https://sqlalche.me/e/20/e3q8)">C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.DeadlockDetected: deadlock detected
+E   DETAIL:  Process 18899 waits for ShareLock on transaction 31669; blocked by process 18898.
+E   Process 18898 waits for ShareLock on transaction 31670; blocked by process 18899.
+E   HINT:  See server log for query details.
+E   CONTEXT:  while locking tuple (0,1) in relation "sales_invoice"
+
+The above exception was the direct cause of the following exception:
+tests\test_invoice_cycle_safety.py:275: in test_concurrent_financial_operations
+    responses = race(life, monkeypatch, calls)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_invoice_cycle_safety.py:251: in race
+    responses = [future.result(timeout=20) for future in futures]
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_invoice_cycle_safety.py:251: in &lt;listcomp&gt;
+    responses = [future.result(timeout=20) for future in futures]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:449: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\thread.py:58: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_invoice_cycle_safety.py:260: in &lt;lambda&gt;
+    calls = [lambda: life.client.post(f"/invoices/{invoice['id']}/post", headers=life.auth["owner"])] * 2
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:555: in post
+    return super().post(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1209: in post
+    return self.request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:454: in request
+    return super().request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:803: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:985: in send
+    response = self._send_handling_auth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1013: in _send_handling_auth
+    response = self._send_handling_redirects(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1048: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1081: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:356: in handle_request
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:353: in handle_request
+    portal.call(self.app, scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\applications.py:90: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:660: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:680: in app
+    await route.handle(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:276: in handle
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:119: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:105: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:431: in app
+    raw_response = await run_endpoint_function(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:315: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\concurrency.py:34: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\to_thread.py:65: in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:2706: in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:1100: in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+app\sales\router.py:352: in post_invoice
+    old = _invoice(db, current, invoice_id, lock=True)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_invoice_cycle_safety.py:245: in synchronized
+    return original(db, user, invoice_id, lock=lock)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\sales\router.py:60: in _invoice
+    invoice = repo.fetch_invoice(db, invoice_id, lock=lock)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\sales\repo.py:7: in fetch_invoice
+    row = db.execute(text("SELECT * FROM sales.sales_invoice WHERE id=:id" + suffix), {"id": invoice_id}).mappings().one_or_none()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.OperationalError: (psycopg.errors.DeadlockDetected) deadlock detected
+E   DETAIL:  Process 18899 waits for ShareLock on transaction 31669; blocked by process 18898.
+E   Process 18898 waits for ShareLock on transaction 31670; blocked by process 18899.
+E   HINT:  See server log for query details.
+E   CONTEXT:  while locking tuple (0,1) in relation "sales_invoice"
+E   [SQL: SELECT * FROM sales.sales_invoice WHERE id=%(id)s FOR UPDATE]
+E   [parameters: {'id': UUID('83d1f292-5a92-4929-adaa-c2d0fbeea30f')}]
+E   (Background on this error at: https://sqlalche.me/e/20/e3q8)</failure></testcase></testsuite></testsuites>

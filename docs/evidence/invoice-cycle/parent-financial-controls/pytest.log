@@ -1,0 +1,17 @@
+........................................................................ [ 79%]
+............F......                                                      [100%]
+================================== FAILURES ===================================
+_________________ test_concurrent_financial_operations[post] __________________
+tests\test_invoice_cycle_safety.py:275: in test_concurrent_financial_operations
+    assert codes in ([200, 409], [201, 409]), [r.text for r in responses]
+E   AssertionError: ['Internal Server Error', '{"id":"50c12ce0-2772-435e-a595-40be58a1a5e5","invoice_no":"ed9e6619f1d64675a1fc6f5bb49d35",...scount_pct":"0.00","net_price":"114.00","line_total":"228.00","vat_rate":"14.00","vat_amount":"28.00","notes":null}]}']
+E   assert [200, 500] in ([200, 409], [201, 409])
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_invoice_cycle_safety.py::test_concurrent_financial_operations[post]
+1 failed, 90 passed, 1 warning in 56.21s

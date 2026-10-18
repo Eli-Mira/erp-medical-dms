@@ -1,0 +1,59 @@
+.F.                                                                      [100%]
+================================== FAILURES ===================================
+_______________ test_concurrent_collection_rejects_overpayment ________________
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.ForeignKeyViolation: insert or update on table "payment_receipt" violates foreign key constraint "payment_receipt_invoice_id_fkey"
+E   DETAIL:  Key (invoice_id)=(e2cb665f-5da7-4781-b9e3-6593950e85e8) is not present in table "sales_invoice".
+
+The above exception was the direct cause of the following exception:
+tests\test_invoice_cycle.py:276: in test_concurrent_collection_rejects_overpayment
+    receipt_id_1 = payments.create_receipt(db2,
+app\finance\payments.py:52: in create_receipt
+    receipt_id = db.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table "payment_receipt" violates foreign key constraint "payment_receipt_invoice_id_fkey"
+E   DETAIL:  Key (invoice_id)=(e2cb665f-5da7-4781-b9e3-6593950e85e8) is not present in table "sales_invoice".
+E   [SQL: 
+E               INSERT INTO finance.payment_receipt
+E                   (invoice_id, branch_id, customer_id, receipt_no, receipt_date,
+E                    amount, method, note, created_by, updated_by)
+E               VALUES (%(inv)s, %(b)s, %(c)s, %(no)s, %(d)s, %(amt)s, %(m)s, %(note)s, %(actor)s, %(actor)s)
+E               RETURNING id
+E               ]
+E   [parameters: {'inv': UUID('e2cb665f-5da7-4781-b9e3-6593950e85e8'), 'b': UUID('db27193d-ec48-4e3e-902a-75676afd3eed'), 'c': UUID('3e255419-2530-476b-a524-5fd968f7991c'), 'no': 'CONC-R1', 'd': datetime.date(2026, 10, 17), 'amt': Decimal('150.00'), 'm': 'cash', 'note': None, 'actor': UUID('d7c452a8-78a4-43b8-94af-22756fba27c0')}]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_invoice_cycle.py::test_concurrent_collection_rejects_overpayment
+1 failed, 2 passed, 1 warning in 0.97s

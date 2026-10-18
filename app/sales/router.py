@@ -13,6 +13,7 @@ from app.auth.repo import log_audit
 from app.auth.router import get_current_user
 from app.config import POSTING_ENABLED
 from app.db import get_db
+from app.inventory.service import InsufficientStock
 from app.sales import repo, service
 from app.sales.calc import invoice_totals, line_calc
 from app.sales.schemas import DraftIn, DraftUpdate, InvoiceOut, VoidIn
@@ -62,7 +63,7 @@ def _invoice(db, user, invoice_id, *, lock=False):
     _scope(db, user, invoice["territory_id"])
     if role == "medical_rep" and invoice["created_by"] != user["id"]:
         raise HTTPException(404, "Invoice not found")
-    if role == "read_only_auditor" and invoice["posting_status"] != "Posted":
+    if role == "read_only_auditor" and invoice["posted_at"] is None:
         raise HTTPException(404, "Invoice not found")
     return invoice
 
@@ -204,6 +205,73 @@ def _prepare(db, user, payload):
     }, lines
 
 
+def _posting_references(db, user, invoice):
+    """Revalidate grants/references without repricing the saved VAT snapshot."""
+    scope = _warehouse_scope(db, user)
+    if scope is not None and invoice["warehouse_id"] not in scope:
+        raise HTTPException(404, "Warehouse not found")
+    warehouse = (
+        db.execute(
+            text("SELECT * FROM master_data.master_warehouse WHERE id=:id FOR SHARE"),
+            {"id": invoice["warehouse_id"]},
+        )
+        .mappings()
+        .one_or_none()
+    )
+    if warehouse is None or not warehouse["is_active"]:
+        raise HTTPException(404, "Warehouse not found")
+    if (
+        warehouse["branch_id"] != invoice["branch_id"]
+        and not db.execute(
+            text(
+                "SELECT 1 FROM inventory.branch_warehouse WHERE branch_id=:b AND warehouse_id=:w FOR SHARE"
+            ),
+            {"b": invoice["branch_id"], "w": invoice["warehouse_id"]},
+        ).scalar()
+    ):
+        raise HTTPException(409, "Source warehouse routing has changed")
+    customer = (
+        db.execute(
+            text("SELECT * FROM master_data.master_customer WHERE id=:id FOR SHARE"),
+            {"id": invoice["customer_id"]},
+        )
+        .mappings()
+        .one_or_none()
+    )
+    if (
+        customer is None
+        or not customer["is_active"]
+        or customer["branch_id"] != invoice["branch_id"]
+        or customer["territory_id"] != invoice["territory_id"]
+    ):
+        raise HTTPException(409, "Customer reference or scope has changed")
+    for line in invoice["lines"]:
+        product = db.execute(
+            text(
+                "SELECT is_active FROM master_data.master_product WHERE id=:id FOR SHARE"
+            ),
+            {"id": line["product_id"]},
+        ).scalar_one_or_none()
+        if not product:
+            raise HTTPException(409, "Invoice product is no longer active")
+        if line["batch_id"]:
+            batch = (
+                db.execute(
+                    text("SELECT * FROM inventory.batch_record WHERE id=:id FOR SHARE"),
+                    {"id": line["batch_id"]},
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if (
+                batch is None
+                or batch["product_id"] != line["product_id"]
+                or batch["warehouse_id"] != invoice["warehouse_id"]
+                or batch["expiry_date"] < invoice["invoice_date"]
+            ):
+                raise HTTPException(409, "Invoice batch reference has changed")
+
+
 def _audit(db, request, user, action, old, new):
     host = request.client.host if request.client else None
     try:
@@ -294,17 +362,41 @@ def update_invoice(
 
 
 @router.post("/{invoice_id}/post")
-def post_invoice(invoice_id: UUID, db: Db, current: CurrentUser) -> InvoiceOut:
-    _invoice(db, current, invoice_id)
+def post_invoice(
+    invoice_id: UUID, request: Request, db: Db, current: CurrentUser
+) -> InvoiceOut:
     if _role(current) not in {"owner", "finance", "sales_manager", "district_manager"}:
         raise HTTPException(403, "Posting permission denied")
     if not POSTING_ENABLED:
+        _invoice(db, current, invoice_id)
         raise HTTPException(
             409,
             "Posting disabled until stock and receivables can be updated atomically",
         )
-    result = service.post_invoice_atomic(db, invoice_id, current["id"])
-    return InvoiceOut.model_validate(result)
+
+    try:
+        old = _invoice(db, current, invoice_id, lock=True)
+        if old["posting_status"] != "Draft":
+            raise HTTPException(409, "Only a draft can be posted")
+        _posting_references(db, current, old)
+        result = service.post_invoice_atomic(db, invoice_id, current["id"])
+        if result is None:
+            raise HTTPException(404, "Invoice not found")
+        snapshot = InvoiceOut.model_validate(repo.fetch_invoice(db, invoice_id))
+        _audit(db, request, current, "posted", old, snapshot)
+        db.commit()
+        return snapshot
+    except InsufficientStock as error:
+        db.rollback()
+        raise HTTPException(409, "Insufficient stock for one or more lines") from error
+    except ValueError as error:
+        db.rollback()
+        raise HTTPException(409, str(error)) from error
+    except IntegrityError as error:
+        _integrity_error(db, error)
+    except Exception:
+        db.rollback()
+        raise
 
 
 @router.post("/{invoice_id}/void")
@@ -330,6 +422,56 @@ def void_invoice(
         db.commit()
         return result
     except IntegrityError as error:
+        _integrity_error(db, error)
+    except Exception:
+        db.rollback()
+        raise
+
+
+@router.post("/{invoice_id}/reverse")
+def reverse_invoice(
+    invoice_id: UUID, payload: VoidIn, request: Request, db: Db, current: CurrentUser
+) -> InvoiceOut:
+    if _role(current) not in {"owner", "finance"}:
+        raise HTTPException(403, "Reversal requires Owner or Finance")
+    if not POSTING_ENABLED:
+        raise HTTPException(
+            409,
+            "Reversal disabled until stock and receivables can be updated atomically",
+        )
+
+    # Validate active void/reversal reason
+    reason = db.execute(
+        text(
+            "SELECT 1 FROM audit.reason_code WHERE id=:id AND is_active AND category IN ('void','reversal') FOR SHARE"
+        ),
+        {"id": payload.reason_id},
+    ).scalar()
+    if not reason:
+        raise HTTPException(422, "An active void/reversal reason code is required")
+
+    try:
+        old = _invoice(db, current, invoice_id, lock=True)
+        if old["posting_status"] != "Posted":
+            raise HTTPException(409, "Only Posted invoices can be reversed")
+        if old["version"] != payload.version:
+            raise HTTPException(409, "Stale invoice version; reload before reversing")
+
+        result = service.reverse_invoice_atomic(
+            db, invoice_id, current["id"], payload.reason_id
+        )
+        if result is None:
+            raise HTTPException(404, "Invoice not found")
+
+        snapshot = InvoiceOut.model_validate(repo.fetch_invoice(db, invoice_id))
+        _audit(db, request, current, "reversed", old, snapshot)
+        db.commit()
+        return snapshot
+    except ValueError as error:
+        db.rollback()
+        raise HTTPException(409, str(error)) from error
+    except IntegrityError as error:
+        db.rollback()
         _integrity_error(db, error)
     except Exception:
         db.rollback()

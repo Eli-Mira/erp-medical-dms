@@ -1,0 +1,2 @@
+# Native verification logs are required evidence, not runtime application logs.
+!**/*.log

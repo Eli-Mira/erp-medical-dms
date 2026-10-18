@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="3" time="0.544" timestamp="2026-10-17T20:28:18.099839+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_invoice_cycle" name="test_full_cycle_invoice_post_collect_void_reverse" time="0.130"><failure message="assert 404 == 201&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\test_invoice_cycle.py:134: in test_full_cycle_invoice_post_collect_void_reverse
+    assert coll1.status_code == 201
+E   assert 404 == 201
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.test_invoice_cycle" name="test_concurrent_collection_rejects_overpayment" time="0.060"><failure message="AttributeError: 'Connection' object has no attribute 'url'">tests\test_invoice_cycle.py:275: in test_concurrent_collection_rejects_overpayment
+    engine2 = create_engine(str(db.get_bind().url))
+                                ^^^^^^^^^^^^^^^^^
+E   AttributeError: 'Connection' object has no attribute 'url'</failure></testcase><testcase classname="tests.test_invoice_cycle" name="test_flag_off_blocks_all_mutations" time="0.041"><failure message="NameError: name 'orig_cfg' is not defined">tests\test_invoice_cycle.py:324: in test_flag_off_blocks_all_mutations
+    cfg.POSTING_ENABLED = orig_cfg
+                          ^^^^^^^^
+E   NameError: name 'orig_cfg' is not defined</failure></testcase></testsuite></testsuites>

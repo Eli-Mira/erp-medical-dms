@@ -1,0 +1,24 @@
+...FF                                                                    [100%]
+================================== FAILURES ===================================
+_____________ test_collection_list_respects_territory_revocation ______________
+tests\test_invoice_cycle_controls.py:173: in test_collection_list_respects_territory_revocation
+    assert response.json() == []
+E   AssertionError: assert [{'id': '33b2...ff9384', ...}] == []
+E     
+E     Left contains one more item: {'id': '33b2ff8a-9379-4c51-ae50-3563edf2987d', 'invoice_id': 'e2bd3502-f8c8-4ab2-aadc-a6448f921bc7', 'branch_id': '0da36e9d-5cd3-4c3a-94cd-bd695bd49202', 'customer_id': '2ba54e4d-ea87-4386-8d60-9fba99ff9384', ...}
+E     Use -v to get more diff
+________________ test_receipt_void_links_the_original_payment _________________
+tests\test_invoice_cycle_controls.py:182: in test_receipt_void_links_the_original_payment
+    assert len(entries) == 2
+E   assert 0 == 2
+E    +  where 0 = len([])
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_invoice_cycle_controls.py::test_collection_list_respects_territory_revocation
+FAILED tests/test_invoice_cycle_controls.py::test_receipt_void_links_the_original_payment
+2 failed, 3 passed, 1 warning in 5.76s

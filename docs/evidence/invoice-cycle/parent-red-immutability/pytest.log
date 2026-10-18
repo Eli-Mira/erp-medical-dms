@@ -1,0 +1,15 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+______________ test_posted_invoice_rejects_raw_snapshot_mutation ______________
+tests\test_invoice_cycle_controls.py:138: in test_posted_invoice_rejects_raw_snapshot_mutation
+    with pytest.raises(DBAPIError):
+E   Failed: DID NOT RAISE DBAPIError
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_invoice_cycle_controls.py::test_posted_invoice_rejects_raw_snapshot_mutation
+1 failed, 1 warning in 0.87s

@@ -1,0 +1,17 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+____________________ test_posting_revalidates_source_grant ____________________
+tests\test_invoice_cycle_controls.py:148: in test_posting_revalidates_source_grant
+    assert response.status_code == 404, response.text
+E   AssertionError: {"id":"d8253e96-bf84-4ff0-ac98-2a9fbbd423aa","invoice_no":"4995ee388a68455ba83ec0ed775149","branch_id":"a484d03c-d600-4c45-a0bd-865bd916fa80","territory_id":"1ca4b986-82bd-49fa-ae83-d6dd8e2fcf22","warehouse_id":"fa796091-5fcd-4e16-a737-954bab2db726","customer_id":"1e9caad4-78fd-4564-b6e6-5cb25f32c052","invoice_date":"2026-10-17","posting_status":"Posted","total_before_discount":"228.00","total_discount":"0.00","total_net":"200.00","vat_amount":"28.00","grand_total":"228.00","notes":null,"version":2,"created_at":"2026-10-17T17:45:48.740010Z","created_by":"4bd12f2f-5dc0-459c-964f-410fd0f2f3b6","updated_at":"2026-10-17T17:45:48.740010Z","updated_by":"4bd12f2f-5dc0-459c-964f-410fd0f2f3b6","posted_at":"2026-10-17T17:45:48.779414Z","posted_by":"ca027615-44fd-4440-8057-37197f5d292c","voided_at":null,"voided_by":null,"void_reason_id":null,"lines":[{"id":"b3af9252-f034-4a3e-acc3-b152135c744f","line_no":1,"product_id":"c889c7c5-c881-4052-8b68-0b7bdbb467f6","batch_id":null,"quantity":"2.000","unit_price":"114.00","discount_pct":"0.00","net_price":"114.00","line_total":"228.00","vat_rate":"14.00","vat_amount":"28.00","notes":null}]}
+E   assert 200 == 404
+E    +  where 200 = <Response [200 OK]>.status_code
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_invoice_cycle_controls.py::test_posting_revalidates_source_grant
+1 failed, 1 warning in 0.83s

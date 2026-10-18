@@ -1,0 +1,16 @@
+...F..                                                                   [100%]
+================================== FAILURES ===================================
+___________________ test_reverse_endpoint_owner_and_finance ___________________
+tests\test_invoice_reversal.py:222: in test_reverse_endpoint_owner_and_finance
+    post_resp = client.post(f"/invoices/{invoice['id']}/post", headers=headers("finance_user"))
+                                         ^^^^^^^^^^^^^
+E   KeyError: 'id'
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_invoice_reversal.py::test_reverse_endpoint_owner_and_finance
+1 failed, 5 passed, 1 warning in 0.84s

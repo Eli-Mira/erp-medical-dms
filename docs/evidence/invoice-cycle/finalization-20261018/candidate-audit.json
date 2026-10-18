@@ -1,0 +1,822 @@
+{
+  "operation": "read-only candidate inspection; NOT staged or committed",
+  "files": {
+    "alembic/versions/0010_invoice_collections.py": {
+      "sha256": "91d5695e2611c07ec3cc8a1168df658cfc37dd90bb68ce4447adca2ce3507051",
+      "bytes": 9360
+    },
+    "app/finance/ar.py": {
+      "sha256": "96ed2b97020ea01ca9553f5d228a30dcc4272f3d5f77b9692aac0f9cc8fc30ad",
+      "bytes": 3768
+    },
+    "app/finance/payment_router.py": {
+      "sha256": "f0a661fa139200690907349535533f1a1ef80c441f1e814a5f82d15de36cc3e2",
+      "bytes": 8044
+    },
+    "app/finance/payments.py": {
+      "sha256": "c2b68d33390e32ed12c4d075913a3c58d3c9477054db7987b848690a5952efb3",
+      "bytes": 6447
+    },
+    "app/finance/schemas.py": {
+      "sha256": "b2c34b53c5ab4c9d2375fd5827ac464dc24b4e7a84175f83de21c23a449fb52d",
+      "bytes": 2657
+    },
+    "app/inventory/service.py": {
+      "sha256": "ed21dfc6a0c9b71838fca1bb19837731855d4c662657afd2fd199e8c7526b468",
+      "bytes": 6486
+    },
+    "app/main.py": {
+      "sha256": "d7ff95a482886457f273b7249500f29d014bcd809cc9cb067b4ecfbd28cdb142",
+      "bytes": 1331
+    },
+    "app/sales/router.py": {
+      "sha256": "4a8e0fa9c3e9b7a799a9a218a1070a2b7cf2692fe383df53bb95a76953ed569c",
+      "bytes": 17429
+    },
+    "app/sales/service.py": {
+      "sha256": "4c63795fa59ba22c44974aa4590e79753e7d2e580beb7437b36cbd2c7fd0ac67",
+      "bytes": 7567
+    },
+    "docs/INVOICE_COLLECTION_SLICE.md": {
+      "sha256": "cb16e3993c491df5517defbd22a7adea4390d6066133552f2eb4f41b49945277",
+      "bytes": 5559
+    },
+    "docs/PROGRESS_CHECKLIST.md": {
+      "sha256": "7a61ce5f81c78206ff93e5d246a1e0962c7d80ad221159cc21416e4e269c2866",
+      "bytes": 12458
+    },
+    "docs/evidence/invoice-cycle/.gitattributes": {
+      "sha256": "0232a4c6e6d5c21dbb7ba8c3f21dd2af9333cd9d2711d361b2028c476ce31a0f",
+      "bytes": 103
+    },
+    "docs/evidence/invoice-cycle/.gitignore": {
+      "sha256": "260e66823a2df69230bfc979e374bf9ed78e9e2991b382b60926af5f7d7878f8",
+      "bytes": 90
+    },
+    "docs/evidence/invoice-cycle/CURRENT_STATUS.md": {
+      "sha256": "f57882af332779555e09e0f26c2ab65c90abe103f0bbd973fa65ae3018d59998",
+      "bytes": 6158
+    },
+    "docs/evidence/invoice-cycle/DEFAULT_DB_INCIDENT.json": {
+      "sha256": "891d6f53472c0b079ff5bf43b7e82549227e728b5909cc902d282e691f53f97e",
+      "bytes": 263
+    },
+    "docs/evidence/invoice-cycle/IMPLEMENTER.md": {
+      "sha256": "e9ae44e138b4c1755fb59e7926ee0ea20acd38beeffd02dcf3c0d3f0f3cffff2",
+      "bytes": 4309
+    },
+    "docs/evidence/invoice-cycle/LEDGER.md": {
+      "sha256": "437c2d7b96b04b6f8651e3e3ae205152aed9a3dc17d0cf7db3e4c6a255554959",
+      "bytes": 5759
+    },
+    "docs/evidence/invoice-cycle/PARENT_REPORT.md": {
+      "sha256": "ee701c6561a78ef2cdfcf5782d711369ad5f52b63960c6380aa368d8cab2d0d9",
+      "bytes": 8405
+    },
+    "docs/evidence/invoice-cycle/REVIEW_BRIEF.md": {
+      "sha256": "5ebbaa6ac04feee123c966fa5d83ac35ac32bc9bf25be9ac54b1642c98390a1f",
+      "bytes": 4215
+    },
+    "docs/evidence/invoice-cycle/REVIEW_DELIVERY_DISPOSITION.json": {
+      "sha256": "f97eb2271e7aab407f8356ed3673d3b9370ffe2fe1e4b7809e14a0fd2cfbe050",
+      "bytes": 2254
+    },
+    "docs/evidence/invoice-cycle/baseline/pytest.log": {
+      "sha256": "5a7b490354f58a00e480f9ce7059207e46563c2b1fcf03ee6830da271797293e",
+      "bytes": 843
+    },
+    "docs/evidence/invoice-cycle/baseline/pytest.xml": {
+      "sha256": "049dfbf3e55eb9635daca2cee3871b6582dae6e195d48c8133c4018663ae28a2",
+      "bytes": 23371
+    },
+    "docs/evidence/invoice-cycle/baseline/ruff-baseline.json": {
+      "sha256": "4cffc6159e94701d5866eab229dca6c6afac89f01b37b6a4c3c07319530d9413",
+      "bytes": 150229
+    },
+    "docs/evidence/invoice-cycle/baseline/run.json": {
+      "sha256": "c538aeab92b89e0781964a8469bb9e2099ad2ad617abaae1f9c2d310a3314d48",
+      "bytes": 41567
+    },
+    "docs/evidence/invoice-cycle/final-full-suite/pytest.log": {
+      "sha256": "6a3a684cdc3a157d2dc951ff92916ebc973405b270ca94b91b61e3990f3c2bc4",
+      "bytes": 1015
+    },
+    "docs/evidence/invoice-cycle/final-full-suite/pytest.xml": {
+      "sha256": "4a3881105b126fc4c43bfe848a25933150beb2bc56fd63bfee0f93867a8b3194",
+      "bytes": 39766
+    },
+    "docs/evidence/invoice-cycle/final-full-suite/run.json": {
+      "sha256": "ca478b2a76f83ec541faae181ecafd5fd4f6c07698d7586d7abe33bf34fa5c4c",
+      "bytes": 61456
+    },
+    "docs/evidence/invoice-cycle/final-lint.json": {
+      "sha256": "98612f2c309736676fe85b4265b25df50b03d516d8d35166f3afe42b3de56712",
+      "bytes": 120428
+    },
+    "docs/evidence/invoice-cycle/final-repeat-cycle-races/pytest.log": {
+      "sha256": "d5f3d924c153af0d3d93bdd26de142e642c2c45070b39f6abe12c101323bda3a",
+      "bytes": 695
+    },
+    "docs/evidence/invoice-cycle/final-repeat-cycle-races/pytest.xml": {
+      "sha256": "d8f6692d758350f63b5b2b21265ae5465811854cb96fe3d07ef89f7dc60584a4",
+      "bytes": 2330
+    },
+    "docs/evidence/invoice-cycle/final-repeat-cycle-races/run.json": {
+      "sha256": "bd86340b97e1e93ebefdefe46b65fab10ace69a9d9fb64147ecd55fd8d531175",
+      "bytes": 19854
+    },
+    "docs/evidence/invoice-cycle/finalization-20261018/REVIEW_BRIEF.md": {
+      "sha256": "673815df6b3b8f1289535bfb508f7586642786e5ce85db6537e70a9325d56d75",
+      "bytes": 4363
+    },
+    "docs/evidence/invoice-cycle/finalization-20261018/preflight.json": {
+      "sha256": "74ac6a8e8d45262392c12a81c51943631d554a9bd96d767ee4fd604083aaae98",
+      "bytes": 45467
+    },
+    "docs/evidence/invoice-cycle/finalization-20261018/review.delta.txt": {
+      "sha256": "37e099d4c503dde8774d121a96dd0b3be00cf4567f6379c445016814200ba378",
+      "bytes": 173286
+    },
+    "docs/evidence/invoice-cycle/parent-chain-intake/run.json": {
+      "sha256": "63a4417fa52fa7d5f631a38403c7ba6bc98ad93aa303a273bdb2985ae7effb85",
+      "bytes": 8438
+    },
+    "docs/evidence/invoice-cycle/parent-financial-controls/pytest.log": {
+      "sha256": "2d082f5edd2c4d96dea0c88f16166cd222895ee3df9f42365bea3cf6dcead224",
+      "bytes": 1570
+    },
+    "docs/evidence/invoice-cycle/parent-financial-controls/pytest.xml": {
+      "sha256": "1d3847c5f3841dc33e5909db77bd5e83184e0522734b986c571df6afdbba9a47",
+      "bytes": 13477
+    },
+    "docs/evidence/invoice-cycle/parent-financial-controls/run.json": {
+      "sha256": "ff0a5728b8d7ec23c6abe45e99b42390c15f66f25fbb17d6f8e9e41e64e9f3c4",
+      "bytes": 31058
+    },
+    "docs/evidence/invoice-cycle/parent-green-collections/pytest.log": {
+      "sha256": "ba0a6766d3cee7f8aa510ab6d848f84d1fb139be61a95e41e78e994cd0ee80b0",
+      "bytes": 678
+    },
+    "docs/evidence/invoice-cycle/parent-green-collections/pytest.xml": {
+      "sha256": "ae3e7bd4b519b4f2e028b8b51fc1c336819efc65660573a310a05a2d9c2bf84c",
+      "bytes": 862
+    },
+    "docs/evidence/invoice-cycle/parent-green-collections/run.json": {
+      "sha256": "a2519411ad2174c5ed95f0ef70ef68b3dc9156dcf4db50ac88f4ff541f57fe1c",
+      "bytes": 17931
+    },
+    "docs/evidence/invoice-cycle/parent-green-immutability/pytest.log": {
+      "sha256": "1d8cfb21ce4486cc5b007e4a371e0f4e60fa85c12858c69c9e52f1afa355ba24",
+      "bytes": 678
+    },
+    "docs/evidence/invoice-cycle/parent-green-immutability/pytest.xml": {
+      "sha256": "07bb9345a6a6778bf2941af246768fd2abc4103dbfd21560dc5e817355552874",
+      "bytes": 373
+    },
+    "docs/evidence/invoice-cycle/parent-green-immutability/run.json": {
+      "sha256": "63eb970ca18ad51db94b7d3e33ebbd5de49a338337f087787b55fdde9fd07cd2",
+      "bytes": 17485
+    },
+    "docs/evidence/invoice-cycle/parent-green-post-grant/pytest.log": {
+      "sha256": "89717296c5b614e422e2fa91c42de0cc8d077218f11dab3e8af42326a18fae05",
+      "bytes": 678
+    },
+    "docs/evidence/invoice-cycle/parent-green-post-grant/pytest.xml": {
+      "sha256": "3790b8498f92d665cd045deee16646347048c75c163ff9876a4e9fb4d9b6c3fe",
+      "bytes": 489
+    },
+    "docs/evidence/invoice-cycle/parent-green-post-grant/run.json": {
+      "sha256": "3ef06902b414dfce89bfc9b237c492a56ff3ac06f42e6187d9d4da913c067ded",
+      "bytes": 17515
+    },
+    "docs/evidence/invoice-cycle/parent-green-races/pytest.log": {
+      "sha256": "de100b6efd8c7d25cc7514e498bd8f9b8c157aae92c8da1a0e1519578a2acfe8",
+      "bytes": 693
+    },
+    "docs/evidence/invoice-cycle/parent-green-races/pytest.xml": {
+      "sha256": "60519c2fd06b7b655e5712175633588ffe5fec355de0097f7a209a7f033a3ae1",
+      "bytes": 977
+    },
+    "docs/evidence/invoice-cycle/parent-green-races/run.json": {
+      "sha256": "5237ae40c3a5537d052d8c3ff2d7e3fef23372bac28637a063fca3f9a25ad737",
+      "bytes": 18304
+    },
+    "docs/evidence/invoice-cycle/parent-green-reversal-links/pytest.log": {
+      "sha256": "a785082d2227f2e5cda7548008838b18b5e9bcb51e8823f80d88a65979a7943b",
+      "bytes": 678
+    },
+    "docs/evidence/invoice-cycle/parent-green-reversal-links/pytest.xml": {
+      "sha256": "44a69c6238c0aeeabb59c426d8f2634173a8309a039bd4791d56b5f6c70da419",
+      "bytes": 610
+    },
+    "docs/evidence/invoice-cycle/parent-green-reversal-links/run.json": {
+      "sha256": "16e98e88651e52c0e40c9a27581ed8c6ae35dffd4db30e2ed67ee1a85cc93823",
+      "bytes": 17654
+    },
+    "docs/evidence/invoice-cycle/parent-intake/pytest.log": {
+      "sha256": "db4f9b18c3d20d5e1ba451988954238584b7fd74e4a57a577604b9bae3ba4848",
+      "bytes": 843
+    },
+    "docs/evidence/invoice-cycle/parent-intake/pytest.xml": {
+      "sha256": "9ab316ee41f921ff67fe8c4f8e4f9287dad52c0e899582ded6460239f44b260f",
+      "bytes": 25536
+    },
+    "docs/evidence/invoice-cycle/parent-intake/run.json": {
+      "sha256": "4c7c9ab4d22f22f52ee4b50ba81b79fdfd925222bbc7a945bf2ab40371737e36",
+      "bytes": 45193
+    },
+    "docs/evidence/invoice-cycle/parent-lint-before.json": {
+      "sha256": "81f9baa03b201e44cf2a6ca1c9a91712f71c220e0c7a8c94139e9fb8fba12a14",
+      "bytes": 221192
+    },
+    "docs/evidence/invoice-cycle/parent-lint-safe-fix.json": {
+      "sha256": "753b5c6039bab99d4bc51cff8138a1fbf235306fc003f6c52abe2e6417c1b3da",
+      "bytes": 43587
+    },
+    "docs/evidence/invoice-cycle/parent-pre-review/pytest.log": {
+      "sha256": "4cfe376b92816640bf6258357f568299bc3e8c14feb81224067c807033704429",
+      "bytes": 1015
+    },
+    "docs/evidence/invoice-cycle/parent-pre-review/pytest.xml": {
+      "sha256": "d1f74cdb6683ecc20743b5f2d909df1daff900662b73b7f071ea9aada5bb0898",
+      "bytes": 39766
+    },
+    "docs/evidence/invoice-cycle/parent-pre-review/run.json": {
+      "sha256": "9ad2108f5be93d98f9285466049c72b1a1613d3bc8442a1f65ece3b27fdb7c52",
+      "bytes": 61457
+    },
+    "docs/evidence/invoice-cycle/parent-red-collections/pytest.log": {
+      "sha256": "4aa3aef3d6a3b029a5c5c99ea8b21361fe3fa1839b372bf11341534ed7ae86b7",
+      "bytes": 1852
+    },
+    "docs/evidence/invoice-cycle/parent-red-collections/pytest.xml": {
+      "sha256": "31222af017b784c95fb20c50c6c782520916dc47021e1fec5aa17a7591655fd5",
+      "bytes": 1972
+    },
+    "docs/evidence/invoice-cycle/parent-red-collections/run.json": {
+      "sha256": "2e4b767a869c92b481e459df946a880b5c3b725b94c7f4a7f0580cc35d37d0d3",
+      "bytes": 17929
+    },
+    "docs/evidence/invoice-cycle/parent-red-duplicate-post-lock/pytest.log": {
+      "sha256": "483725f2838cd854e77b88d4eb4c5439dd377deb6d9e8897e26556f178e9f4ed",
+      "bytes": 12646
+    },
+    "docs/evidence/invoice-cycle/parent-red-duplicate-post-lock/pytest.xml": {
+      "sha256": "fd35114c6ee33d3fb3837a68bf7bb3b6392422bb98e07c109dd78f5a8342ee5c",
+      "bytes": 12647
+    },
+    "docs/evidence/invoice-cycle/parent-red-duplicate-post-lock/run.json": {
+      "sha256": "fd07709b1e3fe6b1830ba17477118bdf05ff2f31f59c0dc4c569bbf8b19b2336",
+      "bytes": 17647
+    },
+    "docs/evidence/invoice-cycle/parent-red-immutability/pytest.log": {
+      "sha256": "deea18b0a938f96931d12a9a84ec98650a702691aa6835cbe976ce6d25be9d2c",
+      "bytes": 1188
+    },
+    "docs/evidence/invoice-cycle/parent-red-immutability/pytest.xml": {
+      "sha256": "0b5bfa6310161d4feb5eedf3efc946f4254048d277fa61e58eea6e61fb83d26f",
+      "bytes": 613
+    },
+    "docs/evidence/invoice-cycle/parent-red-immutability/run.json": {
+      "sha256": "14bd22f3e14f6133716ad2dd82a71235e421d2fba1bf9a892309df58c492de58",
+      "bytes": 17385
+    },
+    "docs/evidence/invoice-cycle/parent-red-post-grant/pytest.log": {
+      "sha256": "84e6074b7a13ea3df5aa1c6bb29607c389fd4bd9b71450d4db52dd20ba7a7ee1",
+      "bytes": 2380
+    },
+    "docs/evidence/invoice-cycle/parent-red-post-grant/pytest.xml": {
+      "sha256": "9d65e2c1437c8d99fcf80016806f3107589e8da872d9c96efbddc1affef5da2b",
+      "bytes": 3663
+    },
+    "docs/evidence/invoice-cycle/parent-red-post-grant/run.json": {
+      "sha256": "82c283f81a7865fb639f8d29b7b47565797dd78bb73e105cec53884aec71a3cb",
+      "bytes": 17410
+    },
+    "docs/evidence/invoice-cycle/parent-red-reversal-links/pytest.log": {
+      "sha256": "2c01c0e1464176d70f1cb746a860e3a698b4d321d989fe1c7212ecf1002c384a",
+      "bytes": 1238
+    },
+    "docs/evidence/invoice-cycle/parent-red-reversal-links/pytest.xml": {
+      "sha256": "85b6f54fffe3f031ecae0e800b7b676fc14298a9898116cc20170054c13aa60b",
+      "bytes": 706
+    },
+    "docs/evidence/invoice-cycle/parent-red-reversal-links/run.json": {
+      "sha256": "ea0b277952da1cbffca7deb1f420d70647b1cb3abb09d8dd0f3b33e4da01e8c5",
+      "bytes": 17424
+    },
+    "docs/evidence/invoice-cycle/review-input/context/app/auth/router.py": {
+      "sha256": "d7dbe8017252256eaa197ed1585782ee47a247de3e29ca7391f36e41708c5f67",
+      "bytes": 3193
+    },
+    "docs/evidence/invoice-cycle/review-input/context/app/config.py": {
+      "sha256": "895535de20d97fe05b35934ea87ff8c051131cb62f0051000419c1160978b6da",
+      "bytes": 363
+    },
+    "docs/evidence/invoice-cycle/review-input/context/app/finance/router.py": {
+      "sha256": "2d731e5bf4dd873318b380fe5cf58dea99a4319498f9f81d405bac612a5d2145",
+      "bytes": 5770
+    },
+    "docs/evidence/invoice-cycle/review-input/context/app/sales/calc.py": {
+      "sha256": "d30623b1e77ab38ea8651ec81cb13c5074b9e6d621148b6d83a296cdfc2ea16b",
+      "bytes": 3567
+    },
+    "docs/evidence/invoice-cycle/review-input/context/app/sales/repo.py": {
+      "sha256": "3f863eafcceb14d32e5c52fa4b810035316214699bfb54703f209afca8709e62",
+      "bytes": 2777
+    },
+    "docs/evidence/invoice-cycle/review-input/context/app/sales/schemas.py": {
+      "sha256": "5e43bb643d92c6d2429463c6930d49ab3fc10e602fc68495d34eb49e094ab7b7",
+      "bytes": 2369
+    },
+    "docs/evidence/invoice-cycle/review-input/context/docs/evidence/invoice-cycle/DEFAULT_DB_INCIDENT.json": {
+      "sha256": "891d6f53472c0b079ff5bf43b7e82549227e728b5909cc902d282e691f53f97e",
+      "bytes": 263
+    },
+    "docs/evidence/invoice-cycle/review-input/context/docs/evidence/invoice-cycle/PARENT_REPORT.md": {
+      "sha256": "ee701c6561a78ef2cdfcf5782d711369ad5f52b63960c6380aa368d8cab2d0d9",
+      "bytes": 8405
+    },
+    "docs/evidence/invoice-cycle/review-input/context/docs/milestones/INVOICE_COLLECTION.md": {
+      "sha256": "7932df7e634b8085b22238d37047e44b461a533f547f727fe516c812f3e8d516",
+      "bytes": 9064
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/alembic__versions__0010_invoice_collections.py.diff": {
+      "sha256": "f75d5f770c4344c842759d47899c4aeb6a86d3e94032da11b2dfbba85fa841d3",
+      "bytes": 9643
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/app__finance__ar.py.diff": {
+      "sha256": "73909e1653aff6986b6865aa967fafa87024c9a394af21ef6532a6f9d3df00b3",
+      "bytes": 5332
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/app__finance__payment_router.py.diff": {
+      "sha256": "9a5b1b3263a8d6f2e454d51ffc2657ad9fdec20426e8ac6883ed77e6c538e9e1",
+      "bytes": 8394
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/app__finance__payments.py.diff": {
+      "sha256": "d08a6b8dc35fead73f295ccea7fc90c21ce44b51a982d3438f070271a0a9ea90",
+      "bytes": 6748
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/app__finance__schemas.py.diff": {
+      "sha256": "42b0cdee90366bea88d26fe88026c17ced4365b33ac3ac1b0cdc72fc3bcb677d",
+      "bytes": 2982
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/app__inventory__service.py.diff": {
+      "sha256": "766a809bc8160bdfd4ec51a59717c8fe99ffe0c1426ec84e3acd61a6372afd2d",
+      "bytes": 9201
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/app__main.py.diff": {
+      "sha256": "c7a488630810a59c58f39856cc419060b78b029a36f8673cf165cca55e32dd99",
+      "bytes": 1683
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/app__sales__router.py.diff": {
+      "sha256": "a4f419230eaa21d3a896d222bf32e122c757756bc075e64b615b8f688ecb2a4b",
+      "bytes": 9531
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/app__sales__service.py.diff": {
+      "sha256": "d64780ff5248022bb4804dcd9a54b6c0ccead4b4e15a3b45c5ad80301ea73041",
+      "bytes": 9161
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/scripts__verify_invoice_cycle.py.diff": {
+      "sha256": "1822b5d3a9f4868ea9e7c2d21ea8bf0aa45e311cf154ad321e2fd8c554e7057f",
+      "bytes": 8266
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/tests__conftest.py.diff": {
+      "sha256": "13872a6c97f4549af448753895f1c145b40f0ddbf0e1987f7e9be3717c226171",
+      "bytes": 7031
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/tests__test_collections.py.diff": {
+      "sha256": "ea77659fd8c66ded5def0441a5df992a05643e67b561bda17823afc25ac1493f",
+      "bytes": 20984
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/tests__test_invoice_cycle.py.diff": {
+      "sha256": "f3fc0c15be91f87aa64105cbc64856837be5a38a531560a28f25ef02fef59f4a",
+      "bytes": 17900
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/tests__test_invoice_cycle_controls.py.diff": {
+      "sha256": "5612360b99bca27c8c64c211b9f900b17cfe3dfa4d2d1e219f584f9e918d8882",
+      "bytes": 11224
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/tests__test_invoice_cycle_safety.py.diff": {
+      "sha256": "7a389a43dddee8adc7d7609c0839418a1364d569e43a5146ac806e29e8c54379",
+      "bytes": 23290
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/tests__test_invoice_reversal.py.diff": {
+      "sha256": "cf7175b4ad087e279cccb58a0ca6f8ef107bfa3f3f7bb27ddfaf5eafbf5e46dc",
+      "bytes": 14702
+    },
+    "docs/evidence/invoice-cycle/review-input/diffs/tests__test_posting_flag.py.diff": {
+      "sha256": "cd455548993ec53ad444442e87c9b735c85cde5b2ae597c5ad4d5cef8fd8fc39",
+      "bytes": 5266
+    },
+    "docs/evidence/invoice-cycle/review-input/files/alembic/versions/0010_invoice_collections.py": {
+      "sha256": "91d5695e2611c07ec3cc8a1168df658cfc37dd90bb68ce4447adca2ce3507051",
+      "bytes": 9360
+    },
+    "docs/evidence/invoice-cycle/review-input/files/app/finance/ar.py": {
+      "sha256": "96ed2b97020ea01ca9553f5d228a30dcc4272f3d5f77b9692aac0f9cc8fc30ad",
+      "bytes": 3768
+    },
+    "docs/evidence/invoice-cycle/review-input/files/app/finance/payment_router.py": {
+      "sha256": "f0a661fa139200690907349535533f1a1ef80c441f1e814a5f82d15de36cc3e2",
+      "bytes": 8044
+    },
+    "docs/evidence/invoice-cycle/review-input/files/app/finance/payments.py": {
+      "sha256": "c2b68d33390e32ed12c4d075913a3c58d3c9477054db7987b848690a5952efb3",
+      "bytes": 6447
+    },
+    "docs/evidence/invoice-cycle/review-input/files/app/finance/schemas.py": {
+      "sha256": "b2c34b53c5ab4c9d2375fd5827ac464dc24b4e7a84175f83de21c23a449fb52d",
+      "bytes": 2657
+    },
+    "docs/evidence/invoice-cycle/review-input/files/app/inventory/service.py": {
+      "sha256": "ed21dfc6a0c9b71838fca1bb19837731855d4c662657afd2fd199e8c7526b468",
+      "bytes": 6486
+    },
+    "docs/evidence/invoice-cycle/review-input/files/app/main.py": {
+      "sha256": "d7ff95a482886457f273b7249500f29d014bcd809cc9cb067b4ecfbd28cdb142",
+      "bytes": 1331
+    },
+    "docs/evidence/invoice-cycle/review-input/files/app/sales/router.py": {
+      "sha256": "4a8e0fa9c3e9b7a799a9a218a1070a2b7cf2692fe383df53bb95a76953ed569c",
+      "bytes": 17429
+    },
+    "docs/evidence/invoice-cycle/review-input/files/app/sales/service.py": {
+      "sha256": "4c63795fa59ba22c44974aa4590e79753e7d2e580beb7437b36cbd2c7fd0ac67",
+      "bytes": 7567
+    },
+    "docs/evidence/invoice-cycle/review-input/files/scripts/verify_invoice_cycle.py": {
+      "sha256": "b6cf7c038bace7364fbba6cb14bca12e3476034bf554c6726b3621356a6bbf72",
+      "bytes": 7946
+    },
+    "docs/evidence/invoice-cycle/review-input/files/tests/conftest.py": {
+      "sha256": "fe3889c391e29bfc884c05086a88d11311663268db78c892dd70a2580be0f358",
+      "bytes": 4604
+    },
+    "docs/evidence/invoice-cycle/review-input/files/tests/test_collections.py": {
+      "sha256": "d8c17365e6b2f45b1814bd5ed449a2a4ef41897fcfcc0244cc8bea68cd3fd4f0",
+      "bytes": 20902
+    },
+    "docs/evidence/invoice-cycle/review-input/files/tests/test_invoice_cycle.py": {
+      "sha256": "f11e898c23f9c5813976905f018a22c21acf32da85cf22d28d3fc1b4c6750bd5",
+      "bytes": 17814
+    },
+    "docs/evidence/invoice-cycle/review-input/files/tests/test_invoice_cycle_controls.py": {
+      "sha256": "7186f88321b87fbe1d894497ba61b4553ba94bec1e3e2e15ba0297b181a7d5a8",
+      "bytes": 10803
+    },
+    "docs/evidence/invoice-cycle/review-input/files/tests/test_invoice_cycle_safety.py": {
+      "sha256": "9599081f1f7ca1933d2f3dee90f5ffaa69284276b20e160e43f9dc4061d148f1",
+      "bytes": 22559
+    },
+    "docs/evidence/invoice-cycle/review-input/files/tests/test_invoice_reversal.py": {
+      "sha256": "312e7542a571d0cebd16b07a0037b8768612533e1458ec1532b84d8bcd3cf96c",
+      "bytes": 14610
+    },
+    "docs/evidence/invoice-cycle/review-input/files/tests/test_posting_flag.py": {
+      "sha256": "ad877c642b6d356dff12f1ad62ef6186fab90dc3fc88e214335f38a65e371ec6",
+      "bytes": 3643
+    },
+    "docs/evidence/invoice-cycle/review-input/manifest.json": {
+      "sha256": "35e47589a314d7ff476cca0832198da1338f01877053db248d5a2c6bbe2ec1c9",
+      "bytes": 14280
+    },
+    "docs/evidence/invoice-cycle/test2/pytest.log": {
+      "sha256": "bfd3283346b09807f96057956e54be908ac1e57e597b48f8771260041e3523a9",
+      "bytes": 2790
+    },
+    "docs/evidence/invoice-cycle/test2/pytest.xml": {
+      "sha256": "681c4a0427507904e79fbb75356368dc7b1167ee39af061c84a3bcd95dd2695b",
+      "bytes": 2537
+    },
+    "docs/evidence/invoice-cycle/test2/run.json": {
+      "sha256": "180274f813fdc4db41ac10b8281fbf570962153a019f94c53ed95a0a4aea2c12",
+      "bytes": 17791
+    },
+    "docs/evidence/invoice-cycle/test3/pytest.log": {
+      "sha256": "2e7fe3a28530fb1be1742d3a2e143fc5ce0d8fa52c77c7cdffad2dec288f2cc7",
+      "bytes": 3120
+    },
+    "docs/evidence/invoice-cycle/test3/pytest.xml": {
+      "sha256": "8b14d4e92d37b575402d0dd367a5683d87a512c32a84dccae1ab045e7360dbda",
+      "bytes": 3191
+    },
+    "docs/evidence/invoice-cycle/test3/run.json": {
+      "sha256": "99345c72b069c9be7e4d37051f27829914f71e4da388a52dd7661dc346cfbb43",
+      "bytes": 17791
+    },
+    "docs/evidence/invoice-cycle/test_collections_fixed/pytest.log": {
+      "sha256": "533359296a9806bff14211d29edea72d4068a85900c7d26bb1575db4e5d71918",
+      "bytes": 4222
+    },
+    "docs/evidence/invoice-cycle/test_collections_fixed/pytest.xml": {
+      "sha256": "b92699c12732796c478a9e2a423bd628cdc4f6fdaa950f09facbec65b7e7c6b9",
+      "bytes": 4529
+    },
+    "docs/evidence/invoice-cycle/test_collections_fixed/run.json": {
+      "sha256": "c7e9665a563cf9ccb4988503798f0eaadad4a374ae62e7606df7701348e3a553",
+      "bytes": 18279
+    },
+    "docs/evidence/invoice-cycle/test_collections_fixed2/pytest.log": {
+      "sha256": "700006cbc22fa26be109ed8fa34fadd07db38b460fe27ea7e6841e08b35b4f74",
+      "bytes": 48192
+    },
+    "docs/evidence/invoice-cycle/test_collections_fixed2/pytest.xml": {
+      "sha256": "5a99fe6b7fe8403cc129af2ab77dc1383918d79186c12e9337b83389e990d3c6",
+      "bytes": 48238
+    },
+    "docs/evidence/invoice-cycle/test_collections_fixed2/run.json": {
+      "sha256": "871669b5b113039c0163b67dd4ce9cb2cbae6c5e1c2c8245fa5e220cc3567a1b",
+      "bytes": 18280
+    },
+    "docs/evidence/invoice-cycle/test_collections_fixed3/pytest.log": {
+      "sha256": "5a0d27dcb1501fcec1005991110190966cf90d4f73a95f7d614720eebdcc8455",
+      "bytes": 54814
+    },
+    "docs/evidence/invoice-cycle/test_collections_fixed3/pytest.xml": {
+      "sha256": "2de7d2b203c6d691c1a093faac6369e3f3fc0e9bbcd22feb1611e3e2247415a2",
+      "bytes": 54832
+    },
+    "docs/evidence/invoice-cycle/test_collections_fixed3/run.json": {
+      "sha256": "7bf1f1e4dd9e0389ea8ff665a9084d234fc8f09d0ba6bf21ff3878baffbe3d2d",
+      "bytes": 18280
+    },
+    "docs/evidence/invoice-cycle/test_collections_fixed4/pytest.log": {
+      "sha256": "a8b847ef2faf6eab7d94b7f74d9f1f15e17a1c7cb89362f5ac52c32e34ef1544",
+      "bytes": 54814
+    },
+    "docs/evidence/invoice-cycle/test_collections_fixed4/pytest.xml": {
+      "sha256": "292e197026f80c078ae045304cfe26496832a13a1b1b4e68422aed55039ea85c",
+      "bytes": 54832
+    },
+    "docs/evidence/invoice-cycle/test_collections_fixed4/run.json": {
+      "sha256": "f1f1653056a8c84cd1b1615e57adce7bf547fc73393181389b633058fef57cf8",
+      "bytes": 18280
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed/pytest.log": {
+      "sha256": "c0203effbef7bdc34423beaff0a050f29c68e83a9a7c17861c23736c246aa3a9",
+      "bytes": 1986
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed/pytest.xml": {
+      "sha256": "86e714d54a7a20650cb0b1c6a38843d6dcd568d42c716d42116922f7dc7505db",
+      "bytes": 1532
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed/run.json": {
+      "sha256": "e37093886451bf831af970302251d8cb99fc1a8db949644066f2c1ca2fe4bb72",
+      "bytes": 17382
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed2/pytest.log": {
+      "sha256": "a7eb154cf182aab22ae3cc50be5252c6587c3ded260c262859dcf294b28046e6",
+      "bytes": 11033
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed2/pytest.xml": {
+      "sha256": "767bec625a3d9bb6292a73c465ac9509592efa5db07888a6fe5814a4532fc057",
+      "bytes": 12299
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed2/run.json": {
+      "sha256": "420c95b7aad237266641111ad724154819a0dd725f08957c5d60d9b7ce7b9bd8",
+      "bytes": 17380
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed3/pytest.log": {
+      "sha256": "3f8462db4aa6747d2c92a83e2a1f12b782ba3b14441f085d509a8fd1827290a1",
+      "bytes": 9817
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed3/pytest.xml": {
+      "sha256": "f94e2525c0fe6ee5c827bdf6cc64e608ab4d425956e7c525fb9d41055756bfd9",
+      "bytes": 9374
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed3/run.json": {
+      "sha256": "931925609e21629c82023e4c9134fd96e35bf54daccc25b1145aef9f5156b372",
+      "bytes": 17383
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed4/pytest.log": {
+      "sha256": "2307b81871cf51a2224d9b176043f73492723ca1ac5e1607d21d5b87f0c153f8",
+      "bytes": 1569
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed4/pytest.xml": {
+      "sha256": "696ad3e7dcf1621d7bfd4b6318bade3701fddc89b2e8ed1015802e8e7ddcb8f1",
+      "bytes": 1121
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed4/run.json": {
+      "sha256": "dc9a75e280a47728c472d81dea11e6740ed49e645d8668a587e237afdb7a2851",
+      "bytes": 17383
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed5/pytest.log": {
+      "sha256": "6c85f565292ec417c428471c43a8404fadf86ae4c76abbc198bcb520b9629a90",
+      "bytes": 4870
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed5/pytest.xml": {
+      "sha256": "242d6fd344c2666f02af5c5d025c43879b29ed37fd1d5766f276834988778bff",
+      "bytes": 5561
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed5/run.json": {
+      "sha256": "2e472042def91ebe964821a8248e2af542258bc7ad13e1ba3a8b707048e871e7",
+      "bytes": 17383
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed_final/pytest.log": {
+      "sha256": "9ccd29bdbde8834f0178bce81c76b37cd528d2965366ae8bf581a6d5f88bbe14",
+      "bytes": 678
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed_final/pytest.xml": {
+      "sha256": "eff4d5a0574c8281d64948714fee9b1b94c18121beeba73924f0b6ad75c0f577",
+      "bytes": 584
+    },
+    "docs/evidence/invoice-cycle/test_cycle_fixed_final/run.json": {
+      "sha256": "b0f02e6895f39e7b9c24245342d823f355dbbf629121333d97dfbf2d9a0d65d9",
+      "bytes": 17388
+    },
+    "docs/evidence/invoice-cycle/test_reversal/pytest.log": {
+      "sha256": "1589675395bb55c6d82a4202cfa4bddd1d2af488562785d6bf531885127e7fd9",
+      "bytes": 6971
+    },
+    "docs/evidence/invoice-cycle/test_reversal/pytest.xml": {
+      "sha256": "772bdbdbeca8719777dd8cf566a7efefa2e4963daa95397ea9c9c884754632be",
+      "bytes": 7716
+    },
+    "docs/evidence/invoice-cycle/test_reversal/run.json": {
+      "sha256": "605a66864ddefc402537854dfa63913b51b566df78f0ff9886fd5ee02719af4f",
+      "bytes": 17805
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed/pytest.log": {
+      "sha256": "410ca4a257fad96017501ca9876939111dcd5ef46b1fac4d2fa88c8367a695ea",
+      "bytes": 2018
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed/pytest.xml": {
+      "sha256": "c7ed6305e516eb1aad66bce600c3a32f1b1837b2726c91b06d08815256491ab4",
+      "bytes": 1886
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed/run.json": {
+      "sha256": "393c9599632538f7d7fe999fe2fa7702bc9249f2876eb8b51cb9fee138ce36fd",
+      "bytes": 17805
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed2/pytest.log": {
+      "sha256": "cfd1a6097ad070d4edae18fd560d2763b01cf246076320dfa404190b0dbaccb2",
+      "bytes": 1264
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed2/pytest.xml": {
+      "sha256": "1945f1c78bef041b98fb733e0419faf27104f1755f38efcef1579a5bee529bb2",
+      "bytes": 1263
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed2/run.json": {
+      "sha256": "ed320fd32df435faf300c83d90bda5068c7a0d6879f2c01bc0ce16e5ef1466f2",
+      "bytes": 17806
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed3/pytest.log": {
+      "sha256": "e4ad8f06be940fde30a53cc17d69bbe9fc7f28352dc06aef2b4a9a71b3a930c3",
+      "bytes": 21120
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed3/pytest.xml": {
+      "sha256": "8056792da6015d6d38dd2afdc7189104f24ba28c7d20fb7c0220f27237d3f219",
+      "bytes": 24191
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed3/run.json": {
+      "sha256": "41ea13cfb0080645380c58837eceeec4cb944fc2d9495ebc86ead28e96c33b36",
+      "bytes": 17800
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed4/pytest.log": {
+      "sha256": "f478d02f0f6dda4895a563c3503c184dcaf5f98292edc14e4975b490d4b6af82",
+      "bytes": 21276
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed4/pytest.xml": {
+      "sha256": "bab661d2662d0a7d8c5920bb477da6a6c693c90f885c2187275a284f3f87b90e",
+      "bytes": 24425
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed4/run.json": {
+      "sha256": "0475733746e8860723f967236d40b923db46daeb9ff150d70ecc1cf9876a7495",
+      "bytes": 17800
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed5/pytest.log": {
+      "sha256": "3850a570bbb4b777b048cde12379290930982cd5cfcb49ef94b69fa8bc857603",
+      "bytes": 1264
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed5/pytest.xml": {
+      "sha256": "ac497af6a8298e6003ce6afc5ed554539d8287efcdf86faf957a094463dbf240",
+      "bytes": 1263
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed5/run.json": {
+      "sha256": "025e8832839393557357518c123d9f91933de3ca2f391c1d9535809873fc5784",
+      "bytes": 17806
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed6/pytest.log": {
+      "sha256": "7e2058cc3b8d0181ff5f5b9e0ca333dafabffe85850775f0aef1a6f1b8cbdeba",
+      "bytes": 678
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed6/pytest.xml": {
+      "sha256": "723827b672d3bffa1b6c34ffb28aea3ba299859c4a3aba135559b8ba3de7e939",
+      "bytes": 959
+    },
+    "docs/evidence/invoice-cycle/test_reversal_fixed6/run.json": {
+      "sha256": "97617ffb347d8b2d6d76cc9beef817fa8d9770fdac9b43402d062f3e098656db",
+      "bytes": 17806
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/.gitignore": {
+      "sha256": "fc172e6df76206a2d87b343b872f3c2384ccde5c26410c439436eccc3e68bba4",
+      "bytes": 43
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/alembic/versions/0010_invoice_collections.py": {
+      "sha256": "b5f040f7b9a92a4a9c7194dc443c2ebb78e64353f49acce1b4301899d5104190",
+      "bytes": 3232
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/app/finance/payment_router.py": {
+      "sha256": "615c62198524deb131bc7d97d1b094ba2a71e8e6c900bd5b5062a7855e961017",
+      "bytes": 7167
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/app/finance/payments.py": {
+      "sha256": "4778cc4a13968f639bb614ae938ef26b164da6d293272c4a325bb82ffb3229a2",
+      "bytes": 4855
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/app/finance/schemas.py": {
+      "sha256": "2be041a1197518bb857e76a905c7e76a72950457e10fa899c8a4659ec9a7863e",
+      "bytes": 2468
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/app/main.py": {
+      "sha256": "70d1e6aa2ad9b30a5015ed1e12671f93d270ed40b95ecee08f36dad52c40b3a5",
+      "bytes": 1433
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/app/sales/router.py": {
+      "sha256": "0ff4d77d6f0312d7222cfa0d741aaaee483826e81ed53ad9fa83c725dd2a0f5c",
+      "bytes": 14826
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/app/sales/service.py": {
+      "sha256": "5b599d8c6c4ec86dc20cae48e9acdb7f8d5cf0ecbc09258258b6c4176a03fd32",
+      "bytes": 4627
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/docs/evidence/invoice-cycle/IMPLEMENTER.md": {
+      "sha256": "e9ae44e138b4c1755fb59e7926ee0ea20acd38beeffd02dcf3c0d3f0f3cffff2",
+      "bytes": 4309
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/manifest.json": {
+      "sha256": "05a6f6019384fe10638a9c3f044b780c84e94efe7cc54afc797f0986e8cc8dd2",
+      "bytes": 1312
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/tests/test_collections.py": {
+      "sha256": "892fd95b6a2b72ea434fcd2362fcbee0b74749454af8edb51c045824910f026d",
+      "bytes": 17986
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/tests/test_invoice_cycle.py": {
+      "sha256": "2f01354f04a740ece22715765dfda7c38d57a7f4c46b3583c287cdb189f93464",
+      "bytes": 15415
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/tests/test_invoice_reversal.py": {
+      "sha256": "8f51ae212761dd9de4b139fac28a2924b6499c634aeca2d0ea73fbe61951aeed",
+      "bytes": 13582
+    },
+    "docs/evidence/invoice-cycle/worker-delivered/tests/test_posting_flag.py": {
+      "sha256": "89a6f4f854206e8b33f2ca65cdb800acc917baddbf67dfe0234bd97b02ecb128",
+      "bytes": 3549
+    },
+    "docs/milestones/INVOICE_COLLECTION.md": {
+      "sha256": "7932df7e634b8085b22238d37047e44b461a533f547f727fe516c812f3e8d516",
+      "bytes": 9064
+    },
+    "scripts/verify_invoice_cycle.py": {
+      "sha256": "b6cf7c038bace7364fbba6cb14bca12e3476034bf554c6726b3621356a6bbf72",
+      "bytes": 7946
+    },
+    "tests/conftest.py": {
+      "sha256": "fe3889c391e29bfc884c05086a88d11311663268db78c892dd70a2580be0f358",
+      "bytes": 4604
+    },
+    "tests/test_collections.py": {
+      "sha256": "d8c17365e6b2f45b1814bd5ed449a2a4ef41897fcfcc0244cc8bea68cd3fd4f0",
+      "bytes": 20902
+    },
+    "tests/test_invoice_cycle.py": {
+      "sha256": "f11e898c23f9c5813976905f018a22c21acf32da85cf22d28d3fc1b4c6750bd5",
+      "bytes": 17814
+    },
+    "tests/test_invoice_cycle_controls.py": {
+      "sha256": "7186f88321b87fbe1d894497ba61b4553ba94bec1e3e2e15ba0297b181a7d5a8",
+      "bytes": 10803
+    },
+    "tests/test_invoice_cycle_safety.py": {
+      "sha256": "9599081f1f7ca1933d2f3dee90f5ffaa69284276b20e160e43f9dc4061d148f1",
+      "bytes": 22559
+    },
+    "tests/test_invoice_reversal.py": {
+      "sha256": "312e7542a571d0cebd16b07a0037b8768612533e1458ec1532b84d8bcd3cf96c",
+      "bytes": 14610
+    },
+    "tests/test_posting_flag.py": {
+      "sha256": "ad877c642b6d356dff12f1ad62ef6186fab90dc3fc88e214335f38a65e371ec6",
+      "bytes": 3643
+    }
+  },
+  "file_count": 200,
+  "bytes": 2957334,
+  "extensions": {
+    ".py": 51,
+    ".md": 12,
+    "": 3,
+    ".json": 46,
+    ".log": 35,
+    ".xml": 35,
+    ".txt": 1,
+    ".diff": 17
+  },
+  "findings": [],
+  "agent_transcripts_excluded": true,
+  "workbooks_config_secrets_unrelated_excluded": true,
+  "raw_evidence_git_filter_preserved": true,
+  "scope": "Known-pattern scan of task payload only, not repository-wide/history certification."
+}

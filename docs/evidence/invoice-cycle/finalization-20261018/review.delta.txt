@@ -1,0 +1,4719 @@
+
+### FILE app/finance/ar.py; diff SHA256 73909e1653aff6986b6865aa967fafa87024c9a394af21ef6532a6f9d3df00b3
+--- a/app/finance/ar.py
++++ b/app/finance/ar.py
+@@ -1,70 +1,120 @@
+ """Customer receivables ledger (finance.ar) + user->warehouse access scope.
+ 
+ balance = Σ(debit) - Σ(credit) per customer, matching the Excel العملاء rule.
+ The `invoice` entry_type is produced only by record_sale (the posting flow);
+ the API schema restricts client-supplied types to opening/payment/credit_note/
+ adjustment, so a client cannot fabricate an invoice AR entry.
+ """
++
+ from sqlalchemy import text
+ 
+ 
+-def record_entry(db, *, customer_id, entry_type, debit=0, credit=0, on_date,
+-                 due_date=None, reason_id=None, note=None, actor_id, invoice_id=None):
+-    row = db.execute(text("""
++def record_entry(
++    db,
++    *,
++    customer_id,
++    entry_type,
++    debit=0,
++    credit=0,
++    on_date,
++    due_date=None,
++    reason_id=None,
++    note=None,
++    actor_id,
++    invoice_id=None,
++    receipt_id=None,
++    reverses_entry_id=None,
++):
++    return db.execute(
++        text("""
+         INSERT INTO finance.ar_entry
+             (customer_id, invoice_id, entry_type, entry_date, due_date,
+-             debit, credit, reason_id, note, created_by)
+-        VALUES (:c, :inv, :et, :d, :due, :debit, :credit, :r, :note, :actor)
++             debit, credit, reason_id, note, created_by, receipt_id, reverses_entry_id)
++        VALUES (:c, :inv, :et, :d, :due, :debit, :credit, :r, :note, :actor, :receipt, :reverses)
+         RETURNING id
+-    """), {"c": str(customer_id), "inv": str(invoice_id) if invoice_id else None,
+-           "et": entry_type, "d": on_date, "due": due_date, "debit": debit, "credit": credit,
+-           "r": str(reason_id) if reason_id else None, "note": note, "actor": str(actor_id)}).scalar_one()
+-    return row
++    """),
++        {
++            "c": customer_id,
++            "inv": invoice_id,
++            "et": entry_type,
++            "d": on_date,
++            "due": due_date,
++            "debit": debit,
++            "credit": credit,
++            "r": reason_id,
++            "note": note,
++            "actor": actor_id,
++            "receipt": receipt_id,
++            "reverses": reverses_entry_id,
++        },
++    ).scalar_one()
+ 
+ 
+-def record_sale(db, *, customer_id, invoice_id, amount, on_date, due_date=None, actor_id):
++def record_sale(
++    db, *, customer_id, invoice_id, amount, on_date, due_date=None, actor_id
++):
+     """One debit entry per posted invoice (amount = grand_total)."""
+-    return record_entry(db, customer_id=customer_id, entry_type="invoice", debit=amount,
+-                        credit=0, on_date=on_date, due_date=due_date, note=None, actor_id=actor_id,
+-                        invoice_id=invoice_id)
++    return record_entry(
++        db,
++        customer_id=customer_id,
++        entry_type="invoice",
++        debit=amount,
++        credit=0,
++        on_date=on_date,
++        due_date=due_date,
++        note=None,
++        actor_id=actor_id,
++        invoice_id=invoice_id,
++    )
+ 
+ 
+ def customer_balance(db, customer_id):
+     """Σ(debit) - Σ(credit). Matches Excel الرصيد = مدين - دائن."""
+-    return db.execute(text(
+-        "SELECT COALESCE(SUM(debit), 0) - COALESCE(SUM(credit), 0) AS balance "
+-        "FROM finance.ar_entry WHERE customer_id = :c"), {"c": str(customer_id)}).scalar()
++    return db.execute(
++        text(
++            "SELECT COALESCE(SUM(debit), 0) - COALESCE(SUM(credit), 0) AS balance "
++            "FROM finance.ar_entry WHERE customer_id = :c"
++        ),
++        {"c": str(customer_id)},
++    ).scalar()
+ 
+ 
+ def list_entries(db, customer_id=None, entry_type=None, date_from=None, date_to=None):
+     """Column names are fixed literals; values are bound parameters."""
+     clauses, params = [], {}
+     for column, value in (("customer_id", customer_id), ("entry_type", entry_type)):
+         if value is not None:
+             clauses.append(f"{column} = :{column}")
+             params[column] = str(value) if column == "customer_id" else value
+     if date_from is not None:
+         clauses.append("entry_date >= :date_from")
+         params["date_from"] = date_from
+     if date_to is not None:
+         clauses.append("entry_date < :date_to")
+         params["date_to"] = date_to
+     where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+-    rows = db.execute(text(
+-        "SELECT * FROM finance.ar_entry" + where + " ORDER BY entry_date DESC, id"), params).mappings()
++    rows = db.execute(
++        text(
++            "SELECT * FROM finance.ar_entry" + where + " ORDER BY entry_date DESC, id"
++        ),
++        params,
++    ).mappings()
+     return [dict(row) for row in rows]
+ 
+ 
+ def warehouses_for_user(db, user_id):
+     """Warehouses a user may touch via branch assignment.
+ 
+     Owner is not special-cased here; callers check is_owner first. Returns all
+     warehouse ids in any branch the user is assigned to via platform.user_branch.
+     """
+-    rows = db.execute(text("""
++    rows = db.execute(
++        text("""
+         SELECT DISTINCT w.id AS warehouse_id
+         FROM platform.user_branch ub
+         JOIN master_data.master_warehouse w ON w.branch_id = ub.branch_id
+         WHERE ub.user_id = :u
+-    """), {"u": str(user_id)}).fetchall()
++    """),
++        {"u": str(user_id)},
++    ).fetchall()
+     return [r[0] for r in rows]
+
+### FILE app/finance/payments.py; diff SHA256 d08a6b8dc35fead73f295ccea7fc90c21ce44b51a982d3438f070271a0a9ea90
+--- a/app/finance/payments.py
++++ b/app/finance/payments.py
+@@ -0,0 +1,223 @@
++"""Payment receipt service: create, void, and list receipts linked to invoices.
++
++Receipts are append-only. Voiding appends an AR counter-entry (adjustment debit)
++and flips the receipt status to Voided. All writes happen in the caller's
++transaction.
++"""
++
++from sqlalchemy import text
++
++from app.finance import ar as finance_ar
++
++
++def _lock_invoice(db, invoice_id):
++    row = (
++        db.execute(
++            text("SELECT * FROM sales.sales_invoice WHERE id=:id FOR UPDATE"),
++            {"id": invoice_id},
++        )
++        .mappings()
++        .one_or_none()
++    )
++    if row is None:
++        return None
++    return dict(row)
++
++
++def _lock_receipt(db, receipt_id):
++    row = (
++        db.execute(
++            text("SELECT * FROM finance.payment_receipt WHERE id=:id FOR UPDATE"),
++            {"id": receipt_id},
++        )
++        .mappings()
++        .one_or_none()
++    )
++    if row is None:
++        return None
++    return dict(row)
++
++
++def _sum_active_receipts(db, invoice_id):
++    """Sum of Active receipt amounts for an invoice."""
++    return db.execute(
++        text(
++            "SELECT COALESCE(SUM(amount), 0) FROM finance.payment_receipt "
++            "WHERE invoice_id=:i AND status='Active'"
++        ),
++        {"i": invoice_id},
++    ).scalar()
++
++
++def create_receipt(
++    db,
++    *,
++    invoice_id,
++    branch_id,
++    customer_id,
++    receipt_no,
++    receipt_date,
++    amount,
++    method,
++    note,
++    actor_id,
++):
++    """Insert a receipt and its AR payment credit entry. Returns receipt_id."""
++    invoice = _lock_invoice(db, invoice_id)
++    if invoice is None or invoice["posting_status"] != "Posted":
++        raise ValueError("Only Posted invoices accept collections")
++    if invoice["customer_id"] != customer_id or invoice["branch_id"] != branch_id:
++        raise ValueError("Receipt does not match invoice scope")
++    if _sum_active_receipts(db, invoice_id) + amount > invoice["grand_total"]:
++        raise ValueError("Overpayment: amount exceeds outstanding balance")
++    receipt_id = db.execute(
++        text(
++            """
++            INSERT INTO finance.payment_receipt
++                (invoice_id, branch_id, customer_id, receipt_no, receipt_date,
++                 amount, method, note, created_by, updated_by)
++            VALUES (:inv, :b, :c, :no, :d, :amt, :m, :note, :actor, :actor)
++            RETURNING id
++            """
++        ),
++        {
++            "inv": invoice_id,
++            "b": branch_id,
++            "c": customer_id,
++            "no": receipt_no,
++            "d": receipt_date,
++            "amt": amount,
++            "m": method,
++            "note": note,
++            "actor": actor_id,
++        },
++    ).scalar_one()
++
++    # AR payment credit entry (reduces customer balance)
++    finance_ar.record_entry(
++        db,
++        customer_id=customer_id,
++        entry_type="payment",
++        debit=0,
++        credit=amount,
++        on_date=receipt_date,
++        note=f"Receipt {receipt_no}",
++        actor_id=actor_id,
++        invoice_id=invoice_id,
++        receipt_id=receipt_id,
++    )
++
++    return receipt_id
++
++
++def fetch_receipt(db, receipt_id, *, lock=False):
++    suffix = " FOR UPDATE" if lock else ""
++    row = (
++        db.execute(
++            text("SELECT * FROM finance.payment_receipt WHERE id=:id" + suffix),
++            {"id": receipt_id},
++        )
++        .mappings()
++        .one_or_none()
++    )
++    return dict(row) if row else None
++
++
++def list_receipts(
++    db,
++    invoice_id=None,
++    customer_id=None,
++    branch_id=None,
++    status=None,
++    date_from=None,
++    date_to=None,
++):
++    clauses, params = [], {}
++    for col, val in (
++        ("invoice_id", invoice_id),
++        ("customer_id", customer_id),
++        ("branch_id", branch_id),
++        ("status", status),
++    ):
++        if val is not None:
++            clauses.append(f"{col} = :{col}")
++            params[col] = val
++    if date_from is not None:
++        clauses.append("receipt_date >= :date_from")
++        params["date_from"] = date_from
++    if date_to is not None:
++        clauses.append("receipt_date < :date_to")
++        params["date_to"] = date_to
++    where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
++    rows = db.execute(
++        text(
++            "SELECT * FROM finance.payment_receipt"
++            + where
++            + " ORDER BY receipt_date DESC, id"
++        ),
++        params,
++    ).mappings()
++    return [dict(row) for row in rows]
++
++
++def void_receipt(db, receipt_id, actor_id, reason_id):
++    """Void a receipt: append AR adjustment debit, flip status to Voided."""
++    existing = fetch_receipt(db, receipt_id)
++    if existing is None:
++        return None
++    # All lifecycle operations lock invoice before receipt/stock, never in reverse.
++    _lock_invoice(db, existing["invoice_id"])
++    receipt = _lock_receipt(db, receipt_id)
++    if receipt is None:
++        return None
++    if receipt["status"] != "Active":
++        raise ValueError("Only Active receipts can be voided")
++    payment = (
++        db.execute(
++            text(
++                "SELECT * FROM finance.ar_entry WHERE receipt_id=:r AND entry_type='payment'"
++            ),
++            {"r": receipt_id},
++        )
++        .mappings()
++        .one_or_none()
++    )
++    if (
++        payment is None
++        or payment["customer_id"] != receipt["customer_id"]
++        or payment["invoice_id"] != receipt["invoice_id"]
++        or payment["credit"] != receipt["amount"]
++        or payment["debit"] != 0
++    ):
++        raise ValueError("Original receipt payment does not reconcile")
++
++    # AR adjustment debit (increases customer balance back)
++    finance_ar.record_entry(
++        db,
++        customer_id=receipt["customer_id"],
++        entry_type="adjustment",
++        debit=receipt["amount"],
++        credit=0,
++        on_date=db.execute(text("SELECT CURRENT_DATE")).scalar_one(),
++        reason_id=reason_id,
++        note=f"Void receipt {receipt['receipt_no']}",
++        actor_id=actor_id,
++        invoice_id=receipt["invoice_id"],
++        receipt_id=receipt_id,
++        reverses_entry_id=payment["id"],
++    )
++
++    db.execute(
++        text(
++            """
++            UPDATE finance.payment_receipt
++            SET status='Voided', voided_at=now(), voided_by=:actor,
++                void_reason_id=:reason, updated_by=:actor, updated_at=now(),
++                version=version+1
++            WHERE id=:id
++            """
++        ),
++        {"actor": actor_id, "reason": reason_id, "id": receipt_id},
++    )
++
++    return _lock_receipt(db, receipt_id)
+
+### FILE app/finance/payment_router.py; diff SHA256 9a5b1b3263a8d6f2e454d51ffc2657ad9fdec20426e8ac6883ed77e6c538e9e1
+--- a/app/finance/payment_router.py
++++ b/app/finance/payment_router.py
+@@ -0,0 +1,260 @@
++"""Payment receipt API endpoints (collections).
++
++Write: Owner, Finance only. Read: Owner, Finance, Sales Manager, District Manager,
++Medical Rep (own), Read-Only Auditor (Posted-linked only).
++All mutations behind POSTING_ENABLED gate.
++"""
++
++import ipaddress
++from datetime import date, datetime
++from decimal import Decimal
++from typing import Annotated
++from uuid import UUID
++
++from fastapi import APIRouter, Depends, HTTPException, Request
++from sqlalchemy import text
++from sqlalchemy.exc import IntegrityError
++from sqlalchemy.orm import Session
++
++from app.auth.repo import log_audit
++from app.auth.router import get_current_user
++from app.config import POSTING_ENABLED
++from app.db import get_db
++from app.finance import payments
++from app.finance.schemas import ReceiptIn, ReceiptOut, ReceiptVoidIn
++from app.sales.router import _invoice
++
++router = APIRouter(prefix="/collections", tags=["collections"])
++Db = Annotated[Session, Depends(get_db)]
++CurrentUser = Annotated[dict, Depends(get_current_user)]
++
++READ_ROLES = {
++    "owner",
++    "finance",
++    "sales_manager",
++    "district_manager",
++    "medical_rep",
++    "read_only_auditor",
++}
++WRITE_ROLES = {"owner", "finance"}
++
++
++def _role(user, allowed):
++    role = user["role"]
++    if (
++        not user["is_active"]
++        or role not in allowed
++        or (role == "owner" and not user["is_owner"])
++    ):
++        raise HTTPException(403, "Access denied")
++    return role
++
++
++def _host(request):
++    host = request.client.host if request.client else None
++    try:
++        return str(ipaddress.ip_address(host)) if host else None
++    except ValueError:
++        return None
++
++
++def _scope_branches(db, user):
++    role = user["role"]
++    if role in {"owner", "finance", "read_only_auditor"}:
++        return None
++    rows = db.execute(
++        text("SELECT branch_id FROM platform.user_branch WHERE user_id=:u"),
++        {"u": user["id"]},
++    ).fetchall()
++    if not rows:
++        return set()
++    return {r[0] for r in rows}
++
++
++@router.get("/{receipt_id}")
++def get_receipt(receipt_id: UUID, db: Db, current: CurrentUser) -> ReceiptOut:
++    _role(current, READ_ROLES)
++    receipt = payments.fetch_receipt(db, receipt_id)
++    if receipt is None:
++        raise HTTPException(404, "Receipt not found")
++    # Scope via linked invoice
++    _receipt_scope(db, current, receipt)
++    return ReceiptOut.model_validate(receipt)
++
++
++@router.get("")
++def list_receipts(
++    db: Db,
++    current: CurrentUser,
++    invoice_id: UUID | None = None,
++    customer_id: UUID | None = None,
++    date_from: date | None = None,
++    date_to: date | None = None,
++) -> list[ReceiptOut]:
++    _role(current, READ_ROLES)
++    rows = payments.list_receipts(
++        db,
++        invoice_id=invoice_id,
++        customer_id=customer_id,
++        date_from=date_from,
++        date_to=date_to,
++    )
++    visible = []
++    for receipt in rows:
++        try:
++            _receipt_scope(db, current, receipt)
++        except HTTPException as error:
++            if error.status_code != 404:
++                raise
++            continue
++        visible.append(ReceiptOut.model_validate(receipt))
++    return visible
++
++
++def _receipt_scope(db, current, receipt):
++    branches = _scope_branches(db, current)
++    if branches is not None and receipt["branch_id"] not in branches:
++        raise HTTPException(404, "Receipt not found")
++    return _invoice(db, current, receipt["invoice_id"])
++
++
++@router.post("", status_code=201)
++def create_receipt(
++    payload: ReceiptIn, request: Request, db: Db, current: CurrentUser
++) -> ReceiptOut:
++    _role(current, WRITE_ROLES)
++    if not POSTING_ENABLED:
++        raise HTTPException(
++            409,
++            "Collections disabled until posting can be updated atomically",
++        )
++
++    try:
++        invoice = _invoice(db, current, payload.invoice_id, lock=True)
++        if invoice["posting_status"] != "Posted":
++            raise HTTPException(409, "Only Posted invoices accept collections")
++        if invoice["version"] != payload.invoice_version:
++            raise HTTPException(409, "Stale invoice version; reload before collecting")
++        receipt_id = payments.create_receipt(
++            db,
++            invoice_id=payload.invoice_id,
++            branch_id=invoice["branch_id"],
++            customer_id=invoice["customer_id"],
++            receipt_no=payload.receipt_no,
++            receipt_date=payload.receipt_date,
++            amount=payload.amount,
++            method=payload.method,
++            note=payload.note,
++            actor_id=current["id"],
++        )
++        receipt = payments.fetch_receipt(db, receipt_id)
++        result = ReceiptOut.model_validate(receipt)
++        _audit(db, request, current, "created", None, receipt)
++        db.commit()
++        return result
++    except ValueError as error:
++        db.rollback()
++        raise HTTPException(409, str(error)) from error
++    except IntegrityError as error:
++        db.rollback()
++        constraint = getattr(getattr(error.orig, "diag", None), "constraint_name", None)
++        if constraint == "uq_receipt_branch_no":
++            raise HTTPException(
++                409, "Receipt number already exists in this branch"
++            ) from error
++        raise HTTPException(
++            422, "Receipt violates a database reference or value constraint"
++        ) from error
++
++    except Exception:
++        db.rollback()
++        raise
++
++
++@router.post("/{receipt_id}/void")
++def void_receipt(
++    receipt_id: UUID,
++    payload: ReceiptVoidIn,
++    request: Request,
++    db: Db,
++    current: CurrentUser,
++) -> ReceiptOut:
++    _role(current, WRITE_ROLES)
++    if not POSTING_ENABLED:
++        raise HTTPException(
++            409,
++            "Collections disabled until posting can be updated atomically",
++        )
++
++    # Validate active void reason
++    reason = db.execute(
++        text(
++            "SELECT 1 FROM audit.reason_code WHERE id=:id AND is_active AND category IN ('void','reversal') FOR SHARE"
++        ),
++        {"id": payload.reason_id},
++    ).scalar()
++    if not reason:
++        raise HTTPException(422, "An active void/reversal reason code is required")
++
++    try:
++        existing = payments.fetch_receipt(db, receipt_id)
++        if existing is None:
++            raise HTTPException(404, "Receipt not found")
++        _invoice(db, current, existing["invoice_id"], lock=True)
++        old = payments.fetch_receipt(db, receipt_id, lock=True)
++        if old is None:
++            raise HTTPException(404, "Receipt not found")
++        if old["status"] != "Active":
++            raise HTTPException(409, "Only Active receipts can be voided")
++        if old["version"] != payload.version:
++            raise HTTPException(409, "Stale receipt version; reload before voiding")
++
++        # Scope via linked invoice
++        _invoice(db, current, old["invoice_id"])
++
++        receipt = payments.void_receipt(
++            db, receipt_id, current["id"], payload.reason_id
++        )
++        result = ReceiptOut.model_validate(receipt)
++        _audit(db, request, current, "voided", old, receipt)
++        db.commit()
++        return result
++    except ValueError as error:
++        db.rollback()
++        raise HTTPException(409, str(error)) from error
++    except IntegrityError as error:
++        db.rollback()
++        raise HTTPException(
++            422, "Receipt void violates a database constraint"
++        ) from error
++    except Exception:
++        db.rollback()
++        raise
++
++
++def _audit(db, request, user, action, old, new):
++    host = _host(request)
++
++    def _serializable(obj):
++        if obj is None:
++            return None
++        if hasattr(obj, "model_dump"):
++            obj = obj.model_dump(mode="json")
++        if isinstance(obj, dict):
++            return {
++                k: (str(v) if isinstance(v, (UUID, date, datetime, Decimal)) else v)
++                for k, v in obj.items()
++            }
++        return obj
++
++    log_audit(
++        db,
++        user["id"],
++        action,
++        "payment_receipt",
++        new["id"],
++        _serializable(old),
++        _serializable(new),
++        host,
++        request.headers.get("user-agent", "")[:1000],
++    )
+
+### FILE app/finance/schemas.py; diff SHA256 42b0cdee90366bea88d26fe88026c17ced4365b33ac3ac1b0cdc72fc3bcb677d
+--- a/app/finance/schemas.py
++++ b/app/finance/schemas.py
+@@ -1,31 +1,36 @@
+-"""AR entry input/output models."""
++"""AR entry and payment receipt input/output models."""
++
+ from datetime import date, datetime
+ from decimal import Decimal
+ from typing import Annotated
+ from uuid import UUID
+ 
+ from pydantic import BaseModel, ConfigDict, Field, model_validator
+ 
+-Money = Annotated[Decimal, Field(ge=0, max_digits=14, decimal_places=2, allow_inf_nan=False)]
++Money = Annotated[
++    Decimal, Field(ge=0, max_digits=14, decimal_places=2, allow_inf_nan=False)
++]
+ EntryType = Annotated[str, Field(min_length=1, max_length=20)]
+ 
+ 
+ class InputModel(BaseModel):
+     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+ 
+ 
+ class EntryIn(InputModel):
+     customer_id: UUID
+-    entry_type: Annotated[str, Field(pattern="^(opening|payment|credit_note|adjustment)$")]
+-    debit: Money = Decimal("0")
+-    credit: Money = Decimal("0")
++    entry_type: Annotated[
++        str, Field(pattern="^(opening|payment|credit_note|adjustment)$")
++    ]
++    debit: Money = Decimal(0)
++    credit: Money = Decimal(0)
+     entry_date: date
+     due_date: date | None = None
+     reason_id: UUID | None = None
+     note: Annotated[str, Field(max_length=4000)] | None = None
+ 
+     @model_validator(mode="after")
+     def _check(self):
+         if self.debit == 0 and self.credit == 0:
+             raise ValueError("an entry must debit or credit at least one side")
+         if self.entry_type == "adjustment" and self.reason_id is None:
+@@ -39,10 +44,51 @@
+     invoice_id: UUID | None
+     entry_type: str
+     entry_date: date
+     due_date: date | None
+     debit: Decimal
+     credit: Decimal
+     reason_id: UUID | None
+     note: str | None
+     created_by: UUID
+     created_at: datetime
++    receipt_id: UUID | None = None
++    reverses_entry_id: UUID | None = None
++
++
++class ReceiptIn(InputModel):
++    # Financial authority (customer/branch/status/actor) is derived server-side.
++    invoice_id: UUID
++    receipt_no: Annotated[str, Field(min_length=1, max_length=30)]
++    receipt_date: date
++    amount: Annotated[
++        Decimal, Field(gt=0, max_digits=14, decimal_places=2, allow_inf_nan=False)
++    ]
++    method: Annotated[str, Field(pattern="^(cash|check|transfer)$")]
++    note: Annotated[str, Field(max_length=4000)] | None = None
++    invoice_version: Annotated[int, Field(ge=1, strict=True)]
++
++
++class ReceiptVoidIn(InputModel):
++    version: Annotated[int, Field(ge=1, strict=True)]
++    reason_id: UUID
++
++
++class ReceiptOut(BaseModel):
++    id: UUID
++    invoice_id: UUID
++    branch_id: UUID
++    customer_id: UUID
++    receipt_no: str
++    receipt_date: date
++    amount: Decimal
++    method: str
++    note: str | None
++    status: str
++    voided_at: datetime | None
++    voided_by: UUID | None
++    void_reason_id: UUID | None
++    version: int
++    created_by: UUID
++    created_at: datetime
++    updated_by: UUID | None
++    updated_at: datetime
+
+### FILE app/inventory/service.py; diff SHA256 766a809bc8160bdfd4ec51a59717c8fe99ffe0c1426ec84e3acd61a6372afd2d
+--- a/app/inventory/service.py
++++ b/app/inventory/service.py
+@@ -1,123 +1,208 @@
+ """Inventory stock ledger and balances.
+ 
+ A movement is an append-only ledger row; the balance row is the running total
+ per (warehouse, product, batch). Both are written in the caller's transaction,
+ so a failed movement cannot leave a half-applied balance.
+ """
++
+ from sqlalchemy import text
+ 
+ 
+ class InsufficientStock(Exception):
+     """A movement would drive a stock balance below zero."""
+ 
+ 
+ def _apply_balance(db, warehouse_id, product_id, batch_id, delta):
+     """Add `delta` to one balance row atomically; return the new quantity."""
+     keys = {"w": warehouse_id, "p": product_id, "b": batch_id}
+     if delta >= 0:
+-        inserted = db.execute(text("""
++        inserted = db.execute(
++            text("""
+             INSERT INTO inventory.stock_balance
+                 (warehouse_id, product_id, batch_id, quantity, updated_at)
+             VALUES (:w, :p, :b, :delta, now())
+             ON CONFLICT DO NOTHING
+             RETURNING quantity
+-        """), {**keys, "delta": delta}).scalar()
++        """),
++            {**keys, "delta": delta},
++        ).scalar()
+         if inserted is not None:
+             return inserted
+-    current = db.execute(text("""
++    current = db.execute(
++        text("""
+         SELECT quantity FROM inventory.stock_balance
+         WHERE warehouse_id=:w AND product_id=:p AND batch_id IS NOT DISTINCT FROM :b
+         FOR UPDATE
+-    """), keys).scalar_one_or_none()
++    """),
++        keys,
++    ).scalar_one_or_none()
+     if current is None:
+         raise InsufficientStock("No stock balance exists to decrease")
+     new_quantity = current + delta
+     if new_quantity < 0:
+         raise InsufficientStock(f"Available {current}, requested {delta}")
+-    db.execute(text("""
++    db.execute(
++        text("""
+         UPDATE inventory.stock_balance SET quantity=:q, updated_at=now()
+         WHERE warehouse_id=:w AND product_id=:p AND batch_id IS NOT DISTINCT FROM :b
+-    """), {**keys, "q": new_quantity})
++    """),
++        {**keys, "q": new_quantity},
++    )
+     return new_quantity
+ 
+ 
+-def record_movement(db, *, actor_id, warehouse_id, product_id, batch_id,
+-                    movement_type, quantity, unit_cost=None, source_type="manual",
+-                    source_id=None, note=None):
+-    """Write one ledger row and update its balance. Returns (movement_id, balance)."""
++def record_movement(
++    db,
++    *,
++    actor_id,
++    warehouse_id,
++    product_id,
++    batch_id,
++    movement_type,
++    quantity,
++    unit_cost=None,
++    source_type="manual",
++    source_id=None,
++    note=None,
++    invoice_line_id=None,
++    reverses_movement_id=None,
++):
++    """Append a movement and update its balance in the caller's transaction."""
+     balance = _apply_balance(db, warehouse_id, product_id, batch_id, quantity)
+-    movement_id = db.execute(text("""
++    movement_id = db.execute(
++        text("""
+         INSERT INTO inventory.stock_movement
+             (warehouse_id, product_id, batch_id, movement_type, quantity,
+-             unit_cost, source_type, source_id, note, created_by)
+-        VALUES (:w, :p, :b, :mt, :q, :uc, :st, :sid, :note, :actor)
++             unit_cost, source_type, source_id, note, created_by, invoice_line_id, reverses_movement_id)
++        VALUES (:w, :p, :b, :mt, :q, :uc, :st, :sid, :note, :actor, :line, :reverses)
+         RETURNING id
+-    """), {"w": warehouse_id, "p": product_id, "b": batch_id, "mt": movement_type,
+-           "q": quantity, "uc": unit_cost, "st": source_type, "sid": source_id,
+-           "note": note, "actor": actor_id}).scalar_one()
++    """),
++        {
++            "w": warehouse_id,
++            "p": product_id,
++            "b": batch_id,
++            "mt": movement_type,
++            "q": quantity,
++            "uc": unit_cost,
++            "st": source_type,
++            "sid": source_id,
++            "note": note,
++            "actor": actor_id,
++            "line": invoice_line_id,
++            "reverses": reverses_movement_id,
++        },
++    ).scalar_one()
+     return movement_id, balance
+ 
+ 
+ def fetch_movement(db, movement_id):
+-    row = db.execute(text("SELECT * FROM inventory.stock_movement WHERE id=:id"),
+-                     {"id": movement_id}).mappings().one_or_none()
++    row = (
++        db.execute(
++            text("SELECT * FROM inventory.stock_movement WHERE id=:id"),
++            {"id": movement_id},
++        )
++        .mappings()
++        .one_or_none()
++    )
+     return dict(row) if row is not None else None
+ 
+ 
+-def _filters(warehouse_id=None, product_id=None, batch_id=None, movement_type=None,
+-             date_from=None, date_to=None, warehouse_ids=None):
++def _filters(
++    warehouse_id=None,
++    product_id=None,
++    batch_id=None,
++    movement_type=None,
++    date_from=None,
++    date_to=None,
++    warehouse_ids=None,
++):
+     """Build a WHERE clause from bound values; column names are fixed literals."""
+     clauses, params = [], {}
+     if warehouse_ids is not None:
+         if warehouse_ids:
+             clauses.append("warehouse_id = ANY(CAST(:warehouse_ids AS uuid[]))")
+             params["warehouse_ids"] = [str(w) for w in warehouse_ids]
+         else:
+             clauses.append("1 = 0")
+-    for column, value in (("warehouse_id", warehouse_id), ("product_id", product_id),
+-                          ("batch_id", batch_id), ("movement_type", movement_type)):
++    for column, value in (
++        ("warehouse_id", warehouse_id),
++        ("product_id", product_id),
++        ("batch_id", batch_id),
++        ("movement_type", movement_type),
++    ):
+         if value is not None:
+             clauses.append(f"{column} = :{column}")
+             params[column] = value
+     if date_from is not None:
+         clauses.append("created_at >= :date_from")
+         params["date_from"] = date_from
+     if date_to is not None:
+         clauses.append("created_at < :date_to")
+         params["date_to"] = date_to
+     return (" WHERE " + " AND ".join(clauses)) if clauses else "", params
+ 
+ 
+-def list_balances(db, warehouse_id=None, product_id=None, batch_id=None,
+-                  warehouse_ids=None):
+-    where, params = _filters(warehouse_id, product_id, batch_id, warehouse_ids=warehouse_ids)
+-    rows = db.execute(text(
+-        "SELECT warehouse_id, product_id, batch_id, quantity, updated_at "
+-        "FROM inventory.stock_balance" + where +
+-        " ORDER BY warehouse_id, product_id, batch_id NULLS LAST"), params).mappings()
++def list_balances(
++    db, warehouse_id=None, product_id=None, batch_id=None, warehouse_ids=None
++):
++    where, params = _filters(
++        warehouse_id, product_id, batch_id, warehouse_ids=warehouse_ids
++    )
++    rows = db.execute(
++        text(
++            "SELECT warehouse_id, product_id, batch_id, quantity, updated_at "
++            "FROM inventory.stock_balance"
++            + where
++            + " ORDER BY warehouse_id, product_id, batch_id NULLS LAST"
++        ),
++        params,
++    ).mappings()
+     return [dict(row) for row in rows]
+ 
+ 
+-def list_movements(db, warehouse_id=None, product_id=None, batch_id=None,
+-                   movement_type=None, date_from=None, date_to=None,
+-                   warehouse_ids=None, scoped_user_id=None):
+-    where, params = _filters(warehouse_id, product_id, batch_id, movement_type,
+-                             date_from, date_to, warehouse_ids=warehouse_ids)
++def list_movements(
++    db,
++    warehouse_id=None,
++    product_id=None,
++    batch_id=None,
++    movement_type=None,
++    date_from=None,
++    date_to=None,
++    warehouse_ids=None,
++    scoped_user_id=None,
++):
++    where, params = _filters(
++        warehouse_id,
++        product_id,
++        batch_id,
++        movement_type,
++        date_from,
++        date_to,
++        warehouse_ids=warehouse_ids,
++    )
+     if scoped_user_id is not None:
+         # A shared stock pool is not permission to read every source invoice.
+-        where += (" AND " if where else " WHERE ") + """(
++        where += (
++            (" AND " if where else " WHERE ")
++            + """(
+             (source_type = 'manual' AND source_id IS NULL)
+             OR (source_type = 'invoice' AND EXISTS (
+                 SELECT 1 FROM sales.sales_invoice i
+                 JOIN platform.user_branch ub ON ub.branch_id = i.branch_id
+                 JOIN platform.user_territory ut ON ut.territory_id = i.territory_id
+                 WHERE i.id = stock_movement.source_id
+                   AND i.warehouse_id = stock_movement.warehouse_id
+                   AND ub.user_id = :scoped_user_id AND ut.user_id = :scoped_user_id
+             ))
+         )"""
++        )
+         params["scoped_user_id"] = scoped_user_id
+-    rows = db.execute(text(
+-        "SELECT * FROM inventory.stock_movement" + where +
+-        " ORDER BY created_at DESC, id"), params).mappings()
++    rows = db.execute(
++        text(
++            "SELECT * FROM inventory.stock_movement"
++            + where
++            + " ORDER BY created_at DESC, id"
++        ),
++        params,
++    ).mappings()
+     return [dict(row) for row in rows]
+
+### FILE app/main.py; diff SHA256 c7a488630810a59c58f39856cc419060b78b029a36f8673cf165cca55e32dd99
+--- a/app/main.py
++++ b/app/main.py
+@@ -1,31 +1,41 @@
+ """Medical Company System API (Phase 2 — Platform Foundation).
+ 
+ Current scope: service scaffold + health probe. Auth/RBAC, audit logging,
+ settings, posting states and PWA shell are added progressively in Phase 2.
+ """
++
+ from fastapi import FastAPI
+ 
+ app = FastAPI(title="Medical Company System", version="0.1.0")
+ 
+-from app.auth.router import router as auth_router  # noqa: E402  (import after app)
++from app.auth.router import router as auth_router
++
+ app.include_router(auth_router)
+-from app.auth.rbac import rbac_router  # noqa: E402
++from app.auth.rbac import rbac_router
++
+ app.include_router(rbac_router)
+-from app.sales.router import router as invoice_router  # noqa: E402
++from app.sales.router import router as invoice_router
++
+ app.include_router(invoice_router)
+-from app.inventory.router import router as inventory_router  # noqa: E402
++from app.inventory.router import router as inventory_router
++
+ app.include_router(inventory_router)
+-from app.finance.router import router as ar_router  # noqa: E402
++from app.finance.router import router as ar_router
++
+ app.include_router(ar_router)
++from app.finance.payment_router import router as collections_router
+ 
+-from fastapi.staticfiles import StaticFiles  # noqa: E402
++app.include_router(collections_router)
++
++from fastapi.staticfiles import StaticFiles
++
+ app.mount("/app", StaticFiles(directory="web", html=True), name="pwa")
+ 
+ 
+ @app.get("/health")
+ def health() -> dict:
+     """Readiness probe: used by Docker + CI to confirm the API boots."""
+     return {"status": "ok", "service": "medical-dms", "phase": "platform-foundation"}
+ 
+ 
+ @app.get("/")
+
+### FILE app/sales/router.py; diff SHA256 a4f419230eaa21d3a896d222bf32e122c757756bc075e64b615b8f688ecb2a4b
+--- a/app/sales/router.py
++++ b/app/sales/router.py
+@@ -6,20 +6,21 @@
+ 
+ from fastapi import APIRouter, Depends, HTTPException, Request
+ from sqlalchemy import text
+ from sqlalchemy.exc import IntegrityError
+ from sqlalchemy.orm import Session
+ 
+ from app.auth.repo import log_audit
+ from app.auth.router import get_current_user
+ from app.config import POSTING_ENABLED
+ from app.db import get_db
++from app.inventory.service import InsufficientStock
+ from app.sales import repo, service
+ from app.sales.calc import invoice_totals, line_calc
+ from app.sales.schemas import DraftIn, DraftUpdate, InvoiceOut, VoidIn
+ 
+ router = APIRouter(prefix="/invoices", tags=["invoices"])
+ Db = Annotated[Session, Depends(get_db)]
+ CurrentUser = Annotated[dict, Depends(get_current_user)]
+ INVOICE_ROLES = {
+     "owner",
+     "finance",
+@@ -55,21 +56,21 @@
+ 
+ 
+ def _invoice(db, user, invoice_id, *, lock=False):
+     role = _role(user)
+     invoice = repo.fetch_invoice(db, invoice_id, lock=lock)
+     if invoice is None:
+         raise HTTPException(404, "Invoice not found")
+     _scope(db, user, invoice["territory_id"])
+     if role == "medical_rep" and invoice["created_by"] != user["id"]:
+         raise HTTPException(404, "Invoice not found")
+-    if role == "read_only_auditor" and invoice["posting_status"] != "Posted":
++    if role == "read_only_auditor" and invoice["posted_at"] is None:
+         raise HTTPException(404, "Invoice not found")
+     return invoice
+ 
+ 
+ # Roles that may reference any warehouse (no per-warehouse filtering).
+ GLOBAL_WAREHOUSE_ROLES = {"owner", "finance", "warehouse_staff", "read_only_auditor"}
+ 
+ 
+ def _warehouse_scope(db, user):
+     """Active warehouses the caller may reference; None means global.
+@@ -197,20 +198,87 @@
+         raise HTTPException(422, "Invoice exceeds supported monetary precision")
+     values = payload.model_dump(exclude={"lines", "version"})
+     return {
+         **values,
+         **totals,
+         "territory_id": customer["territory_id"],
+         "actor": user["id"],
+     }, lines
+ 
+ 
++def _posting_references(db, user, invoice):
++    """Revalidate grants/references without repricing the saved VAT snapshot."""
++    scope = _warehouse_scope(db, user)
++    if scope is not None and invoice["warehouse_id"] not in scope:
++        raise HTTPException(404, "Warehouse not found")
++    warehouse = (
++        db.execute(
++            text("SELECT * FROM master_data.master_warehouse WHERE id=:id FOR SHARE"),
++            {"id": invoice["warehouse_id"]},
++        )
++        .mappings()
++        .one_or_none()
++    )
++    if warehouse is None or not warehouse["is_active"]:
++        raise HTTPException(404, "Warehouse not found")
++    if (
++        warehouse["branch_id"] != invoice["branch_id"]
++        and not db.execute(
++            text(
++                "SELECT 1 FROM inventory.branch_warehouse WHERE branch_id=:b AND warehouse_id=:w FOR SHARE"
++            ),
++            {"b": invoice["branch_id"], "w": invoice["warehouse_id"]},
++        ).scalar()
++    ):
++        raise HTTPException(409, "Source warehouse routing has changed")
++    customer = (
++        db.execute(
++            text("SELECT * FROM master_data.master_customer WHERE id=:id FOR SHARE"),
++            {"id": invoice["customer_id"]},
++        )
++        .mappings()
++        .one_or_none()
++    )
++    if (
++        customer is None
++        or not customer["is_active"]
++        or customer["branch_id"] != invoice["branch_id"]
++        or customer["territory_id"] != invoice["territory_id"]
++    ):
++        raise HTTPException(409, "Customer reference or scope has changed")
++    for line in invoice["lines"]:
++        product = db.execute(
++            text(
++                "SELECT is_active FROM master_data.master_product WHERE id=:id FOR SHARE"
++            ),
++            {"id": line["product_id"]},
++        ).scalar_one_or_none()
++        if not product:
++            raise HTTPException(409, "Invoice product is no longer active")
++        if line["batch_id"]:
++            batch = (
++                db.execute(
++                    text("SELECT * FROM inventory.batch_record WHERE id=:id FOR SHARE"),
++                    {"id": line["batch_id"]},
++                )
++                .mappings()
++                .one_or_none()
++            )
++            if (
++                batch is None
++                or batch["product_id"] != line["product_id"]
++                or batch["warehouse_id"] != invoice["warehouse_id"]
++                or batch["expiry_date"] < invoice["invoice_date"]
++            ):
++                raise HTTPException(409, "Invoice batch reference has changed")
++
++
+ def _audit(db, request, user, action, old, new):
+     host = request.client.host if request.client else None
+     try:
+         host = str(ipaddress.ip_address(host)) if host else None
+     except ValueError:
+         host = None
+     log_audit(
+         db,
+         user["id"],
+         action,
+@@ -287,31 +355,55 @@
+         db.commit()
+         return result
+     except IntegrityError as error:
+         _integrity_error(db, error)
+     except Exception:
+         db.rollback()
+         raise
+ 
+ 
+ @router.post("/{invoice_id}/post")
+-def post_invoice(invoice_id: UUID, db: Db, current: CurrentUser) -> InvoiceOut:
+-    _invoice(db, current, invoice_id)
++def post_invoice(
++    invoice_id: UUID, request: Request, db: Db, current: CurrentUser
++) -> InvoiceOut:
+     if _role(current) not in {"owner", "finance", "sales_manager", "district_manager"}:
+         raise HTTPException(403, "Posting permission denied")
+     if not POSTING_ENABLED:
++        _invoice(db, current, invoice_id)
+         raise HTTPException(
+             409,
+             "Posting disabled until stock and receivables can be updated atomically",
+         )
+-    result = service.post_invoice_atomic(db, invoice_id, current["id"])
+-    return InvoiceOut.model_validate(result)
++
++    try:
++        old = _invoice(db, current, invoice_id, lock=True)
++        if old["posting_status"] != "Draft":
++            raise HTTPException(409, "Only a draft can be posted")
++        _posting_references(db, current, old)
++        result = service.post_invoice_atomic(db, invoice_id, current["id"])
++        if result is None:
++            raise HTTPException(404, "Invoice not found")
++        snapshot = InvoiceOut.model_validate(repo.fetch_invoice(db, invoice_id))
++        _audit(db, request, current, "posted", old, snapshot)
++        db.commit()
++        return snapshot
++    except InsufficientStock as error:
++        db.rollback()
++        raise HTTPException(409, "Insufficient stock for one or more lines") from error
++    except ValueError as error:
++        db.rollback()
++        raise HTTPException(409, str(error)) from error
++    except IntegrityError as error:
++        _integrity_error(db, error)
++    except Exception:
++        db.rollback()
++        raise
+ 
+ 
+ @router.post("/{invoice_id}/void")
+ def void_invoice(
+     invoice_id: UUID, payload: VoidIn, request: Request, db: Db, current: CurrentUser
+ ) -> InvoiceOut:
+     if _role(current) not in {"owner", "sales_manager"}:
+         raise HTTPException(403, "Void requires Owner or Sales Manager")
+     try:
+         old = _invoice(db, current, invoice_id, lock=True)
+@@ -327,10 +419,60 @@
+         repo.void_draft(db, invoice_id, current["id"], payload.reason_id)
+         result = InvoiceOut.model_validate(repo.fetch_invoice(db, invoice_id))
+         _audit(db, request, current, "voided", old, result)
+         db.commit()
+         return result
+     except IntegrityError as error:
+         _integrity_error(db, error)
+     except Exception:
+         db.rollback()
+         raise
++
++
++@router.post("/{invoice_id}/reverse")
++def reverse_invoice(
++    invoice_id: UUID, payload: VoidIn, request: Request, db: Db, current: CurrentUser
++) -> InvoiceOut:
++    if _role(current) not in {"owner", "finance"}:
++        raise HTTPException(403, "Reversal requires Owner or Finance")
++    if not POSTING_ENABLED:
++        raise HTTPException(
++            409,
++            "Reversal disabled until stock and receivables can be updated atomically",
++        )
++
++    # Validate active void/reversal reason
++    reason = db.execute(
++        text(
++            "SELECT 1 FROM audit.reason_code WHERE id=:id AND is_active AND category IN ('void','reversal') FOR SHARE"
++        ),
++        {"id": payload.reason_id},
++    ).scalar()
++    if not reason:
++        raise HTTPException(422, "An active void/reversal reason code is required")
++
++    try:
++        old = _invoice(db, current, invoice_id, lock=True)
++        if old["posting_status"] != "Posted":
++            raise HTTPException(409, "Only Posted invoices can be reversed")
++        if old["version"] != payload.version:
++            raise HTTPException(409, "Stale invoice version; reload before reversing")
++
++        result = service.reverse_invoice_atomic(
++            db, invoice_id, current["id"], payload.reason_id
++        )
++        if result is None:
++            raise HTTPException(404, "Invoice not found")
++
++        snapshot = InvoiceOut.model_validate(repo.fetch_invoice(db, invoice_id))
++        _audit(db, request, current, "reversed", old, snapshot)
++        db.commit()
++        return snapshot
++    except ValueError as error:
++        db.rollback()
++        raise HTTPException(409, str(error)) from error
++    except IntegrityError as error:
++        db.rollback()
++        _integrity_error(db, error)
++    except Exception:
++        db.rollback()
++        raise
+
+### FILE app/sales/service.py; diff SHA256 d64780ff5248022bb4804dcd9a54b6c0ccead4b4e15a3b45c5ad80301ea73041
+--- a/app/sales/service.py
++++ b/app/sales/service.py
+@@ -1,66 +1,220 @@
+-"""Atomic invoice posting: stock decrement + AR debit in one transaction.
+-
+-Kept as a unit-testable function. The HTTP endpoint (app.sales.router.post_invoice)
+-intentionally stays disabled (409) until this transaction is verified and
+-Eli signs off on enabling production posting.
++"""Atomic invoice posting and reversal: stock + AR in one transaction.
++
++Kept as unit-testable functions. HTTP endpoints intentionally stay disabled (409)
++until these transactions are verified and Eli signs off on enabling production.
+ """
++
+ from sqlalchemy import text
+ 
+ from app.finance import ar as finance
+ from app.inventory import service as inventory
++from app.sales.calc import invoice_totals, line_calc
+ 
+ 
+ def _lock_invoice(db, invoice_id):
+-    row = db.execute(text(
+-        "SELECT * FROM sales.sales_invoice WHERE id=:id FOR UPDATE"), {"id": invoice_id}).mappings().one_or_none()
++    row = (
++        db.execute(
++            text("SELECT * FROM sales.sales_invoice WHERE id=:id FOR UPDATE"),
++            {"id": invoice_id},
++        )
++        .mappings()
++        .one_or_none()
++    )
+     if row is None:
+         return None
+     return dict(row)
+ 
+ 
+ def _lines(db, invoice_id):
+-    rows = db.execute(text(
+-        "SELECT * FROM sales.sales_invoice_line WHERE invoice_id=:id ORDER BY line_no"),
+-        {"id": invoice_id}).mappings()
++    rows = db.execute(
++        text(
++            "SELECT * FROM sales.sales_invoice_line WHERE invoice_id=:id ORDER BY line_no"
++        ),
++        {"id": invoice_id},
++    ).mappings()
+     return [dict(r) for r in rows]
+ 
+ 
+ def post_invoice_atomic(db, invoice_id, actor_id):
+     """Post a draft invoice atomically:
+ 
+     1. decrement stock for each line (inventory.stock_movement, type 'sale');
+     2. create one receivables debit entry (finance.ar_entry, type 'invoice');
+     3. flip the invoice to Posted.
+ 
+     All three happen in the caller's transaction. Insufficient stock rolls
+     back everything (balance never went negative, no AR entry written, invoice
+     stays Draft). The DB posting gates (ck_invoice_posting_status /
+     ck_invoice_posted_at) backstop a partial Posted row.
+     """
+     invoice = _lock_invoice(db, invoice_id)
+     if invoice is None:
+         return None
+     if invoice["posting_status"] != "Draft":
+         raise ValueError("Only a draft can be posted")
+-    if any(line["quantity"] <= 0 for line in _lines(db, invoice_id)):
+-        raise ValueError("Invoice has non-positive line quantity")
+-
+     lines = _lines(db, invoice_id)
+-    for line in lines:
++    if not lines or any(line["quantity"] <= 0 for line in lines):
++        raise ValueError("Invoice requires positive line quantities")
++    calculations = [
++        (line["quantity"], line["unit_price"], line["discount_pct"], line["vat_rate"])
++        for line in lines
++    ]
++    for line, values in zip(lines, calculations, strict=True):
++        if line_calc(*values) != (
++            line["net_price"],
++            line["line_total"],
++            line["vat_amount"],
++        ):
++            raise ValueError("Invoice line snapshot does not reconcile")
++    if any(
++        invoice[key] != value for key, value in invoice_totals(calculations).items()
++    ):
++        raise ValueError("Invoice totals do not reconcile")
++    # Lock stock keys consistently across invoices to avoid cross-line deadlocks.
++    for line in sorted(
++        lines,
++        key=lambda row: (
++            str(row["product_id"]),
++            str(row["batch_id"] or ""),
++            row["line_no"],
++        ),
++    ):
+         inventory.record_movement(
+-            db, actor_id=actor_id, warehouse_id=invoice["warehouse_id"],
+-            product_id=line["product_id"], batch_id=line["batch_id"],
+-            movement_type="sale", quantity=-abs(line["quantity"]),
+-            unit_cost=line["unit_price"], source_type="invoice", source_id=invoice_id)
++            db,
++            actor_id=actor_id,
++            warehouse_id=invoice["warehouse_id"],
++            product_id=line["product_id"],
++            batch_id=line["batch_id"],
++            movement_type="sale",
++            quantity=-line["quantity"],
++            unit_cost=line["unit_price"],
++            source_type="invoice",
++            source_id=invoice_id,
++            invoice_line_id=line["id"],
++        )
+     finance.record_sale(
+-        db, customer_id=invoice["customer_id"], invoice_id=invoice_id,
+-        amount=invoice["grand_total"], on_date=invoice["invoice_date"],
+-        actor_id=actor_id)
+-    db.execute(text("""
++        db,
++        customer_id=invoice["customer_id"],
++        invoice_id=invoice_id,
++        amount=invoice["grand_total"],
++        on_date=invoice["invoice_date"],
++        actor_id=actor_id,
++    )
++    db.execute(
++        text("""
+         UPDATE sales.sales_invoice
+            SET posting_status='Posted', posted_at=now(), posted_by=:actor,
+                version=version+1
+          WHERE id=:id
+-    """), {"actor": actor_id, "id": invoice_id})
++    """),
++        {"actor": actor_id, "id": invoice_id},
++    )
+     updated = _lock_invoice(db, invoice_id)
+     return dict(updated)
++
++
++def reverse_invoice_atomic(db, invoice_id, actor_id, reason_id):
++    """Reverse a Posted invoice atomically (append-only compensating entries):
++
++    1. stock: record 'return' movements (+qty) for each line;
++    2. AR: create a 'credit_note' credit entry equal to grand_total;
++    3. flip invoice to Voided with void metadata.
++
++    All in the caller's transaction. Prevents reversal if Active receipts exist.
++    """
++    invoice = _lock_invoice(db, invoice_id)
++    if invoice is None:
++        return None
++    if invoice["posting_status"] != "Posted":
++        raise ValueError("Only a Posted invoice can be reversed")
++    # Active receipts check
++    active = db.execute(
++        text(
++            "SELECT COALESCE(SUM(amount), 0) FROM finance.payment_receipt "
++            "WHERE invoice_id=:i AND status='Active'"
++        ),
++        {"i": invoice_id},
++    ).scalar()
++    if active and active > 0:
++        raise ValueError("Active receipts exist; void them first")
++
++    movements = list(
++        db.execute(
++            text(
++                "SELECT * FROM inventory.stock_movement WHERE source_type='invoice' "
++                "AND source_id=:i AND movement_type='sale' ORDER BY product_id,batch_id NULLS FIRST,id"
++            ),
++            {"i": invoice_id},
++        ).mappings()
++    )
++    lines = _lines(db, invoice_id)
++    if len(movements) != len(lines) or not movements:
++        raise ValueError("Original stock posting does not reconcile")
++    line_map = {line["id"]: line for line in lines}
++    for movement in movements:
++        line = line_map.get(movement["invoice_line_id"])
++        if (
++            line is None
++            or movement["product_id"] != line["product_id"]
++            or movement["batch_id"] != line["batch_id"]
++            or movement["warehouse_id"] != invoice["warehouse_id"]
++            or movement["quantity"] != -line["quantity"]
++        ):
++            raise ValueError("Original stock posting does not reconcile")
++    debit = (
++        db.execute(
++            text(
++                "SELECT * FROM finance.ar_entry WHERE invoice_id=:i AND entry_type='invoice'"
++            ),
++            {"i": invoice_id},
++        )
++        .mappings()
++        .one_or_none()
++    )
++    if (
++        debit is None
++        or debit["customer_id"] != invoice["customer_id"]
++        or debit["debit"] != invoice["grand_total"]
++        or debit["credit"] != 0
++    ):
++        raise ValueError("Original receivables posting does not reconcile")
++    for movement in movements:
++        inventory.record_movement(
++            db,
++            actor_id=actor_id,
++            warehouse_id=movement["warehouse_id"],
++            product_id=movement["product_id"],
++            batch_id=movement["batch_id"],
++            movement_type="return",
++            quantity=-movement["quantity"],
++            unit_cost=movement["unit_cost"],
++            source_type="invoice",
++            source_id=invoice_id,
++            reverses_movement_id=movement["id"],
++            note="Invoice reversal",
++        )
++    finance.record_entry(
++        db,
++        customer_id=debit["customer_id"],
++        invoice_id=invoice_id,
++        entry_type="credit_note",
++        debit=0,
++        credit=debit["debit"],
++        on_date=db.execute(text("SELECT CURRENT_DATE")).scalar_one(),
++        reason_id=reason_id,
++        reverses_entry_id=debit["id"],
++        note="Invoice reversal",
++        actor_id=actor_id,
++    )
++    db.execute(
++        text("""
++        UPDATE sales.sales_invoice
++           SET posting_status='Voided', voided_at=now(), voided_by=:actor,
++               void_reason_id=:reason, updated_by=:actor, updated_at=now(),
++               version=version+1
++         WHERE id=:id
++    """),
++        {"actor": actor_id, "reason": reason_id, "id": invoice_id},
++    )
++    updated = _lock_invoice(db, invoice_id)
++    return dict(updated)
+
+### FILE tests/conftest.py; diff SHA256 13872a6c97f4549af448753895f1c145b40f0ddbf0e1987f7e9be3717c226171
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -1,61 +1,136 @@
+ """Shared pytest fixtures for the posting tests.
+ 
+ `posting_env` lives here (rather than in tests/test_posting.py) so that any
+ test module in this directory can request it without duplicating setup.
+ """
+-import pytest
+-from datetime import date
++
++import os
++from datetime import UTC, datetime
+ from uuid import uuid4
+ 
++import pytest
+ from fastapi.testclient import TestClient
+ from sqlalchemy import text
+ from sqlalchemy.orm import Session
+ 
+ from app.db import engine, get_db
+ from app.main import app
+ 
+ 
++@pytest.fixture(autouse=True)
++def isolated_financial_database(request):
++    if request.module.__name__.split(".")[-1] not in {
++        "test_posting",
++        "test_posting_flag",
++        "test_collections",
++        "test_invoice_reversal",
++        "test_invoice_cycle",
++        "test_invoice_cycle_controls",
++        "test_invoice_cycle_safety",
++    }:
++        return
++    assert os.environ.get("APP_ENV") == "test", "Use scripts/verify_invoice_cycle.py"
++    assert engine.url.database.startswith("dms_cycle_test_"), (
++        "Refusing non-disposable financial tests"
++    )
++    with engine.connect() as connection:
++        assert (
++            connection.execute(text("SELECT current_database()")).scalar_one()
++            == engine.url.database
++        )
++
++
+ @pytest.fixture
+ def posting_env():
+     connection = engine.connect()
+     transaction = connection.begin()
+     db = Session(bind=connection, join_transaction_mode="create_savepoint")
+-    ids = {name: uuid4() for name in ("owner", "branch", "territory", "customer", "warehouse", "product")}
+-    db.execute(text("INSERT INTO platform.platform_user (id,username,password_hash,role,is_owner) VALUES (:id,:u,'unused','owner',true)"),
+-               {"id": ids["owner"], "u": f"post_test_{ids['owner'].hex}"})
+-    db.execute(text("INSERT INTO master_data.master_branch(id,code,name_ar) VALUES (:id,:code,'Test branch')"),
+-               {"id": ids["branch"], "code": ids["branch"].hex[:20]})
+-    db.execute(text("INSERT INTO master_data.master_territory(id,code,name_ar) VALUES (:id,:code,'Test territory')"),
+-               {"id": ids["territory"], "code": ids["territory"].hex[:20]})
+-    db.execute(text("INSERT INTO master_data.master_customer(id,code,name_ar,branch_id,territory_id) VALUES (:id,:code,'Test customer',:b,:t)"),
+-               {"id": ids["customer"], "code": ids["customer"].hex[:30], "b": ids["branch"], "t": ids["territory"]})
+-    db.execute(text("INSERT INTO master_data.master_warehouse(id,branch_id,code,name_ar) VALUES (:id,:b,:code,'Test warehouse')"),
+-               {"id": ids["warehouse"], "b": ids["branch"], "code": ids["warehouse"].hex[:20]})
+-    db.execute(text("INSERT INTO master_data.master_product(id,sku,name_ar,base_price,vat_rate) VALUES (:id,:sku,'Test product',114,'14.00')"),
+-               {"id": ids["product"], "sku": ids["product"].hex})
++    ids = {
++        name: uuid4()
++        for name in ("owner", "branch", "territory", "customer", "warehouse", "product")
++    }
++    db.execute(
++        text(
++            "INSERT INTO platform.platform_user (id,username,password_hash,role,is_owner) VALUES (:id,:u,'unused','owner',true)"
++        ),
++        {"id": ids["owner"], "u": f"post_test_{ids['owner'].hex}"},
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_branch(id,code,name_ar) VALUES (:id,:code,'Test branch')"
++        ),
++        {"id": ids["branch"], "code": ids["branch"].hex[:20]},
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_territory(id,code,name_ar) VALUES (:id,:code,'Test territory')"
++        ),
++        {"id": ids["territory"], "code": ids["territory"].hex[:20]},
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_customer(id,code,name_ar,branch_id,territory_id) VALUES (:id,:code,'Test customer',:b,:t)"
++        ),
++        {
++            "id": ids["customer"],
++            "code": ids["customer"].hex[:30],
++            "b": ids["branch"],
++            "t": ids["territory"],
++        },
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_warehouse(id,branch_id,code,name_ar) VALUES (:id,:b,:code,'Test warehouse')"
++        ),
++        {"id": ids["warehouse"], "b": ids["branch"], "code": ids["warehouse"].hex[:20]},
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_product(id,sku,name_ar,base_price,vat_rate) VALUES (:id,:sku,'Test product',114,'14.00')"
++        ),
++        {"id": ids["product"], "sku": ids["product"].hex},
++    )
+     # opening stock of 10 units, no batch
+     # (no stock UPDATE here; test that needs depleted stock updates it in-place)
+-    db.execute(text("INSERT INTO inventory.stock_balance(warehouse_id,product_id,quantity) VALUES (:w,:p,10)"),
+-               {"w": ids["warehouse"], "p": ids["product"]})
++    db.execute(
++        text(
++            "INSERT INTO inventory.stock_balance(warehouse_id,product_id,quantity) VALUES (:w,:p,10)"
++        ),
++        {"w": ids["warehouse"], "p": ids["product"]},
++    )
+     db.commit()
+ 
+     def get_test_db():
+         yield db
+ 
+     app.dependency_overrides[get_db] = get_test_db
+     with TestClient(app) as client:
+         sid = uuid4()
+-        db.execute(text("INSERT INTO platform.platform_session(id,user_id,expires_at) VALUES (:sid,:uid,now() + interval '1 hour')"),
+-                   {"sid": sid, "uid": ids["owner"]})
++        db.execute(
++            text(
++                "INSERT INTO platform.platform_session(id,user_id,expires_at) VALUES (:sid,:uid,now() + interval '1 hour')"
++            ),
++            {"sid": sid, "uid": ids["owner"]},
++        )
+         db.commit()
+         auth = {"Authorization": f"Bearer {sid}"}
+-        payload = {"invoice_no": f"P-{uuid4().hex[:20]}", "branch_id": str(ids["branch"]),
+-                   "warehouse_id": str(ids["warehouse"]), "customer_id": str(ids["customer"]),
+-                   "invoice_date": date.today().isoformat(),
+-                   "lines": [{"product_id": str(ids["product"]), "quantity": "2", "discount_pct": "0"}]}
++        payload = {
++            "invoice_no": f"P-{uuid4().hex[:20]}",
++            "branch_id": str(ids["branch"]),
++            "warehouse_id": str(ids["warehouse"]),
++            "customer_id": str(ids["customer"]),
++            "invoice_date": datetime.now(UTC).astimezone().date().isoformat(),
++            "lines": [
++                {
++                    "product_id": str(ids["product"]),
++                    "quantity": "2",
++                    "discount_pct": "0",
++                }
++            ],
++        }
+         invoice = client.post("/invoices", json=payload, headers=auth).json()
+         yield client, db, ids, auth, invoice, payload
+     app.dependency_overrides.pop(get_db, None)
+     db.close()
+     transaction.rollback()
+-    connection.close()
+\ No newline at end of file
++    connection.close()
+
+### FILE tests/test_collections.py; diff SHA256 ea77659fd8c66ded5def0441a5df992a05643e67b561bda17823afc25ac1493f
+--- a/tests/test_collections.py
++++ b/tests/test_collections.py
+@@ -0,0 +1,595 @@
++"""Payment receipt (collections) tests: create, void, list, overpayment guards."""
++
++from datetime import UTC, datetime
++from decimal import Decimal
++from uuid import UUID, uuid4
++
++import pytest
++from fastapi.testclient import TestClient
++from sqlalchemy import text
++from sqlalchemy.orm import Session
++
++from app.db import engine, get_db
++from app.finance import ar, payments
++from app.main import app
++
++
++@pytest.fixture
++def collections_env():
++    """Fresh DB with a Posted invoice ready for collections."""
++    connection = engine.connect()
++    transaction = connection.begin()
++    db = Session(bind=connection, join_transaction_mode="create_savepoint")
++    ids = {
++        name: uuid4()
++        for name in (
++            "owner",
++            "finance_user",
++            "branch",
++            "territory",
++            "customer",
++            "warehouse",
++            "product",
++            "reason_void",
++            "reason_reversal",
++        )
++    }
++    for role, uid, owner in [
++        ("owner", ids["owner"], True),
++        ("finance", ids["finance_user"], False),
++    ]:
++        db.execute(
++            text(
++                "INSERT INTO platform.platform_user (id,username,password_hash,role,is_owner) "
++                "VALUES (:id,:u,'unused',:role,:owner)"
++            ),
++            {"id": uid, "u": f"col_test_{uid.hex}", "role": role, "owner": owner},
++        )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_branch(id,code,name_ar) VALUES (:id,:code,'Test branch')"
++        ),
++        {"id": ids["branch"], "code": ids["branch"].hex[:20]},
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_territory(id,code,name_ar) VALUES (:id,:code,'Test territory')"
++        ),
++        {"id": ids["territory"], "code": ids["territory"].hex[:20]},
++    )
++    # Assign finance_user to territory for customer access
++    db.execute(
++        text(
++            "INSERT INTO platform.user_territory(user_id,territory_id) VALUES (:uid,:tid)"
++        ),
++        {"uid": ids["finance_user"], "tid": ids["territory"]},
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_customer(id,code,name_ar,branch_id,territory_id) "
++            "VALUES (:id,:code,'Test customer',:b,:t)"
++        ),
++        {
++            "id": ids["customer"],
++            "code": ids["customer"].hex[:30],
++            "b": ids["branch"],
++            "t": ids["territory"],
++        },
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_warehouse(id,branch_id,code,name_ar) "
++            "VALUES (:id,:b,:code,'Test warehouse')"
++        ),
++        {"id": ids["warehouse"], "b": ids["branch"], "code": ids["warehouse"].hex[:20]},
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_product(id,sku,name_ar,base_price,vat_rate) "
++            "VALUES (:id,:sku,'Test product',114,'14.00')"
++        ),
++        {"id": ids["product"], "sku": ids["product"].hex},
++    )
++    db.execute(
++        text(
++            "INSERT INTO inventory.stock_balance(warehouse_id,product_id,quantity) VALUES (:w,:p,10)"
++        ),
++        {"w": ids["warehouse"], "p": ids["product"]},
++    )
++    for cat, rid in [
++        ("void", ids["reason_void"]),
++        ("reversal", ids["reason_reversal"]),
++    ]:
++        db.execute(
++            text(
++                "INSERT INTO audit.reason_code(id,code,category) VALUES (:id,:code,:cat)"
++            ),
++            {"id": rid, "code": f"COL_{cat}_{rid.hex[:10]}", "cat": cat},
++        )
++    db.commit()
++
++    def get_test_db():
++        yield db
++
++    app.dependency_overrides[get_db] = get_test_db
++    with TestClient(app) as client:
++
++        def headers(user="owner"):
++            sid = uuid4()
++            db.execute(
++                text(
++                    "INSERT INTO platform.platform_session(id,user_id,expires_at) "
++                    "VALUES (:sid,:uid,now() + interval '1 hour')"
++                ),
++                {"sid": sid, "uid": ids[user]},
++            )
++            db.commit()
++            return {"Authorization": f"Bearer {sid}"}
++
++        # Create and post an invoice
++        payload = {
++            "invoice_no": f"C-{uuid4().hex[:20]}",
++            "branch_id": str(ids["branch"]),
++            "warehouse_id": str(ids["warehouse"]),
++            "customer_id": str(ids["customer"]),
++            "invoice_date": datetime.now(UTC).astimezone().date().isoformat(),
++            "lines": [
++                {
++                    "product_id": str(ids["product"]),
++                    "quantity": "2",
++                    "discount_pct": "0",
++                }
++            ],
++        }
++        invoice = client.post("/invoices", json=payload, headers=headers()).json()
++        import app.config as cfg
++        import app.sales.router as invoice_router
++
++        orig_cfg = cfg.POSTING_ENABLED
++        orig_router = invoice_router.POSTING_ENABLED
++        cfg.POSTING_ENABLED = True
++        invoice_router.POSTING_ENABLED = True
++        try:
++            post_resp = client.post(
++                f"/invoices/{invoice['id']}/post", headers=headers()
++            )
++            assert post_resp.status_code == 200, post_resp.text
++            posted = post_resp.json()
++        finally:
++            cfg.POSTING_ENABLED = orig_cfg
++            invoice_router.POSTING_ENABLED = orig_router
++
++        yield client, db, ids, headers, posted
++    app.dependency_overrides.pop(get_db, None)
++    db.close()
++    transaction.rollback()
++    connection.close()
++
++
++def test_create_receipt_partial_payment(collections_env):
++    client, db, ids, headers, posted = collections_env
++    assert posted["grand_total"] == "228.00"
++
++    # Enable collections gate for this test
++    import app.config as cfg
++    import app.finance.payment_router as pr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_router = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        # Partial payment: 100
++        resp = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "RCT-001",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "100.00",
++                "method": "cash",
++                "note": "Partial payment",
++            },
++            headers=headers("finance_user"),
++        )
++        assert resp.status_code == 201, resp.text
++        receipt = resp.json()
++        assert receipt["amount"] == "100.00"
++        assert receipt["status"] == "Active"
++        assert receipt["invoice_id"] == posted["id"]
++        assert receipt["customer_id"] == posted["customer_id"]
++        assert receipt["branch_id"] == posted["branch_id"]
++
++        # AR balance reduced by payment amount
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("128.00")
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        pr.POSTING_ENABLED = orig_router
++
++
++def test_create_receipt_final_payment(collections_env):
++    client, db, ids, headers, posted = collections_env
++    import app.config as cfg
++    import app.finance.payment_router as pr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_router = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        # Full payment
++        resp = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "RCT-FULL",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "228.00",
++                "method": "transfer",
++            },
++            headers=headers("finance_user"),
++        )
++        assert resp.status_code == 201, resp.text
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("0.00")
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        pr.POSTING_ENABLED = orig_router
++
++
++def test_overpayment_rejected(collections_env):
++    client, db, ids, headers, posted = collections_env
++    import app.config as cfg
++    import app.finance.payment_router as pr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_router = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        # Try to overpay
++        resp = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "RCT-OVER",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "300.00",  # > 228
++                "method": "cash",
++            },
++            headers=headers("finance_user"),
++        )
++        assert resp.status_code == 409, resp.text
++        assert "overpayment" in resp.json()["detail"].lower()
++
++        # Balance unchanged
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("228.00")
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        pr.POSTING_ENABLED = orig_router
++
++
++def test_partial_then_final_sum_rejects_overpayment(collections_env):
++    client, db, ids, headers, posted = collections_env
++    import app.config as cfg
++    import app.finance.payment_router as pr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_router = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        # First partial
++        client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "RCT-1",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "150.00",
++                "method": "cash",
++            },
++            headers=headers("finance_user"),
++        )
++        # Second that would exceed
++        resp = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "RCT-2",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "100.00",
++                "method": "cash",  # 150+100 > 228
++            },
++            headers=headers("finance_user"),
++        )
++        assert resp.status_code == 409
++        # Balance: still only 150 collected
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("78.00")
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        pr.POSTING_ENABLED = orig_router
++
++
++def test_receipt_number_unique_per_branch(collections_env):
++    client, _db, _ids, headers, posted = collections_env
++    import app.config as cfg
++    import app.finance.payment_router as pr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_router = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        # First receipt
++        resp = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "RCT-DUP",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "50.00",
++                "method": "cash",
++            },
++            headers=headers("finance_user"),
++        )
++        assert resp.status_code == 201
++        # Duplicate receipt_no in same branch -> 409
++        resp = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "RCT-DUP",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "50.00",
++                "method": "check",
++            },
++            headers=headers("finance_user"),
++        )
++        assert resp.status_code == 409
++        assert "already exists" in resp.json()["detail"].lower()
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        pr.POSTING_ENABLED = orig_router
++
++
++def test_receipt_requires_posted_invoice(collections_env):
++    client, _db, ids, headers, _posted = collections_env
++    # Create a draft invoice
++    payload = {
++        "invoice_no": f"D-{uuid4().hex[:20]}",
++        "branch_id": str(ids["branch"]),
++        "warehouse_id": str(ids["warehouse"]),
++        "customer_id": str(ids["customer"]),
++        "invoice_date": datetime.now(UTC).astimezone().date().isoformat(),
++        "lines": [
++            {"product_id": str(ids["product"]), "quantity": "1", "discount_pct": "0"}
++        ],
++    }
++    draft = client.post("/invoices", json=payload, headers=headers()).json()
++    import app.config as cfg
++    import app.finance.payment_router as pr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_router = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        resp = client.post(
++            "/collections",
++            json={
++                "invoice_id": draft["id"],
++                "invoice_version": draft["version"],
++                "receipt_no": "RCT-DRAFT",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "10.00",
++                "method": "cash",
++            },
++            headers=headers("finance_user"),
++        )
++        assert resp.status_code == 409
++        assert "posted" in resp.json()["detail"].lower()
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        pr.POSTING_ENABLED = orig_router
++
++
++def test_void_receipt_appends_ar_adjustment(collections_env):
++    client, db, ids, headers, posted = collections_env
++    import app.config as cfg
++    import app.finance.payment_router as pr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_router = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        # Create receipt
++        create = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "RCT-VOID",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "100.00",
++                "method": "cash",
++            },
++            headers=headers("finance_user"),
++        )
++        assert create.status_code == 201
++        receipt = create.json()
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("128.00")
++
++        # Void it
++        void_resp = client.post(
++            f"/collections/{receipt['id']}/void",
++            json={"version": 1, "reason_id": str(ids["reason_void"])},
++            headers=headers("finance_user"),
++        )
++        assert void_resp.status_code == 200, void_resp.text
++        voided = void_resp.json()
++        assert voided["status"] == "Voided"
++        assert voided["void_reason_id"] == str(ids["reason_void"])
++
++        # AR balance restored (adjustment debit added)
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("228.00")
++
++        # Original receipt retained
++        assert payments.fetch_receipt(db, UUID(receipt["id"]))["status"] == "Voided"
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        pr.POSTING_ENABLED = orig_router
++
++
++def test_duplicate_void_receipt_returns_409(collections_env):
++    client, _db, ids, headers, posted = collections_env
++    import app.config as cfg
++    import app.finance.payment_router as pr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_router = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        create = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "RCT-DUPV",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "50.00",
++                "method": "cash",
++            },
++            headers=headers("finance_user"),
++        )
++        receipt = create.json()
++        # First void
++        client.post(
++            f"/collections/{receipt['id']}/void",
++            json={"version": 1, "reason_id": str(ids["reason_void"])},
++            headers=headers("finance_user"),
++        )
++        # Second void -> 409
++        resp = client.post(
++            f"/collections/{receipt['id']}/void",
++            json={"version": 2, "reason_id": str(ids["reason_void"])},
++            headers=headers("finance_user"),
++        )
++        assert resp.status_code == 409
++        assert "active" in resp.json()["detail"].lower()
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        pr.POSTING_ENABLED = orig_router
++
++
++def test_list_receipts_scoped(collections_env):
++    client, _db, _ids, headers, posted = collections_env
++    import app.config as cfg
++    import app.finance.payment_router as pr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_router = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        # Create a couple
++        client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "RCT-L1",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "50.00",
++                "method": "cash",
++            },
++            headers=headers("finance_user"),
++        )
++        client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "RCT-L2",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "50.00",
++                "method": "check",
++            },
++            headers=headers("finance_user"),
++        )
++
++        resp = client.get(
++            f"/collections?invoice_id={posted['id']}", headers=headers("owner")
++        )
++        assert resp.status_code == 200
++        receipts = resp.json()
++        assert len(receipts) == 2
++        assert all(r["invoice_id"] == posted["id"] for r in receipts)
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        pr.POSTING_ENABLED = orig_router
++
++
++def test_invalid_amount_rejected(collections_env):
++    client, _db, _ids, headers, posted = collections_env
++    import app.config as cfg
++    import app.finance.payment_router as pr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_router = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        for bad_amt in ["0", "-10.00", "abc", "1.001"]:
++            resp = client.post(
++                "/collections",
++                json={
++                    "invoice_id": posted["id"],
++                    "invoice_version": posted["version"],
++                    "receipt_no": f"RCT-BAD-{bad_amt}",
++                    "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                    "amount": bad_amt,
++                    "method": "cash",
++                },
++                headers=headers("finance_user"),
++            )
++            assert resp.status_code == 422, f"Should reject {bad_amt}: {resp.text}"
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        pr.POSTING_ENABLED = orig_router
++
++
++def test_invalid_method_rejected(collections_env):
++    client, _db, _ids, headers, posted = collections_env
++    import app.config as cfg
++    import app.finance.payment_router as pr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_router = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        resp = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "RCT-BADM",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "10.00",
++                "method": "crypto",
++            },
++            headers=headers("finance_user"),
++        )
++        assert resp.status_code == 422
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        pr.POSTING_ENABLED = orig_router
+
+### FILE tests/test_invoice_cycle.py; diff SHA256 f3fc0c15be91f87aa64105cbc64856837be5a38a531560a28f25ef02fef59f4a
+--- a/tests/test_invoice_cycle.py
++++ b/tests/test_invoice_cycle.py
+@@ -0,0 +1,488 @@
++"""Full Invoice → Stock → AR → Collection → Payment Void → Invoice Reversal cycle.
++
++Savepoint regressions; independent committed races live in test_invoice_cycle_safety.
++"""
++
++from datetime import UTC, datetime
++from decimal import Decimal
++from uuid import UUID, uuid4
++
++import pytest
++from fastapi.testclient import TestClient
++from sqlalchemy import text
++from sqlalchemy.orm import Session
++
++from app.db import engine, get_db
++from app.finance import ar
++from app.main import app
++
++
++@pytest.fixture
++def cycle_env():
++    """Fresh DB with all fixtures for full cycle test."""
++    connection = engine.connect()
++    transaction = connection.begin()
++    db = Session(bind=connection, join_transaction_mode="create_savepoint")
++    ids = {
++        name: uuid4()
++        for name in (
++            "owner",
++            "finance_user",
++            "branch",
++            "territory",
++            "customer",
++            "warehouse",
++            "product",
++            "reason_void",
++            "reason_reversal",
++        )
++    }
++    for role, uid, owner in [
++        ("owner", ids["owner"], True),
++        ("finance", ids["finance_user"], False),
++    ]:
++        db.execute(
++            text(
++                "INSERT INTO platform.platform_user (id,username,password_hash,role,is_owner) "
++                "VALUES (:id,:u,'unused',:role,:owner)"
++            ),
++            {"id": uid, "u": f"cycle_{uid.hex}", "role": role, "owner": owner},
++        )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_branch(id,code,name_ar) VALUES (:id,:code,'Test branch')"
++        ),
++        {"id": ids["branch"], "code": ids["branch"].hex[:20]},
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_territory(id,code,name_ar) VALUES (:id,:code,'Test territory')"
++        ),
++        {"id": ids["territory"], "code": ids["territory"].hex[:20]},
++    )
++    # Assign finance_user to territory for customer access
++    db.execute(
++        text(
++            "INSERT INTO platform.user_territory(user_id,territory_id) VALUES (:uid,:tid)"
++        ),
++        {"uid": ids["finance_user"], "tid": ids["territory"]},
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_customer(id,code,name_ar,branch_id,territory_id) "
++            "VALUES (:id,:code,'Test customer',:b,:t)"
++        ),
++        {
++            "id": ids["customer"],
++            "code": ids["customer"].hex[:30],
++            "b": ids["branch"],
++            "t": ids["territory"],
++        },
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_warehouse(id,branch_id,code,name_ar) "
++            "VALUES (:id,:b,:code,'Test warehouse')"
++        ),
++        {"id": ids["warehouse"], "b": ids["branch"], "code": ids["warehouse"].hex[:20]},
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_product(id,sku,name_ar,base_price,vat_rate) "
++            "VALUES (:id,:sku,'Test product',114,'14.00')"
++        ),
++        {"id": ids["product"], "sku": ids["product"].hex},
++    )
++    db.execute(
++        text(
++            "INSERT INTO inventory.stock_balance(warehouse_id,product_id,quantity) VALUES (:w,:p,10)"
++        ),
++        {"w": ids["warehouse"], "p": ids["product"]},
++    )
++    for cat, rid in [
++        ("void", ids["reason_void"]),
++        ("reversal", ids["reason_reversal"]),
++    ]:
++        db.execute(
++            text(
++                "INSERT INTO audit.reason_code(id,code,category) VALUES (:id,:code,:cat)"
++            ),
++            {"id": rid, "code": f"CYC_{cat}_{rid.hex[:10]}", "cat": cat},
++        )
++    db.commit()
++
++    def get_test_db():
++        yield db
++
++    app.dependency_overrides[get_db] = get_test_db
++    with TestClient(app) as client:
++
++        def headers(user="owner"):
++            sid = uuid4()
++            db.execute(
++                text(
++                    "INSERT INTO platform.platform_session(id,user_id,expires_at) "
++                    "VALUES (:sid,:uid,now() + interval '1 hour')"
++                ),
++                {"sid": sid, "uid": ids[user]},
++            )
++            db.commit()
++            return {"Authorization": f"Bearer {sid}"}
++
++        yield client, db, ids, headers
++    app.dependency_overrides.pop(get_db, None)
++    db.close()
++    transaction.rollback()
++    connection.close()
++
++
++def test_full_cycle_invoice_post_collect_void_reverse(cycle_env):
++    """Full cycle: Post → Partial Collect → Full Collect → Void Receipt → Reverse Invoice."""
++    client, db, ids, headers = cycle_env
++    import app.config as cfg
++    import app.finance.payment_router as pr
++    import app.sales.router as sr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_sr = sr.POSTING_ENABLED
++    orig_pr = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    sr.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        # 1. Create draft invoice (3 units = 342.00)
++        payload = {
++            "invoice_no": f"CYC-{uuid4().hex[:20]}",
++            "branch_id": str(ids["branch"]),
++            "warehouse_id": str(ids["warehouse"]),
++            "customer_id": str(ids["customer"]),
++            "invoice_date": datetime.now(UTC).astimezone().date().isoformat(),
++            "lines": [
++                {
++                    "product_id": str(ids["product"]),
++                    "quantity": "3",
++                    "discount_pct": "0",
++                }
++            ],
++        }
++        inv = client.post("/invoices", json=payload, headers=headers()).json()
++        assert inv["grand_total"] == "342.00"
++        assert inv["posting_status"] == "Draft"
++
++        # 2. POST invoice
++        post = client.post(f"/invoices/{inv['id']}/post", headers=headers())
++        assert post.status_code == 200, post.text
++        posted = post.json()
++        assert posted["posting_status"] == "Posted"
++        assert posted["grand_total"] == "342.00"
++        assert posted["version"] == 2
++        # Stock: 10 -> 7
++        stock_before = db.execute(
++            text(
++                "SELECT quantity FROM inventory.stock_balance "
++                "WHERE warehouse_id=:w AND product_id=:p"
++            ),
++            {"w": ids["warehouse"], "p": ids["product"]},
++        ).scalar_one()
++        assert str(stock_before) == "7.000"
++        # AR: 342 debit
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("342.00")
++
++        # 3. Partial collection: 100.00
++        coll1 = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "CYC-R1",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "100.00",
++                "method": "cash",
++            },
++            headers=headers("finance_user"),
++        )
++        assert coll1.status_code == 201
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("242.00")
++
++        # 4. Full collection: remaining 242.00
++        coll2 = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "CYC-R2",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "242.00",
++                "method": "transfer",
++            },
++            headers=headers("finance_user"),
++        )
++        assert coll2.status_code == 201
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("0.00")
++
++        # 5. Void first receipt (100.00 adjustment debit -> balance back to 100)
++        void1 = client.post(
++            f"/collections/{coll1.json()['id']}/void",
++            json={"version": 1, "reason_id": str(ids["reason_void"])},
++            headers=headers("finance_user"),
++        )
++        assert void1.status_code == 200
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("100.00")
++
++        # 6. Void second receipt (balance back to 342)
++        void2 = client.post(
++            f"/collections/{coll2.json()['id']}/void",
++            json={"version": 1, "reason_id": str(ids["reason_void"])},
++            headers=headers("finance_user"),
++        )
++        assert void2.status_code == 200
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("342.00")
++
++        # 7. Reverse invoice (stock back to 10, AR credit_note 342 -> balance 0)
++        rev = client.post(
++            f"/invoices/{posted['id']}/reverse",
++            json={
++                "version": posted["version"],
++                "reason_id": str(ids["reason_reversal"]),
++            },
++            headers=headers("owner"),
++        )
++        assert rev.status_code == 200, rev.text
++        reversed_inv = rev.json()
++        assert reversed_inv["posting_status"] == "Voided"
++        assert reversed_inv["void_reason_id"] == str(ids["reason_reversal"])
++
++        stock_after = db.execute(
++            text(
++                "SELECT quantity FROM inventory.stock_balance "
++                "WHERE warehouse_id=:w AND product_id=:p"
++            ),
++            {"w": ids["warehouse"], "p": ids["product"]},
++        ).scalar_one()
++        assert str(stock_after) == "10.000"
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("0.00")
++
++        # 8. Verify original rows retained
++        # Invoice header
++        inv_row = db.execute(
++            text(
++                "SELECT grand_total, posting_status, posted_at, voided_at FROM sales.sales_invoice WHERE id=:i"
++            ),
++            {"i": UUID(posted["id"])},
++        ).one()
++        assert str(inv_row.grand_total) == "342.00"
++        assert inv_row.posting_status == "Voided"
++        assert inv_row.posted_at is not None  # posted_at retained
++        assert inv_row.voided_at is not None
++
++        # Original invoice lines retained
++        lines = db.execute(
++            text(
++                "SELECT line_no, quantity, unit_price, vat_rate, vat_amount FROM sales.sales_invoice_line "
++                "WHERE invoice_id=:i ORDER BY line_no"
++            ),
++            {"i": UUID(posted["id"])},
++        ).fetchall()
++        assert len(lines) == 1
++        assert str(lines[0].quantity) == "3.000"
++        assert str(lines[0].vat_rate) == "14.00"
++
++        # Stock movements: sale (-3) + return (+3)
++        movements = db.execute(
++            text(
++                "SELECT movement_type, quantity FROM inventory.stock_movement WHERE source_id=:i "
++                "ORDER BY created_at"
++            ),
++            {"i": UUID(posted["id"])},
++        ).fetchall()
++        assert len(movements) == 2
++        assert (
++            movements[0].movement_type == "sale"
++            and str(movements[0].quantity) == "-3.000"
++        )
++        assert (
++            movements[1].movement_type == "return"
++            and str(movements[1].quantity) == "3.000"
++        )
++
++        # AR entries: invoice (342 debit) + payment x2 (100+242 credit) + adjustment x2 (100+242 debit) + credit_note (342 credit)
++        ar_entries = db.execute(
++            text(
++                "SELECT entry_type, debit, credit FROM finance.ar_entry WHERE invoice_id=:i "
++                "ORDER BY created_at"
++            ),
++            {"i": UUID(posted["id"])},
++        ).fetchall()
++        assert len(ar_entries) == 6
++        types = [e.entry_type for e in ar_entries]
++        assert types == [
++            "invoice",
++            "payment",
++            "payment",
++            "adjustment",
++            "adjustment",
++            "credit_note",
++        ]
++        # Verify amounts
++        assert (
++            str(ar_entries[0].debit) == "342.00" and str(ar_entries[0].credit) == "0.00"
++        )
++        assert (
++            str(ar_entries[1].credit) == "100.00" and str(ar_entries[1].debit) == "0.00"
++        )
++        assert (
++            str(ar_entries[2].credit) == "242.00" and str(ar_entries[2].debit) == "0.00"
++        )
++        assert (
++            str(ar_entries[3].debit) == "100.00" and str(ar_entries[3].credit) == "0.00"
++        )
++        assert (
++            str(ar_entries[4].debit) == "242.00" and str(ar_entries[4].credit) == "0.00"
++        )
++        assert (
++            str(ar_entries[5].credit) == "342.00" and str(ar_entries[5].debit) == "0.00"
++        )
++
++        # 9. Repeat operations rejected
++        # Re-reverse
++        rev2 = client.post(
++            f"/invoices/{posted['id']}/reverse",
++            json={
++                "version": reversed_inv["version"],
++                "reason_id": str(ids["reason_reversal"]),
++            },
++            headers=headers("owner"),
++        )
++        assert rev2.status_code == 409
++        # Re-post
++        post2 = client.post(f"/invoices/{posted['id']}/post", headers=headers())
++        assert post2.status_code == 409
++        # New collection on voided
++        coll3 = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": reversed_inv["version"],
++                "receipt_no": "CYC-R3",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "10.00",
++                "method": "cash",
++            },
++            headers=headers("finance_user"),
++        )
++        assert coll3.status_code == 409
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        sr.POSTING_ENABLED = orig_sr
++        pr.POSTING_ENABLED = orig_pr
++
++
++def test_sequential_collection_rejects_overpayment(cycle_env):
++    """A second sequential receipt cannot exceed the remaining balance."""
++    client, db, ids, headers = cycle_env
++    import app.config as cfg
++    import app.finance.payment_router as pr
++    import app.sales.router as sr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_sr = sr.POSTING_ENABLED
++    orig_pr = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    sr.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        # Create and post invoice
++        payload = {
++            "invoice_no": f"CONC-{uuid4().hex[:20]}",
++            "branch_id": str(ids["branch"]),
++            "warehouse_id": str(ids["warehouse"]),
++            "customer_id": str(ids["customer"]),
++            "invoice_date": datetime.now(UTC).astimezone().date().isoformat(),
++            "lines": [
++                {
++                    "product_id": str(ids["product"]),
++                    "quantity": "2",
++                    "discount_pct": "0",
++                }
++            ],
++        }
++        inv = client.post("/invoices", json=payload, headers=headers()).json()
++        post = client.post(f"/invoices/{inv['id']}/post", headers=headers())
++        posted = post.json()
++
++        # Collect 150 via API first time -> succeeds
++        resp1 = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "CONC-R1",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "150.00",
++                "method": "cash",
++            },
++            headers=headers("finance_user"),
++        )
++        assert resp1.status_code == 201
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("78.00")
++
++        # Try to collect 150 again -> overpayment rejection
++        resp2 = client.post(
++            "/collections",
++            json={
++                "invoice_id": posted["id"],
++                "invoice_version": posted["version"],
++                "receipt_no": "CONC-R2",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "150.00",
++                "method": "cash",
++            },
++            headers=headers("finance_user"),
++        )
++        assert resp2.status_code == 409, resp2.text
++        # Balance unchanged
++        assert ar.customer_balance(db, ids["customer"]) == Decimal("78.00")
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        sr.POSTING_ENABLED = orig_sr
++        pr.POSTING_ENABLED = orig_pr
++
++
++def test_flag_off_blocks_posting(cycle_env):
++    """All four mutation types have independent coverage in cycle_safety."""
++    client, _db, ids, headers = cycle_env
++    import app.config
++    import app.finance.payment_router as pr
++    import app.sales.router as sr
++
++    orig_app = app.config.POSTING_ENABLED
++    orig_sr = sr.POSTING_ENABLED
++    orig_pr = pr.POSTING_ENABLED
++    app.config.POSTING_ENABLED = False
++    sr.POSTING_ENABLED = False
++    pr.POSTING_ENABLED = False
++    try:
++        payload = {
++            "invoice_no": f"OFF-{uuid4().hex[:20]}",
++            "branch_id": str(ids["branch"]),
++            "warehouse_id": str(ids["warehouse"]),
++            "customer_id": str(ids["customer"]),
++            "invoice_date": datetime.now(UTC).astimezone().date().isoformat(),
++            "lines": [
++                {
++                    "product_id": str(ids["product"]),
++                    "quantity": "1",
++                    "discount_pct": "0",
++                }
++            ],
++        }
++        inv = client.post("/invoices", json=payload, headers=headers()).json()
++
++        # Post
++        resp = client.post(f"/invoices/{inv['id']}/post", headers=headers())
++        assert resp.status_code == 409
++
++    finally:
++        app.config.POSTING_ENABLED = orig_app
++        sr.POSTING_ENABLED = orig_sr
++        pr.POSTING_ENABLED = orig_pr
+
+### FILE tests/test_invoice_cycle_controls.py; diff SHA256 5612360b99bca27c8c64c211b9f900b17cfe3dfa4d2d1e219f584f9e918d8882
+--- a/tests/test_invoice_cycle_controls.py
++++ b/tests/test_invoice_cycle_controls.py
+@@ -0,0 +1,317 @@
++"""Real committed lifecycle controls; refuses every non-disposable database."""
++
++import os
++from datetime import UTC, datetime
++from decimal import Decimal
++from types import SimpleNamespace
++from uuid import UUID, uuid4
++
++import pytest
++from fastapi.testclient import TestClient
++from sqlalchemy import text
++from sqlalchemy.exc import DBAPIError
++from sqlalchemy.orm import Session
++
++from app.db import engine, get_db
++from app.main import app
++
++
++def sql(statement, **params):
++    with engine.begin() as connection:
++        result = connection.execute(text(statement), params)
++        return [dict(row) for row in result.mappings()] if result.returns_rows else []
++
++
++def scalar(statement, **params):
++    return next(iter(sql(statement, **params)[0].values()))
++
++
++@pytest.fixture
++def life(monkeypatch):
++    assert os.environ.get("APP_ENV") == "test"
++    assert engine.url.database.startswith("dms_cycle_test_")
++    assert scalar("SELECT current_database()") == engine.url.database
++    import app.finance.payment_router as payments_router
++    import app.sales.router as sales_router
++
++    monkeypatch.setattr(sales_router, "POSTING_ENABLED", True)
++    monkeypatch.setattr(payments_router, "POSTING_ENABLED", True)
++
++    def clear():
++        # This fixture owns synthetic state only in the freshly-created disposable DB.
++        sql(
++            "TRUNCATE platform.platform_user, master_data.master_branch, "
++            "master_data.master_product, master_data.master_territory, audit.reason_code CASCADE"
++        )
++
++    clear()
++    ids = {
++        name: uuid4()
++        for name in (
++            "branch",
++            "other_branch",
++            "territory",
++            "other_territory",
++            "warehouse",
++            "other_warehouse",
++            "customer",
++            "other_customer",
++            "product",
++            "product2",
++            "reason",
++        )
++    }
++    auth = {}
++    for role in (
++        "owner",
++        "finance",
++        "sales_manager",
++        "district_manager",
++        "medical_rep",
++        "read_only_auditor",
++        "warehouse_staff",
++        "admin",
++    ):
++        uid, sid = uuid4(), uuid4()
++        ids[role] = uid
++        sql(
++            "INSERT INTO platform.platform_user(id,username,password_hash,role,is_owner) "
++            "VALUES (:i,:u,'synthetic-unused',:r,:o)",
++            i=uid,
++            u=uid.hex,
++            r=role,
++            o=role == "owner",
++        )
++        sql(
++            "INSERT INTO platform.platform_session(id,user_id,expires_at) "
++            "VALUES (:s,:u,now()+interval '1 hour')",
++            s=sid,
++            u=uid,
++        )
++        auth[role] = {"Authorization": f"Bearer {sid}"}
++    for prefix in ("", "other_"):
++        sql(
++            "INSERT INTO master_data.master_branch(id,code,name_ar) VALUES (:i,:c,'Synthetic')",
++            i=ids[prefix + "branch"],
++            c=uuid4().hex[:20],
++        )
++        sql(
++            "INSERT INTO master_data.master_territory(id,code,name_ar) VALUES (:i,:c,'Synthetic')",
++            i=ids[prefix + "territory"],
++            c=uuid4().hex[:20],
++        )
++        sql(
++            "INSERT INTO master_data.master_warehouse(id,code,name_ar,branch_id) "
++            "VALUES (:i,:c,'Synthetic',:b)",
++            i=ids[prefix + "warehouse"],
++            c=uuid4().hex[:20],
++            b=ids[prefix + "branch"],
++        )
++        sql(
++            "INSERT INTO master_data.master_customer(id,code,name_ar,branch_id,territory_id) "
++            "VALUES (:i,:c,'Synthetic',:b,:t)",
++            i=ids[prefix + "customer"],
++            c=uuid4().hex[:20],
++            b=ids[prefix + "branch"],
++            t=ids[prefix + "territory"],
++        )
++    for role in auth:
++        sql(
++            "INSERT INTO platform.user_territory VALUES (:u,:t)",
++            u=ids[role],
++            t=ids["territory"],
++        )
++        sql(
++            "INSERT INTO platform.user_branch VALUES (:u,:b)",
++            u=ids[role],
++            b=ids["branch"],
++        )
++    for key, price, vat in (("product", "114", "14"), ("product2", "105", "5")):
++        sql(
++            "INSERT INTO master_data.master_product(id,sku,name_ar,base_price,vat_rate) "
++            "VALUES (:i,:s,'Synthetic',:p,:v)",
++            i=ids[key],
++            s=uuid4().hex,
++            p=Decimal(price),
++            v=Decimal(vat),
++        )
++        sql(
++            "INSERT INTO inventory.stock_balance(warehouse_id,product_id,quantity) VALUES (:w,:p,10)",
++            w=ids["warehouse"],
++            p=ids[key],
++        )
++    sql(
++        "INSERT INTO audit.reason_code(id,code,category) VALUES (:i,:c,'void')",
++        i=ids["reason"],
++        c=uuid4().hex[:30],
++    )
++    client = TestClient(app, raise_server_exceptions=False)
++    previous = app.dependency_overrides.get(get_db)
++
++    def bounded_db():
++        with Session(engine) as db:
++            db.execute(text("SET LOCAL lock_timeout='5s'"))
++            db.execute(text("SET LOCAL statement_timeout='12s'"))
++            yield db
++
++    app.dependency_overrides[get_db] = bounded_db
++
++    def draft(quantity="2", lines=None, **overrides):
++        payload = {
++            "invoice_no": uuid4().hex[:30],
++            "branch_id": str(ids["branch"]),
++            "warehouse_id": str(ids["warehouse"]),
++            "customer_id": str(ids["customer"]),
++            "invoice_date": datetime.now(UTC).astimezone().date().isoformat(),
++            "lines": lines
++            or [{"product_id": str(ids["product"]), "quantity": quantity}],
++        }
++        payload.update(overrides)
++        response = client.post("/invoices", json=payload, headers=auth["owner"])
++        assert response.status_code == 201, response.text
++        return response.json()
++
++    def post(invoice=None):
++        invoice = draft() if invoice is None else invoice
++        response = client.post(f"/invoices/{invoice['id']}/post", headers=auth["owner"])
++        assert response.status_code == 200, response.text
++        return response.json()
++
++    def collect(invoice, amount="100.00", **overrides):
++        payload = {
++            "invoice_id": invoice["id"],
++            "invoice_version": invoice["version"],
++            "receipt_no": uuid4().hex[:30],
++            "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++            "amount": amount,
++            "method": "cash",
++        }
++        payload.update(overrides)
++        return client.post("/collections", json=payload, headers=auth["finance"])
++
++    def reverse(invoice, **overrides):
++        payload = {"version": invoice["version"], "reason_id": str(ids["reason"])}
++        payload.update(overrides)
++        return client.post(
++            f"/invoices/{invoice['id']}/reverse", json=payload, headers=auth["owner"]
++        )
++
++    def void(receipt, **overrides):
++        payload = {"version": receipt["version"], "reason_id": str(ids["reason"])}
++        payload.update(overrides)
++        return client.post(
++            f"/collections/{receipt['id']}/void", json=payload, headers=auth["finance"]
++        )
++
++    env = SimpleNamespace(
++        ids=ids,
++        auth=auth,
++        client=client,
++        draft=draft,
++        post=post,
++        collect=collect,
++        reverse=reverse,
++        void=void,
++    )
++    try:
++        with client:
++            yield env
++    finally:
++        if previous is None:
++            app.dependency_overrides.pop(get_db, None)
++        else:
++            app.dependency_overrides[get_db] = previous
++        clear()
++
++
++def state(life):
++    return {
++        "invoices": sql("SELECT * FROM sales.sales_invoice ORDER BY id"),
++        "lines": sql("SELECT * FROM sales.sales_invoice_line ORDER BY id"),
++        "stock": sql("SELECT * FROM inventory.stock_balance ORDER BY id"),
++        "movements": sql("SELECT * FROM inventory.stock_movement ORDER BY id"),
++        "ar": sql("SELECT * FROM finance.ar_entry ORDER BY id"),
++        "receipts": sql("SELECT * FROM finance.payment_receipt ORDER BY id"),
++        "audits": sql("SELECT * FROM audit.audit_log ORDER BY id"),
++    }
++
++
++def test_posted_invoice_rejects_raw_snapshot_mutation(life):
++    invoice = life.post()
++    before = state(life)
++    with pytest.raises(DBAPIError):
++        sql(
++            "UPDATE sales.sales_invoice SET invoice_no='tampered' WHERE id=:i",
++            i=UUID(invoice["id"]),
++        )
++    assert state(life) == before
++
++
++def test_posting_revalidates_source_grant(life):
++    invoice = life.draft()
++    sql(
++        "DELETE FROM platform.user_branch WHERE user_id=:u", u=life.ids["sales_manager"]
++    )
++    before = state(life)
++    response = life.client.post(
++        f"/invoices/{invoice['id']}/post", headers=life.auth["sales_manager"]
++    )
++    assert response.status_code == 404, response.text
++    assert state(life) == before
++
++
++def test_reversal_links_exact_original_entries(life):
++    invoice = life.post()
++    sale = sql(
++        "SELECT * FROM inventory.stock_movement WHERE source_id=:i AND movement_type='sale'",
++        i=UUID(invoice["id"]),
++    )[0]
++    debit = sql(
++        "SELECT * FROM finance.ar_entry WHERE invoice_id=:i AND entry_type='invoice'",
++        i=UUID(invoice["id"]),
++    )[0]
++    response = life.reverse(invoice)
++    assert response.status_code == 200, response.text
++    counter = sql(
++        "SELECT * FROM inventory.stock_movement WHERE source_id=:i AND movement_type='return'",
++        i=UUID(invoice["id"]),
++    )[0]
++    credit = sql(
++        "SELECT * FROM finance.ar_entry WHERE invoice_id=:i AND entry_type='credit_note'",
++        i=UUID(invoice["id"]),
++    )[0]
++    assert counter["reverses_movement_id"] == sale["id"]
++    assert counter["quantity"] == -sale["quantity"]
++    assert counter["source_type"] == "invoice"
++    assert credit["reverses_entry_id"] == debit["id"]
++    assert credit["credit"] == debit["debit"]
++
++
++def test_collection_list_respects_territory_revocation(life):
++    invoice = life.post()
++    receipt = life.collect(invoice).json()
++    sql("DELETE FROM platform.user_territory WHERE user_id=:u", u=life.ids["finance"])
++    response = life.client.get("/collections", headers=life.auth["finance"])
++    assert response.status_code == 200, response.text
++    assert response.json() == []
++    assert (
++        life.client.get(
++            f"/collections/{receipt['id']}", headers=life.auth["finance"]
++        ).status_code
++        == 404
++    )
++
++
++def test_receipt_void_links_the_original_payment(life):
++    invoice = life.post()
++    receipt = life.collect(invoice).json()
++    assert life.void(receipt).status_code == 200
++    entries = sql(
++        "SELECT * FROM finance.ar_entry WHERE receipt_id=:r ORDER BY created_at",
++        r=UUID(receipt["id"]),
++    )
++    assert len(entries) == 2
++    payment, reversal = entries
++    assert payment["entry_type"] == "payment"
++    assert reversal["reverses_entry_id"] == payment["id"]
++    assert reversal["debit"] == payment["credit"]
+
+### FILE tests/test_invoice_cycle_safety.py; diff SHA256 7a389a43dddee8adc7d7609c0839418a1364d569e43a5146ac806e29e8c54379
+--- a/tests/test_invoice_cycle_safety.py
++++ b/tests/test_invoice_cycle_safety.py
+@@ -0,0 +1,631 @@
++"""Financial acceptance: persisted API results, real races and late rollback."""
++
++from concurrent.futures import ThreadPoolExecutor
++from datetime import UTC, datetime, timedelta
++from decimal import Decimal
++from threading import Barrier
++from uuid import UUID, uuid4
++
++import pytest
++from alembic.config import Config
++from sqlalchemy import text
++from sqlalchemy.exc import DBAPIError
++from test_invoice_cycle_controls import scalar, sql, state
++
++from alembic import command
++from app.db import engine
++
++pytest_plugins = ["test_invoice_cycle_controls"]
++
++
++def balance(env):
++    return scalar(
++        "SELECT COALESCE(SUM(debit-credit),0) FROM finance.ar_entry WHERE customer_id=:c",
++        c=env.ids["customer"],
++    )
++
++
++def test_mixed_vat_discount_batch_cycle_persists_originals(life):
++    batch = uuid4()
++    sql(
++        "INSERT INTO inventory.batch_record(id,product_id,warehouse_id,batch_no,expiry_date) VALUES (:i,:p,:w,:n,:d)",
++        i=batch,
++        p=life.ids["product"],
++        w=life.ids["warehouse"],
++        n=uuid4().hex,
++        d=datetime.now(UTC).astimezone().date() + timedelta(days=365),
++    )
++    sql(
++        "INSERT INTO inventory.stock_balance(warehouse_id,product_id,batch_id,quantity) VALUES (:w,:p,:b,10)",
++        w=life.ids["warehouse"],
++        p=life.ids["product"],
++        b=batch,
++    )
++    draft = life.draft(
++        lines=[
++            {
++                "product_id": str(life.ids["product"]),
++                "batch_id": str(batch),
++                "quantity": "2",
++                "discount_pct": "10",
++            },
++            {"product_id": str(life.ids["product2"]), "quantity": "1"},
++        ]
++    )
++    posted = life.post(draft)
++    assert tuple(
++        Decimal(posted[k]) for k in ("grand_total", "total_net", "vat_amount")
++    ) == (Decimal("310.20"), Decimal("280.00"), Decimal("30.20"))
++    assert balance(life) == Decimal("310.20")
++    assert scalar(
++        "SELECT quantity FROM inventory.stock_balance WHERE batch_id=:b", b=batch
++    ) == Decimal(8)
++    # Master-price changes must never rewrite a posted tax snapshot or its compensation.
++    sql(
++        "UPDATE master_data.master_product SET base_price=999,vat_rate=0 WHERE id=:p",
++        p=life.ids["product"],
++    )
++    receipts = [life.collect(posted, amount).json() for amount in ("100.00", "210.20")]
++    assert balance(life) == 0
++    assert life.reverse(posted).status_code == 409
++    for receipt in receipts:
++        assert life.void(receipt).status_code == 200
++    assert balance(life) == Decimal("310.20")
++    reversed_response = life.reverse(posted)
++    assert reversed_response.status_code == 200, reversed_response.text
++    reversed_invoice = reversed_response.json()
++    assert reversed_invoice["lines"] == posted["lines"]
++    for key in ("grand_total", "total_net", "vat_amount", "posted_at", "posted_by"):
++        assert reversed_invoice[key] == posted[key]
++    assert (
++        scalar(
++            "SELECT quantity FROM inventory.stock_balance WHERE batch_id=:b", b=batch
++        )
++        == 10
++    )
++    assert balance(life) == 0
++    assert (
++        scalar(
++            "SELECT count(*) FROM finance.ar_entry WHERE invoice_id=:i",
++            i=UUID(posted["id"]),
++        )
++        == 6
++    )
++    assert (
++        scalar(
++            "SELECT count(*) FROM inventory.stock_movement WHERE source_id=:i",
++            i=UUID(posted["id"]),
++        )
++        == 4
++    )
++    audits = sql(
++        "SELECT action,old_values,new_values FROM audit.audit_log WHERE entity_id=:i ORDER BY created_at",
++        i=UUID(posted["id"]),
++    )
++    assert [row["action"] for row in audits] == ["created", "posted", "reversed"]
++    assert audits[1]["old_values"]["posting_status"] == "Draft"
++    assert audits[2]["new_values"]["posting_status"] == "Voided"
++    assert (
++        scalar(
++            "SELECT count(*) FROM audit.audit_log WHERE entity_type='payment_receipt'"
++        )
++        == 4
++    )
++    assert life.reverse(reversed_invoice).status_code == 409
++    assert (
++        life.client.post(
++            f"/invoices/{posted['id']}/post", headers=life.auth["owner"]
++        ).status_code
++        == 409
++    )
++    assert life.collect(reversed_invoice, "1").status_code == 409
++    # Posted-then-voided history is visible to an assigned auditor, not a draft.
++    for receipt in receipts:
++        assert (
++            life.client.get(
++                f"/collections/{receipt['id']}", headers=life.auth["read_only_auditor"]
++            ).status_code
++            == 200
++        )
++    assert (
++        life.client.get(
++            f"/invoices/{life.draft()['id']}", headers=life.auth["read_only_auditor"]
++        ).status_code
++        == 404
++    )
++
++
++@pytest.mark.parametrize("operation", ["post", "reverse", "collect", "void"])
++@pytest.mark.parametrize("failure", ["ar", "audit"])
++def test_late_failure_rolls_back_entire_transaction(
++    life, monkeypatch, operation, failure
++):
++    import app.sales.router as sales_router
++    from app.finance import ar, payment_router
++
++    invoice = life.draft() if operation == "post" else life.post()
++    receipt = life.collect(invoice).json() if operation == "void" else None
++    before = state(life)
++    if failure == "ar":
++        name = "record_sale" if operation == "post" else "record_entry"
++        original = getattr(ar, name)
++        target = ar
++    else:
++        name = "log_audit"
++        target = sales_router if operation in {"post", "reverse"} else payment_router
++        original = target.log_audit
++
++    def fail_after_write(*args, **kwargs):
++        original(*args, **kwargs)
++        raise RuntimeError("synthetic late transaction failure")
++
++    monkeypatch.setattr(target, name, fail_after_write)
++    if operation == "post":
++        response = life.client.post(
++            f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
++        )
++    elif operation == "reverse":
++        response = life.reverse(invoice)
++    elif operation == "collect":
++        response = life.collect(invoice)
++    else:
++        response = life.void(receipt)
++    assert response.status_code == 500
++    assert state(life) == before
++
++
++def test_later_line_insufficient_stock_undoes_earlier_deduction(life, monkeypatch):
++    from app.inventory import service
++
++    products = sorted((life.ids["product"], life.ids["product2"]), key=str)
++    invoice = life.draft(
++        lines=[
++            {"product_id": str(p), "quantity": q}
++            for p, q in zip(products, ("1", "999"), strict=True)
++        ]
++    )
++    before = state(life)
++    applied = []
++    original = service.record_movement
++
++    def record(*args, **kwargs):
++        result = original(*args, **kwargs)
++        applied.append(kwargs["product_id"])
++        return result
++
++    monkeypatch.setattr(service, "record_movement", record)
++    response = life.client.post(
++        f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
++    )
++    assert response.status_code == 409
++    assert applied == [products[0]]
++    assert state(life) == before
++
++
++@pytest.mark.parametrize("operation", ["post", "reverse", "collect", "void"])
++@pytest.mark.parametrize(
++    "role",
++    [
++        "owner",
++        "finance",
++        "sales_manager",
++        "district_manager",
++        "medical_rep",
++        "read_only_auditor",
++        "warehouse_staff",
++        "admin",
++    ],
++)
++def test_mutation_role_matrix(life, operation, role):
++    invoice = life.draft() if operation == "post" else life.post()
++    receipt = life.collect(invoice).json() if operation == "void" else None
++    before = state(life)
++    auth = life.auth[role]
++    if operation == "post":
++        response = life.client.post(f"/invoices/{invoice['id']}/post", headers=auth)
++        allowed = role in {"owner", "finance", "sales_manager", "district_manager"}
++    elif operation == "reverse":
++        response = life.client.post(
++            f"/invoices/{invoice['id']}/reverse",
++            headers=auth,
++            json={"version": invoice["version"], "reason_id": str(life.ids["reason"])},
++        )
++        allowed = role in {"owner", "finance"}
++    elif operation == "collect":
++        response = life.client.post(
++            "/collections",
++            headers=auth,
++            json={
++                "invoice_id": invoice["id"],
++                "invoice_version": invoice["version"],
++                "receipt_no": "role-test",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "1.00",
++                "method": "cash",
++            },
++        )
++        allowed = role in {"owner", "finance"}
++    else:
++        response = life.client.post(
++            f"/collections/{receipt['id']}/void",
++            headers=auth,
++            json={"version": receipt["version"], "reason_id": str(life.ids["reason"])},
++        )
++        allowed = role in {"owner", "finance"}
++    assert response.status_code in ({200, 201} if allowed else {403, 404}), (
++        response.text
++    )
++    if not allowed:
++        assert state(life) == before
++
++
++@pytest.mark.parametrize("operation", ["post", "reverse", "collect", "void"])
++@pytest.mark.parametrize("revoke", ["territory", "inactive", "owner_flag"])
++def test_permission_revocation_and_disabled_accounts(life, operation, revoke):
++    invoice = life.draft() if operation == "post" else life.post()
++    receipt = life.collect(invoice).json() if operation == "void" else None
++    role = "owner" if revoke == "owner_flag" else "finance"
++    if revoke == "territory":
++        sql("DELETE FROM platform.user_territory WHERE user_id=:u", u=life.ids[role])
++    elif revoke == "inactive":
++        sql(
++            "UPDATE platform.platform_user SET is_active=false WHERE id=:u",
++            u=life.ids[role],
++        )
++    else:
++        sql(
++            "UPDATE platform.platform_user SET is_owner=false WHERE id=:u",
++            u=life.ids[role],
++        )
++    auth = life.auth[role]
++    before = state(life)
++    if operation == "post":
++        response = life.client.post(f"/invoices/{invoice['id']}/post", headers=auth)
++    elif operation == "reverse":
++        response = life.client.post(
++            f"/invoices/{invoice['id']}/reverse",
++            json={"version": invoice["version"], "reason_id": str(life.ids["reason"])},
++            headers=auth,
++        )
++    elif operation == "collect":
++        response = life.client.post(
++            "/collections",
++            json={
++                "invoice_id": invoice["id"],
++                "invoice_version": invoice["version"],
++                "receipt_no": "forged",
++                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
++                "amount": "1",
++                "method": "cash",
++            },
++            headers=auth,
++        )
++    else:
++        response = life.client.post(
++            f"/collections/{receipt['id']}/void",
++            json={"version": receipt["version"], "reason_id": str(life.ids["reason"])},
++            headers=auth,
++        )
++    expected = {"territory": 404, "inactive": 401, "owner_flag": 403}[revoke]
++    assert response.status_code == expected, response.text
++    assert state(life) == before
++
++
++@pytest.mark.parametrize(
++    "field,value",
++    [
++        ("amount", "NaN"),
++        ("amount", "Infinity"),
++        ("amount", "-1"),
++        ("amount", "0"),
++        ("amount", "1.001"),
++        ("method", "crypto"),
++        ("receipt_no", " "),
++        ("customer_id", str(uuid4())),
++        ("branch_id", str(uuid4())),
++        ("created_by", str(uuid4())),
++        ("status", "Voided"),
++        ("invoice_version", True),
++    ],
++)
++def test_receipt_rejects_malformed_or_forged_fields(life, field, value):
++    invoice = life.post()
++    before = state(life)
++    response = life.collect(invoice, **{field: value})
++    assert response.status_code == 422, response.text
++    assert state(life) == before
++
++
++@pytest.mark.parametrize("operation", ["post", "reverse", "collect", "void"])
++def test_gate_off_blocks_every_real_mutation(life, monkeypatch, operation):
++    import app.finance.payment_router as pr
++    import app.sales.router as sr
++
++    invoice = life.draft() if operation == "post" else life.post()
++    receipt = life.collect(invoice).json() if operation == "void" else None
++    monkeypatch.setattr(sr, "POSTING_ENABLED", False)
++    monkeypatch.setattr(pr, "POSTING_ENABLED", False)
++    before = state(life)
++    if operation == "post":
++        response = life.client.post(
++            f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
++        )
++    elif operation == "reverse":
++        response = life.reverse(invoice)
++    elif operation == "collect":
++        response = life.collect(invoice)
++    else:
++        response = life.void(receipt)
++    assert response.status_code == 409
++    assert state(life) == before
++
++
++@pytest.mark.parametrize(
++    "mutation",
++    [
++        "UPDATE sales.sales_invoice_line SET quantity=99 WHERE invoice_id=:i",
++        "DELETE FROM sales.sales_invoice_line WHERE invoice_id=:i",
++        "DELETE FROM sales.sales_invoice WHERE id=:i",
++        "UPDATE inventory.stock_movement SET quantity=99 WHERE source_id=:i",
++        "DELETE FROM inventory.stock_movement WHERE source_id=:i",
++        "UPDATE finance.ar_entry SET debit=999 WHERE invoice_id=:i",
++        "DELETE FROM finance.ar_entry WHERE invoice_id=:i",
++        "UPDATE finance.payment_receipt SET amount=1 WHERE invoice_id=:i",
++        "DELETE FROM finance.payment_receipt WHERE invoice_id=:i",
++    ],
++)
++def test_raw_financial_history_is_immutable(life, mutation):
++    invoice = life.post()
++    assert life.collect(invoice).status_code == 201
++    before = state(life)
++    with pytest.raises(DBAPIError):
++        sql(mutation, i=UUID(invoice["id"]))
++    assert state(life) == before
++
++
++def race(life, monkeypatch, calls):
++    import app.finance.payment_router as pr
++    import app.sales.router as sr
++
++    barrier = Barrier(2)
++    # Surface actual server exceptions instead of hiding a failed race behind HTTP 500.
++    monkeypatch.setattr(life.client._transport, "raise_server_exceptions", True)
++    pids = set()
++    original = sr._invoice
++
++    def synchronized(db, user, invoice_id, *, lock=False):
++        if lock:
++            pids.add(db.execute(text("SELECT pg_backend_pid()")).scalar_one())
++            barrier.wait(timeout=10)
++        return original(db, user, invoice_id, lock=lock)
++
++    monkeypatch.setattr(sr, "_invoice", synchronized)
++    monkeypatch.setattr(pr, "_invoice", synchronized)
++    with ThreadPoolExecutor(max_workers=2) as pool:
++        futures = [pool.submit(call) for call in calls]
++        responses = [future.result(timeout=20) for future in futures]
++    assert len(pids) == 2, (
++        "Concurrency must use two independent PostgreSQL transactions"
++    )
++    return responses
++
++
++@pytest.mark.parametrize(
++    "operation", ["post", "reverse", "collect", "void", "stock", "reverse_collect"]
++)
++def test_concurrent_financial_operations(life, monkeypatch, operation):
++    invoice = life.draft() if operation in {"post", "stock"} else life.post()
++    if operation == "post":
++        calls = [
++            lambda: life.client.post(
++                f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
++            )
++        ] * 2
++    elif operation == "stock":
++        sql(
++            "UPDATE inventory.stock_balance SET quantity=3 WHERE product_id=:p",
++            p=life.ids["product"],
++        )
++        second = life.draft()
++        calls = [
++            lambda: life.client.post(
++                f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
++            ),
++            lambda: life.client.post(
++                f"/invoices/{second['id']}/post", headers=life.auth["owner"]
++            ),
++        ]
++    elif operation == "reverse":
++        calls = [lambda: life.reverse(invoice)] * 2
++    elif operation == "collect":
++        calls = [lambda: life.collect(invoice, "150.00")] * 2
++    elif operation == "void":
++        receipt = life.collect(invoice).json()
++        calls = [lambda: life.void(receipt)] * 2
++    else:
++        calls = [lambda: life.reverse(invoice), lambda: life.collect(invoice)]
++    responses = race(life, monkeypatch, calls)
++    codes = sorted(response.status_code for response in responses)
++    assert codes in ([200, 409], [201, 409]), [r.text for r in responses]
++    if operation in {"post", "stock"}:
++        assert (
++            scalar("SELECT count(*) FROM finance.ar_entry WHERE entry_type='invoice'")
++            == 1
++        )
++        expected_stock = Decimal(1) if operation == "stock" else Decimal(8)
++        assert (
++            scalar(
++                "SELECT quantity FROM inventory.stock_balance WHERE product_id=:p",
++                p=life.ids["product"],
++            )
++            == expected_stock
++        )
++    elif operation == "reverse":
++        assert balance(life) == 0
++        assert (
++            scalar(
++                "SELECT count(*) FROM finance.ar_entry WHERE reverses_entry_id IS NOT NULL"
++            )
++            == 1
++        )
++    elif operation == "collect":
++        assert balance(life) == Decimal("78.00")
++        assert scalar("SELECT count(*) FROM finance.payment_receipt") == 1
++    elif operation == "void":
++        assert balance(life) == Decimal("228.00")
++        assert (
++            scalar(
++                "SELECT count(*) FROM finance.ar_entry WHERE reverses_entry_id IS NOT NULL"
++            )
++            == 1
++        )
++    else:
++        status = scalar(
++            "SELECT posting_status FROM sales.sales_invoice WHERE id=:i",
++            i=UUID(invoice["id"]),
++        )
++        assert (status, balance(life)) in {
++            ("Posted", Decimal(128)),
++            ("Voided", Decimal(0)),
++        }
++
++
++def test_populated_downgrade_refuses_without_losing_history(life):
++    invoice = life.post()
++    assert life.collect(invoice).status_code == 201
++    before = state(life)
++    cfg = Config("alembic.ini")
++    cfg.set_main_option(
++        "sqlalchemy.url",
++        engine.url.render_as_string(hide_password=False).replace("%", "%%"),
++    )
++    with pytest.raises(RuntimeError, match="history must be preserved"):
++        command.downgrade(cfg, "0009_sales_source_warehouse")
++    assert state(life) == before
++    assert (
++        scalar("SELECT version_num FROM alembic_version") == "0010_invoice_collections"
++    )
++
++
++@pytest.mark.parametrize("operation", ["reverse", "collect", "void"])
++def test_stale_financial_versions_are_rejected(life, operation):
++    invoice = life.post()
++    receipt = life.collect(invoice).json() if operation == "void" else None
++    before = state(life)
++    if operation == "reverse":
++        response = life.reverse(invoice, version=invoice["version"] + 1)
++    elif operation == "collect":
++        response = life.collect(invoice, invoice_version=invoice["version"] + 1)
++    else:
++        response = life.void(receipt, version=receipt["version"] + 1)
++    assert response.status_code == 409
++    assert state(life) == before
++
++
++@pytest.mark.parametrize("operation", ["reverse", "void"])
++@pytest.mark.parametrize("invalid", ["inactive", "wrong_category", "unknown"])
++def test_reversals_require_valid_reasons(life, operation, invalid):
++    invoice = life.post()
++    receipt = life.collect(invoice).json() if operation == "void" else None
++    reason = life.ids["reason"]
++    if invalid == "inactive":
++        sql("UPDATE audit.reason_code SET is_active=false WHERE id=:i", i=reason)
++    elif invalid == "wrong_category":
++        sql("UPDATE audit.reason_code SET category='unrelated' WHERE id=:i", i=reason)
++    else:
++        reason = uuid4()
++    before = state(life)
++    response = (
++        life.reverse(invoice, reason_id=str(reason))
++        if operation == "reverse"
++        else life.void(receipt, reason_id=str(reason))
++    )
++    assert response.status_code == 422
++    assert state(life) == before
++
++
++@pytest.mark.parametrize("reference", ["customer", "warehouse", "product"])
++def test_posting_rejects_deactivated_references(life, reference):
++    invoice = life.draft()
++    table = {
++        "customer": "master_customer",
++        "warehouse": "master_warehouse",
++        "product": "master_product",
++    }[reference]
++    sql(
++        f"UPDATE master_data.{table} SET is_active=false WHERE id=:i",
++        i=life.ids[reference],
++    )
++    before = state(life)
++    response = life.client.post(
++        f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
++    )
++    assert response.status_code in {404, 409}
++    assert state(life) == before
++
++
++def test_shared_source_route_revalidated_without_expanding_inventory_scope(life):
++    sql(
++        "INSERT INTO inventory.branch_warehouse VALUES (:b,:w)",
++        b=life.ids["other_branch"],
++        w=life.ids["warehouse"],
++    )
++    invoice = life.draft(
++        branch_id=str(life.ids["other_branch"]),
++        customer_id=str(life.ids["other_customer"]),
++    )
++    sql(
++        "DELETE FROM inventory.branch_warehouse WHERE branch_id=:b",
++        b=life.ids["other_branch"],
++    )
++    before = state(life)
++    response = life.client.post(
++        f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
++    )
++    assert response.status_code == 409
++    assert state(life) == before
++    sql(
++        "INSERT INTO inventory.branch_warehouse VALUES (:b,:w)",
++        b=life.ids["other_branch"],
++        w=life.ids["warehouse"],
++    )
++    posted = life.post(invoice)
++    assert posted["branch_id"] == str(life.ids["other_branch"])
++    assert scalar(
++        "SELECT debit FROM finance.ar_entry WHERE customer_id=:c",
++        c=life.ids["other_customer"],
++    ) == Decimal(posted["grand_total"])
++    assert balance(life) == 0
++
++
++def test_managers_receipt_reads_require_branch_and_territory(life):
++    invoice = life.post()
++    receipt = life.collect(invoice).json()
++    auth = life.auth["sales_manager"]
++    response = life.client.get("/collections", headers=auth)
++    assert response.status_code == 200, response.text
++    assert [row["id"] for row in response.json()] == [receipt["id"]]
++    sql(
++        "DELETE FROM platform.user_branch WHERE user_id=:u", u=life.ids["sales_manager"]
++    )
++    assert life.client.get("/collections", headers=auth).json() == []
++    assert (
++        life.client.get(f"/collections/{receipt['id']}", headers=auth).status_code
++        == 404
++    )
++
++
++def test_posting_rejects_inconsistent_draft_snapshot(life):
++    invoice = life.draft()
++    sql(
++        "UPDATE sales.sales_invoice_line SET vat_amount=0 WHERE invoice_id=:i",
++        i=UUID(invoice["id"]),
++    )
++    before = state(life)
++    assert (
++        life.client.post(
++            f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
++        ).status_code
++        == 409
++    )
++    assert state(life) == before
+
+### FILE tests/test_invoice_reversal.py; diff SHA256 cf7175b4ad087e279cccb58a0ca6f8ef107bfa3f3f7bb27ddfaf5eafbf5e46dc
+--- a/tests/test_invoice_reversal.py
++++ b/tests/test_invoice_reversal.py
+@@ -0,0 +1,426 @@
++"""Posted invoice reversal tests: exact stock+AR compensation, append-only."""
++
++from datetime import UTC, datetime
++from decimal import Decimal
++from uuid import UUID, uuid4
++
++import pytest
++from fastapi.testclient import TestClient
++from sqlalchemy import text
++from sqlalchemy.orm import Session
++
++from app.db import engine, get_db
++from app.finance import ar
++from app.main import app
++
++
++@pytest.fixture
++def reversal_env():
++    """Fresh DB connection with a posted invoice ready for reversal."""
++    connection = engine.connect()
++    transaction = connection.begin()
++    db = Session(bind=connection, join_transaction_mode="create_savepoint")
++    ids = {
++        name: uuid4()
++        for name in (
++            "owner",
++            "finance_user",
++            "branch",
++            "territory",
++            "customer",
++            "warehouse",
++            "product",
++            "reason_void",
++            "reason_reversal",
++        )
++    }
++    for role, uid, owner in [
++        ("owner", ids["owner"], True),
++        ("finance", ids["finance_user"], False),
++    ]:
++        db.execute(
++            text(
++                "INSERT INTO platform.platform_user (id,username,password_hash,role,is_owner) "
++                "VALUES (:id,:u,'unused',:role,:owner)"
++            ),
++            {"id": uid, "u": f"rev_test_{uid.hex}", "role": role, "owner": owner},
++        )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_branch(id,code,name_ar) VALUES (:id,:code,'Test branch')"
++        ),
++        {"id": ids["branch"], "code": ids["branch"].hex[:20]},
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_territory(id,code,name_ar) VALUES (:id,:code,'Test territory')"
++        ),
++        {"id": ids["territory"], "code": ids["territory"].hex[:20]},
++    )
++    # Assign finance_user to territory for customer access
++    db.execute(
++        text(
++            "INSERT INTO platform.user_territory(user_id,territory_id) VALUES (:uid,:tid)"
++        ),
++        {"uid": ids["finance_user"], "tid": ids["territory"]},
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_customer(id,code,name_ar,branch_id,territory_id) "
++            "VALUES (:id,:code,'Test customer',:b,:t)"
++        ),
++        {
++            "id": ids["customer"],
++            "code": ids["customer"].hex[:30],
++            "b": ids["branch"],
++            "t": ids["territory"],
++        },
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_warehouse(id,branch_id,code,name_ar) "
++            "VALUES (:id,:b,:code,'Test warehouse')"
++        ),
++        {"id": ids["warehouse"], "b": ids["branch"], "code": ids["warehouse"].hex[:20]},
++    )
++    db.execute(
++        text(
++            "INSERT INTO master_data.master_product(id,sku,name_ar,base_price,vat_rate) "
++            "VALUES (:id,:sku,'Test product',114,'14.00')"
++        ),
++        {"id": ids["product"], "sku": ids["product"].hex},
++    )
++    db.execute(
++        text(
++            "INSERT INTO inventory.stock_balance(warehouse_id,product_id,quantity) VALUES (:w,:p,10)"
++        ),
++        {"w": ids["warehouse"], "p": ids["product"]},
++    )
++    # Reasons: void and reversal
++    for cat, rid in [
++        ("void", ids["reason_void"]),
++        ("reversal", ids["reason_reversal"]),
++    ]:
++        db.execute(
++            text(
++                "INSERT INTO audit.reason_code(id,code,category) VALUES (:id,:code,:cat)"
++            ),
++            {"id": rid, "code": f"REV_{cat}_{rid.hex[:10]}", "cat": cat},
++        )
++    db.commit()
++
++    def get_test_db():
++        yield db
++
++    app.dependency_overrides[get_db] = get_test_db
++    with TestClient(app) as client:
++
++        def headers(user="owner"):
++            sid = uuid4()
++            db.execute(
++                text(
++                    "INSERT INTO platform.platform_session(id,user_id,expires_at) "
++                    "VALUES (:sid,:uid,now() + interval '1 hour')"
++                ),
++                {"sid": sid, "uid": ids[user]},
++            )
++            db.commit()
++            return {"Authorization": f"Bearer {sid}"}
++
++        # Create draft then post via service to get a Posted invoice
++        payload = {
++            "invoice_no": f"R-{uuid4().hex[:20]}",
++            "branch_id": str(ids["branch"]),
++            "warehouse_id": str(ids["warehouse"]),
++            "customer_id": str(ids["customer"]),
++            "invoice_date": datetime.now(UTC).astimezone().date().isoformat(),
++            "lines": [
++                {
++                    "product_id": str(ids["product"]),
++                    "quantity": "2",
++                    "discount_pct": "0",
++                }
++            ],
++        }
++        invoice = client.post("/invoices", json=payload, headers=headers()).json()
++        # Post it (enable flag for this test)
++        import app.config as cfg
++
++        original = cfg.POSTING_ENABLED
++        import app.sales.router as invoice_router
++
++        orig_router = invoice_router.POSTING_ENABLED
++        cfg.POSTING_ENABLED = True
++        invoice_router.POSTING_ENABLED = True
++        try:
++            post_resp = client.post(
++                f"/invoices/{invoice['id']}/post", headers=headers()
++            )
++            assert post_resp.status_code == 200, post_resp.text
++            posted = post_resp.json()
++            yield client, db, ids, headers, posted
++        finally:
++            cfg.POSTING_ENABLED = original
++            invoice_router.POSTING_ENABLED = orig_router
++    app.dependency_overrides.pop(get_db, None)
++    db.close()
++    transaction.rollback()
++    connection.close()
++
++
++def _stock(db, ids):
++    return db.execute(
++        text(
++            "SELECT quantity FROM inventory.stock_balance "
++            "WHERE warehouse_id=:w AND product_id=:p AND batch_id IS NULL"
++        ),
++        {"w": ids["warehouse"], "p": ids["product"]},
++    ).scalar_one()
++
++
++def test_reverse_invoice_atomic_restores_stock_and_ar(reversal_env):
++    from app.sales.service import reverse_invoice_atomic
++
++    _client, db, ids, _headers, posted = reversal_env
++    assert posted["posting_status"] == "Posted"
++    assert posted["grand_total"] == "228.00"
++    # Before: stock 8 (10 - 2), AR balance 228
++    assert str(_stock(db, ids)) == "8.000"
++    assert ar.customer_balance(db, ids["customer"]) == Decimal("228.00")
++
++    reversed_inv = reverse_invoice_atomic(
++        db, UUID(posted["id"]), ids["owner"], ids["reason_reversal"]
++    )
++    db.commit()
++
++    assert reversed_inv["posting_status"] == "Voided"
++    assert str(reversed_inv["voided_by"]) == str(ids["owner"])
++    assert str(reversed_inv["void_reason_id"]) == str(ids["reason_reversal"])
++    assert str(_stock(db, ids)) == "10.000"  # back to original
++    # Return movement recorded
++    movement = db.execute(
++        text(
++            "SELECT movement_type, quantity FROM inventory.stock_movement "
++            "WHERE source_id=:i AND movement_type='return'"
++        ),
++        {"i": UUID(posted["id"])},
++    ).one()
++    assert movement.movement_type == "return"
++    assert str(movement.quantity) == "2.000"
++    # AR credit_note entry
++    assert ar.customer_balance(db, ids["customer"]) == Decimal("0.00")
++    entry = db.execute(
++        text(
++            "SELECT entry_type, debit, credit FROM finance.ar_entry WHERE invoice_id=:i "
++            "AND entry_type='credit_note'"
++        ),
++        {"i": UUID(posted["id"])},
++    ).one()
++    assert (entry.entry_type, str(entry.debit), str(entry.credit)) == (
++        "credit_note",
++        "0.00",
++        "228.00",
++    )
++    # Original invoice row retained
++    orig = db.execute(
++        text("SELECT grand_total, posting_status FROM sales.sales_invoice WHERE id=:i"),
++        {"i": UUID(posted["id"])},
++    ).one()
++    assert str(orig.grand_total) == "228.00"
++    assert orig.posting_status == "Voided"
++
++
++def test_reversal_requires_active_reversal_reason(reversal_env):
++    import app.config as cfg
++    import app.finance.payment_router as pr
++
++    client, db, ids, headers, posted = reversal_env
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_pr = pr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    pr.POSTING_ENABLED = True
++    try:
++        # Make reason inactive -> 422
++        db.execute(
++            text("UPDATE audit.reason_code SET is_active=false WHERE id=:id"),
++            {"id": ids["reason_reversal"]},
++        )
++        db.commit()
++        resp = client.post(
++            f"/invoices/{posted['id']}/reverse",
++            json={
++                "version": posted["version"],
++                "reason_id": str(ids["reason_reversal"]),
++            },
++            headers=headers("owner"),
++        )
++        assert resp.status_code == 422
++        assert "reason" in resp.json()["detail"].lower()
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        pr.POSTING_ENABLED = orig_pr
++
++
++def test_reversal_refused_when_active_receipts_exist(reversal_env):
++    from app.finance import payments
++    from app.sales.service import reverse_invoice_atomic
++
++    _client, db, ids, _headers, posted = reversal_env
++    # Create an Active receipt
++    payments.create_receipt(
++        db,
++        invoice_id=UUID(posted["id"]),
++        branch_id=ids["branch"],
++        customer_id=ids["customer"],
++        receipt_no="RCT-001",
++        receipt_date=datetime.now(UTC).astimezone().date(),
++        amount=Decimal("100.00"),
++        method="cash",
++        note=None,
++        actor_id=ids["owner"],
++    )
++    db.commit()
++
++    with pytest.raises(ValueError, match="Active receipts exist"):
++        reverse_invoice_atomic(
++            db, UUID(posted["id"]), ids["owner"], ids["reason_reversal"]
++        )
++
++
++def test_reverse_endpoint_owner_and_finance(reversal_env):
++    client, _db, ids, headers, posted = reversal_env
++    import app.config as cfg
++    import app.sales.router as sr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_sr = sr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    sr.POSTING_ENABLED = True
++    try:
++        # Owner: success
++        resp = client.post(
++            f"/invoices/{posted['id']}/reverse",
++            json={
++                "version": posted["version"],
++                "reason_id": str(ids["reason_reversal"]),
++            },
++            headers=headers("owner"),
++        )
++        assert resp.status_code == 200, resp.text
++        assert resp.json()["posting_status"] == "Voided"
++        assert resp.json()["void_reason_id"] == str(ids["reason_reversal"])
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        sr.POSTING_ENABLED = orig_sr
++
++    # Finance role test
++    payload = {
++        "invoice_no": f"R2-{uuid4().hex[:20]}",
++        "branch_id": str(ids["branch"]),
++        "warehouse_id": str(ids["warehouse"]),
++        "customer_id": str(ids["customer"]),
++        "invoice_date": datetime.now(UTC).astimezone().date().isoformat(),
++        "lines": [
++            {"product_id": str(ids["product"]), "quantity": "1", "discount_pct": "0"}
++        ],
++    }
++    invoice = client.post(
++        "/invoices", json=payload, headers=headers("finance_user")
++    ).json()
++    cfg.POSTING_ENABLED = True
++    sr.POSTING_ENABLED = True
++    try:
++        post_resp = client.post(
++            f"/invoices/{invoice['id']}/post", headers=headers("finance_user")
++        )
++        assert post_resp.status_code == 200
++        posted2 = post_resp.json()
++        resp = client.post(
++            f"/invoices/{posted2['id']}/reverse",
++            json={
++                "version": posted2["version"],
++                "reason_id": str(ids["reason_reversal"]),
++            },
++            headers=headers("finance_user"),
++        )
++        assert resp.status_code == 200, resp.text
++        assert resp.json()["posting_status"] == "Voided"
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        sr.POSTING_ENABLED = orig_sr
++
++
++def test_reverse_endpoint_medical_rep_denied(reversal_env):
++    client, db, ids, _headers, posted = reversal_env
++    import app.config as cfg
++    import app.sales.router as sr
++
++    orig_cfg = cfg.POSTING_ENABLED
++    orig_sr = sr.POSTING_ENABLED
++    cfg.POSTING_ENABLED = True
++    sr.POSTING_ENABLED = True
++    try:
++        rep = uuid4()
++        db.execute(
++            text(
++                "INSERT INTO platform.platform_user (id,username,password_hash,role,is_owner) "
++                "VALUES (:id,:u,'unused','medical_rep',false)"
++            ),
++            {"id": rep, "u": f"rep_{rep.hex}"},
++        )
++        db.commit()
++        sid = uuid4()
++        db.execute(
++            text(
++                "INSERT INTO platform.platform_session(id,user_id,expires_at) "
++                "VALUES (:sid,:uid,now() + interval '1 hour')"
++            ),
++            {"sid": sid, "uid": rep},
++        )
++        db.commit()
++        rep_auth = {"Authorization": f"Bearer {sid}"}
++        resp = client.post(
++            f"/invoices/{posted['id']}/reverse",
++            json={
++                "version": posted["version"],
++                "reason_id": str(ids["reason_reversal"]),
++            },
++            headers=rep_auth,
++        )
++        assert resp.status_code == 403
++    finally:
++        cfg.POSTING_ENABLED = orig_cfg
++        sr.POSTING_ENABLED = orig_sr
++
++
++def test_reversal_preserves_original_vat_and_line_snapshots(reversal_env):
++    from app.sales.service import reverse_invoice_atomic
++
++    _client, db, ids, _headers, posted = reversal_env
++    before = db.execute(
++        text(
++            "SELECT * FROM sales.sales_invoice_line WHERE invoice_id=:i ORDER BY line_no"
++        ),
++        {"i": UUID(posted["id"])},
++    ).fetchall()
++    # Repricing the master never changes the original posted tax snapshot.
++    db.execute(
++        text(
++            "UPDATE master_data.master_product SET base_price=999,vat_rate=0 WHERE id=:p"
++        ),
++        {"p": ids["product"]},
++    )
++    db.commit()
++    reversed_inv = reverse_invoice_atomic(
++        db, UUID(posted["id"]), ids["owner"], ids["reason_reversal"]
++    )
++    db.commit()
++    after = db.execute(
++        text(
++            "SELECT * FROM sales.sales_invoice_line WHERE invoice_id=:i ORDER BY line_no"
++        ),
++        {"i": UUID(posted["id"])},
++    ).fetchall()
++    assert after == before
++    assert reversed_inv["posting_status"] == "Voided"
++    assert str(reversed_inv["grand_total"]) == posted["grand_total"]
+
+### FILE tests/test_posting_flag.py; diff SHA256 cd455548993ec53ad444442e87c9b735c85cde5b2ae597c5ad4d5cef8fd8fc39
+--- a/tests/test_posting_flag.py
++++ b/tests/test_posting_flag.py
+@@ -1,91 +1,95 @@
+ """Feature-flag gate for the invoice posting endpoint.
+ 
+ The flag POSTING_ENABLED defaults to OFF. When OFF the endpoint keeps
+ returning 409 with the unchanged message; when ON it delegates to
+ app.sales.service.post_invoice_atomic.
+ """
++
+ from uuid import UUID
+-
+-import pytest
+ 
+ from app.sales import service
+ from app.sales.service import post_invoice_atomic
+ 
+ 
+ def test_flag_defaults_off(posting_env, monkeypatch):
+     """Without POSTING_ENABLED the endpoint stays 409 with the old message."""
+     monkeypatch.delenv("POSTING_ENABLED", raising=False)
+     monkeypatch.setattr("app.sales.router.POSTING_ENABLED", False)
+-    client, db, ids, auth, invoice, payload = posting_env
++    client, _db, _ids, auth, invoice, _payload = posting_env
+     response = client.post(f"/invoices/{invoice['id']}/post", headers=auth)
+     assert response.status_code == 409
+     assert "disabled" in response.json()["detail"].lower()
+     # nothing was posted
+-    assert client.get(f"/invoices/{invoice['id']}", headers=auth).json()["posting_status"] == "Draft"
++    assert (
++        client.get(f"/invoices/{invoice['id']}", headers=auth).json()["posting_status"]
++        == "Draft"
++    )
+ 
+ 
+ def test_flag_on_delegates_to_atomic(posting_env, monkeypatch):
+     """With the flag ON the endpoint delegates to post_invoice_atomic once."""
+     monkeypatch.setenv("POSTING_ENABLED", "true")
+     monkeypatch.setattr("app.sales.router.POSTING_ENABLED", True)
+-    client, db, ids, auth, invoice, payload = posting_env
++    client, _db, ids, auth, invoice, _payload = posting_env
+ 
+     calls = []
+ 
+     def fake_post_invoice_atomic(db_, invoice_id, actor_id):
+         calls.append({"db": db_, "invoice_id": invoice_id, "actor_id": actor_id})
+         # a complete InvoiceOut-shaped dict so the route's model_validate passes
+-        return {**invoice, "posting_status": "Draft", "id": str(invoice_id), "version": 1}
++        return {
++            **invoice,
++            "posting_status": "Draft",
++            "id": str(invoice_id),
++            "version": 1,
++        }
+ 
+     real = service.post_invoice_atomic
+     monkeypatch.setattr(service, "post_invoice_atomic", fake_post_invoice_atomic)
+     try:
+         response = client.post(f"/invoices/{invoice['id']}/post", headers=auth)
+     finally:
+         # the real atomic function must not have been the one invoked
+         assert service.post_invoice_atomic is fake_post_invoice_atomic
+ 
+     assert response.status_code == 200
+     body = response.json()
+     assert body["posting_status"] == "Draft"
+     assert body["id"] == invoice["id"]
+     assert body["version"] == 1
+     assert len(calls) == 1
+     assert calls[0]["invoice_id"] == UUID(invoice["id"])
+     assert calls[0]["actor_id"] == ids["owner"]
+     # the real atomic function was never called: no DB side effects
+-    assert client.get(f"/invoices/{invoice['id']}", headers=auth).json()["posting_status"] == "Draft"
++    assert (
++        client.get(f"/invoices/{invoice['id']}", headers=auth).json()["posting_status"]
++        == "Draft"
++    )
+     assert real is post_invoice_atomic  # the original is untouched
+ 
+ 
+-def test_flag_on_with_depleted_stock_returns_paper_error(posting_env, monkeypatch):
+-    """With the flag ON and depleted stock the real atomic runs and raises."""
+-    from app.inventory.service import InsufficientStock
++def test_flag_on_with_depleted_stock_returns_409(posting_env, monkeypatch):
++    """With the flag ON and depleted stock the endpoint returns 409, no exception."""
+     from sqlalchemy import text
+ 
+     monkeypatch.setenv("POSTING_ENABLED", "true")
+     monkeypatch.setattr("app.sales.router.POSTING_ENABLED", True)
+-    client, db, ids, auth, invoice, payload = posting_env
++    client, db, ids, auth, invoice, _payload = posting_env
+     # deplete stock to a single unit; the invoice line needs 2
+ 
+     db.execute(
+-        text("UPDATE inventory.stock_balance SET quantity=1 WHERE warehouse_id=:w AND product_id=:p"),
++        text(
++            "UPDATE inventory.stock_balance SET quantity=1 WHERE warehouse_id=:w AND product_id=:p"
++        ),
+         {"w": ids["warehouse"], "p": ids["product"]},
+     )
+     db.commit()
+ 
+-    reached = {"called": False}
+-
+-    real_post_invoice_atomic = service.post_invoice_atomic
+-
+-    def recording_atomic(db_, invoice_id, actor_id):
+-        reached["called"] = True
+-        return real_post_invoice_atomic(db_, invoice_id, actor_id)
+-
+-    monkeypatch.setattr(service, "post_invoice_atomic", recording_atomic)
+-
+-    with pytest.raises(InsufficientStock):
+-        response = client.post(f"/invoices/{invoice['id']}/post", headers=auth)
+-    assert reached["called"] is True
++    response = client.post(f"/invoices/{invoice['id']}/post", headers=auth)
++    assert response.status_code == 409
++    assert "stock" in response.json()["detail"].lower()
+     # nothing was posted; the transaction rolled back
+-    assert client.get(f"/invoices/{invoice['id']}", headers=auth).json()["posting_status"] == "Draft"
+\ No newline at end of file
++    assert (
++        client.get(f"/invoices/{invoice['id']}", headers=auth).json()["posting_status"]
++        == "Draft"
++    )
+
+### FILE alembic/versions/0010_invoice_collections.py; diff SHA256 f75d5f770c4344c842759d47899c4aeb6a86d3e94032da11b2dfbba85fa841d3
+--- a/alembic/versions/0010_invoice_collections.py
++++ b/alembic/versions/0010_invoice_collections.py
+@@ -0,0 +1,163 @@
++"""Invoice collections: payment receipts, reversal support, and related constraints.
++
++- finance.payment_receipt: invoice-linked receipts (one invoice per receipt,
++  partial receipts allowed). Exact positive two-decimal amount, receipt number,
++  date, cash/check/transfer method, optional note. Derives customer/branch from
++  locked Posted invoice. Server-owned status/actor/totals. Unique receipt number
++  per branch.
++- Appends exact stock + AR counter-entries on reversal/void.
++- Constraints for idempotency, overpayment rejection, terminal-row immutability.
++"""
++
++from alembic import op
++
++revision = "0010_invoice_collections"
++down_revision = "0009_sales_source_warehouse"
++branch_labels = None
++depends_on = None
++
++
++def upgrade() -> None:
++    op.execute(
++        """
++        CREATE SCHEMA IF NOT EXISTS finance;
++
++        CREATE TABLE finance.payment_receipt (
++            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
++            invoice_id uuid NOT NULL REFERENCES sales.sales_invoice(id),
++            branch_id uuid NOT NULL REFERENCES master_data.master_branch(id),
++            customer_id uuid NOT NULL REFERENCES master_data.master_customer(id),
++            receipt_no varchar(30) NOT NULL,
++            receipt_date date NOT NULL,
++            amount numeric(14,2) NOT NULL,
++            method varchar(20) NOT NULL,
++            note text,
++            status varchar(20) NOT NULL DEFAULT 'Active',
++            voided_at timestamptz,
++            voided_by uuid REFERENCES platform.platform_user(id),
++            void_reason_id uuid REFERENCES audit.reason_code(id),
++            created_by uuid NOT NULL REFERENCES platform.platform_user(id),
++            updated_by uuid REFERENCES platform.platform_user(id),
++            created_at timestamptz NOT NULL DEFAULT now(),
++            updated_at timestamptz NOT NULL DEFAULT now(),
++            version integer NOT NULL DEFAULT 1,
++            CONSTRAINT ck_receipt_amount_positive CHECK (amount > 0),
++            CONSTRAINT ck_receipt_method CHECK (method IN ('cash', 'check', 'transfer')),
++            CONSTRAINT ck_receipt_status CHECK (status IN ('Active', 'Voided')),
++            CONSTRAINT ck_receipt_void_metadata CHECK (
++                (status = 'Active' AND voided_at IS NULL AND voided_by IS NULL AND void_reason_id IS NULL)
++                OR (status = 'Voided' AND voided_at IS NOT NULL AND voided_by IS NOT NULL AND void_reason_id IS NOT NULL)),
++            CONSTRAINT ck_receipt_version CHECK (version >= 1)
++        );
++
++        CREATE UNIQUE INDEX uq_receipt_branch_no ON finance.payment_receipt(branch_id, receipt_no);
++        CREATE INDEX ix_receipt_invoice ON finance.payment_receipt(invoice_id);
++        CREATE INDEX ix_receipt_customer ON finance.payment_receipt(customer_id);
++        CREATE INDEX ix_receipt_branch ON finance.payment_receipt(branch_id);
++        ALTER TABLE sales.sales_invoice
++            ADD CONSTRAINT uq_invoice_receipt_scope UNIQUE(id, branch_id, customer_id),
++            ADD CONSTRAINT ck_invoice_posting_actor CHECK (
++                (posted_at IS NULL) = (posted_by IS NULL)
++                AND (posting_status != 'Draft' OR posted_at IS NULL));
++        ALTER TABLE finance.payment_receipt
++            ADD CONSTRAINT fk_receipt_invoice_scope FOREIGN KEY(invoice_id, branch_id, customer_id)
++                REFERENCES sales.sales_invoice(id, branch_id, customer_id),
++            ADD CONSTRAINT ck_receipt_no CHECK (length(btrim(receipt_no)) > 0),
++            ADD CONSTRAINT ck_receipt_finite CHECK (amount < 'Infinity'::numeric);
++        ALTER TABLE finance.ar_entry
++            ADD COLUMN receipt_id uuid REFERENCES finance.payment_receipt(id),
++            ADD COLUMN reverses_entry_id uuid UNIQUE REFERENCES finance.ar_entry(id);
++        CREATE UNIQUE INDEX uq_ar_invoice_sale ON finance.ar_entry(invoice_id) WHERE entry_type='invoice';
++        CREATE UNIQUE INDEX uq_ar_receipt_type ON finance.ar_entry(receipt_id,entry_type) WHERE receipt_id IS NOT NULL;
++        ALTER TABLE inventory.stock_movement
++            ADD COLUMN invoice_line_id uuid REFERENCES sales.sales_invoice_line(id),
++            ADD COLUMN reverses_movement_id uuid UNIQUE REFERENCES inventory.stock_movement(id);
++        CREATE UNIQUE INDEX uq_stock_invoice_line_sale ON inventory.stock_movement(invoice_line_id)
++            WHERE movement_type='sale' AND invoice_line_id IS NOT NULL;
++
++        CREATE FUNCTION sales.guard_terminal_invoice() RETURNS trigger LANGUAGE plpgsql AS $$
++        BEGIN
++            IF OLD.posting_status != 'Draft' THEN
++                IF TG_OP='DELETE' THEN RAISE EXCEPTION 'Terminal invoice history is immutable'; END IF;
++                IF NOT (OLD.posting_status='Posted' AND NEW.posting_status='Voided'
++                    AND NEW.version=OLD.version+1
++                    AND (to_jsonb(NEW)-ARRAY['posting_status','version','voided_at','voided_by','void_reason_id','updated_at','updated_by'])
++                      = (to_jsonb(OLD)-ARRAY['posting_status','version','voided_at','voided_by','void_reason_id','updated_at','updated_by'])) THEN
++                    RAISE EXCEPTION 'Terminal invoice history is immutable';
++                END IF;
++            END IF;
++            IF TG_OP='DELETE' THEN RETURN OLD; END IF;
++            RETURN NEW;
++        END $$;
++        CREATE TRIGGER guard_terminal_invoice BEFORE UPDATE OR DELETE ON sales.sales_invoice
++            FOR EACH ROW EXECUTE FUNCTION sales.guard_terminal_invoice();
++        CREATE FUNCTION sales.guard_terminal_line() RETURNS trigger LANGUAGE plpgsql AS $$
++        DECLARE target uuid; status text;
++        BEGIN
++            IF TG_OP='INSERT' THEN target:=NEW.invoice_id; ELSE target:=OLD.invoice_id; END IF;
++            SELECT posting_status INTO status FROM sales.sales_invoice WHERE id=target FOR UPDATE;
++            IF status IS DISTINCT FROM 'Draft' THEN RAISE EXCEPTION 'Terminal invoice lines are immutable'; END IF;
++            IF TG_OP='UPDATE' AND NEW.invoice_id != OLD.invoice_id THEN RAISE EXCEPTION 'Invoice lines cannot be reparented'; END IF;
++            IF TG_OP='DELETE' THEN RETURN OLD; END IF;
++            RETURN NEW;
++        END $$;
++        CREATE TRIGGER guard_terminal_line BEFORE INSERT OR UPDATE OR DELETE ON sales.sales_invoice_line
++            FOR EACH ROW EXECUTE FUNCTION sales.guard_terminal_line();
++        CREATE FUNCTION finance.guard_append_only() RETURNS trigger LANGUAGE plpgsql AS $$
++        BEGIN RAISE EXCEPTION 'Financial and stock ledgers are append-only'; END $$;
++        CREATE TRIGGER guard_ar_history BEFORE UPDATE OR DELETE ON finance.ar_entry
++            FOR EACH ROW EXECUTE FUNCTION finance.guard_append_only();
++        CREATE TRIGGER guard_stock_history BEFORE UPDATE OR DELETE ON inventory.stock_movement
++            FOR EACH ROW EXECUTE FUNCTION finance.guard_append_only();
++        CREATE FUNCTION finance.guard_receipt_history() RETURNS trigger LANGUAGE plpgsql AS $$
++        BEGIN
++            IF TG_OP='DELETE' THEN RAISE EXCEPTION 'Receipt history is immutable'; END IF;
++            IF NOT (OLD.status='Active' AND NEW.status='Voided' AND NEW.version=OLD.version+1
++                AND (to_jsonb(NEW)-ARRAY['status','version','voided_at','voided_by','void_reason_id','updated_at','updated_by'])
++                  = (to_jsonb(OLD)-ARRAY['status','version','voided_at','voided_by','void_reason_id','updated_at','updated_by'])) THEN
++                RAISE EXCEPTION 'Receipt history is immutable';
++            END IF;
++            RETURN NEW;
++        END $$;
++        CREATE TRIGGER guard_receipt_history BEFORE UPDATE OR DELETE ON finance.payment_receipt
++            FOR EACH ROW EXECUTE FUNCTION finance.guard_receipt_history();
++        """
++    )
++
++
++def downgrade() -> None:
++    from sqlalchemy import text
++
++    used = (
++        op.get_bind()
++        .execute(
++            text("""
++        SELECT EXISTS(SELECT 1 FROM finance.payment_receipt)
++            OR EXISTS(SELECT 1 FROM finance.ar_entry WHERE receipt_id IS NOT NULL OR reverses_entry_id IS NOT NULL)
++            OR EXISTS(SELECT 1 FROM inventory.stock_movement WHERE invoice_line_id IS NOT NULL OR reverses_movement_id IS NOT NULL)
++    """)
++        )
++        .scalar_one()
++    )
++    if used:
++        raise RuntimeError(
++            "Cannot downgrade: invoice/collection history must be preserved"
++        )
++    op.execute("""
++        DROP TRIGGER guard_receipt_history ON finance.payment_receipt;
++        DROP FUNCTION finance.guard_receipt_history();
++        DROP TRIGGER guard_stock_history ON inventory.stock_movement;
++        DROP TRIGGER guard_ar_history ON finance.ar_entry;
++        DROP FUNCTION finance.guard_append_only();
++        DROP TRIGGER guard_terminal_line ON sales.sales_invoice_line;
++        DROP FUNCTION sales.guard_terminal_line();
++        DROP TRIGGER guard_terminal_invoice ON sales.sales_invoice;
++        DROP FUNCTION sales.guard_terminal_invoice();
++        DROP INDEX inventory.uq_stock_invoice_line_sale;
++        ALTER TABLE inventory.stock_movement DROP COLUMN reverses_movement_id, DROP COLUMN invoice_line_id;
++        DROP INDEX finance.uq_ar_receipt_type;
++        DROP INDEX finance.uq_ar_invoice_sale;
++        ALTER TABLE finance.ar_entry DROP COLUMN reverses_entry_id, DROP COLUMN receipt_id;
++        DROP TABLE finance.payment_receipt;
++        ALTER TABLE sales.sales_invoice DROP CONSTRAINT uq_invoice_receipt_scope, DROP CONSTRAINT ck_invoice_posting_actor;
++    """)
+
+### FILE scripts/verify_invoice_cycle.py; diff SHA256 1822b5d3a9f4868ea9e7c2d21ea8bf0aa45e311cf154ad321e2fd8c554e7057f
+--- a/scripts/verify_invoice_cycle.py
++++ b/scripts/verify_invoice_cycle.py
+@@ -0,0 +1,226 @@
++"""Run invoice-cycle tests only on a fresh synthetic PostgreSQL database."""
++
++import argparse
++import hashlib
++import importlib.metadata
++import json
++import os
++import re
++import subprocess
++import sys
++import xml.etree.ElementTree as ET
++from pathlib import Path
++from uuid import uuid4
++
++from alembic.config import Config
++from sqlalchemy import create_engine, text
++
++from alembic import command
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++from app.db import DATABASE_URL
++
++
++def bindings():
++    paths = {
++        p
++        for folder in ("app", "tests", "alembic", "web", "scripts")
++        for p in (ROOT / folder).rglob("*")
++        if p.is_file() and "__pycache__" not in p.parts
++    }
++    paths.update(
++        p
++        for pattern in (
++            "*.xlsx",
++            ".env*",
++            "*compose*.yml",
++            "Dockerfile",
++            "requirements.txt",
++        )
++        for p in ROOT.glob(pattern)
++        if p.is_file()
++    )
++    result = {}
++    for path in sorted(paths):
++        with path.open("rb") as source:
++            result[path.relative_to(ROOT).as_posix()] = hashlib.file_digest(
++                source, "sha256"
++            ).hexdigest()
++    return result
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--stage", required=True)
++    parser.add_argument("--chain", action="store_true")
++    parser.add_argument("tests", nargs=argparse.REMAINDER)
++    args = parser.parse_args()
++    if not re.fullmatch(r"[a-zA-Z0-9_-]+", args.stage):
++        parser.error("stage must be a simple artifact name")
++    out = ROOT / "docs/evidence/invoice-cycle" / args.stage
++    out.mkdir(parents=True, exist_ok=False)
++    selectors = args.tests or ["tests/", "-q", "--tb=short"]
++    if selectors[0] == "--":
++        selectors = selectors[1:]
++    base = create_engine(DATABASE_URL).url
++    assert base.host in {"localhost", "127.0.0.1", "::1"}, (
++        "Only local disposable tests are permitted"
++    )
++    # Never migrate/connect to the application database: admin is metadata/CREATE/DROP only.
++    name = "dms_cycle_test_" + uuid4().hex
++    assert re.fullmatch(r"dms_cycle_test_[0-9a-f]{32}", name) and name != base.database
++    target = base.set(database=name)
++    admin = create_engine(base.set(database="postgres"), isolation_level="AUTOCOMMIT")
++    engine = create_engine(target)
++    record = {
++        "database": name,
++        "created": False,
++        "removed": False,
++        "configuration": {"APP_ENV": "test", "POSTING_ENABLED": "false"},
++        "before": bindings(),
++        "steps": [],
++        "versions": {
++            p: importlib.metadata.version(p)
++            for p in ("fastapi", "sqlalchemy", "psycopg", "alembic", "pytest")
++        },
++    }
++    code = 1
++    try:
++        with admin.connect() as db:
++            db.exec_driver_sql(f'CREATE DATABASE "{name}"')
++            record["created"] = True
++            record["postgresql_version"] = db.exec_driver_sql(
++                "SHOW server_version"
++            ).scalar_one()
++        cfg = Config(str(ROOT / "alembic.ini"))
++        cfg.set_main_option(
++            "sqlalchemy.url",
++            target.render_as_string(hide_password=False).replace("%", "%%"),
++        )
++        command.upgrade(cfg, "head")
++        with engine.connect() as db:
++            assert db.exec_driver_sql("SELECT current_database()").scalar_one() == name
++            revision = db.exec_driver_sql(
++                "SELECT version_num FROM alembic_version"
++            ).scalar_one()
++        record["steps"].append({"action": "fresh-upgrade", "revision": revision})
++        if args.chain:
++            command.downgrade(cfg, "-1")
++            command.upgrade(cfg, "head")
++            with engine.connect() as db:
++                assert (
++                    db.exec_driver_sql(
++                        "SELECT version_num FROM alembic_version"
++                    ).scalar_one()
++                    == revision
++                )
++            record["steps"].append({"action": "down-one-up-head", "revision": revision})
++        env = {
++            **os.environ,
++            "DATABASE_URL": target.render_as_string(hide_password=False),
++            "APP_ENV": "test",
++            "POSTING_ENABLED": "false",
++            "PYTHONIOENCODING": "utf-8",
++        }
++        argv = [
++            sys.executable,
++            "-m",
++            "pytest",
++            *selectors,
++            "--junitxml=" + str(out / "pytest.xml"),
++        ]
++        record.update(argv=argv, cwd=str(ROOT))
++        result = subprocess.run(
++            argv,
++            cwd=ROOT,
++            env=env,
++            stdout=subprocess.PIPE,
++            stderr=subprocess.STDOUT,
++            check=False,
++        )
++        (out / "pytest.log").write_bytes(result.stdout)
++        print(result.stdout.decode("utf-8", errors="replace"))
++        record["exit_code"] = result.returncode
++        code = result.returncode
++        if (out / "pytest.xml").exists():
++            # This XML is generated locally by the just-executed trusted pytest process.
++            cases = ET.parse(out / "pytest.xml").findall(".//testcase")
++            record["cases"] = [
++                {
++                    "id": c.get("classname", "") + "::" + c.get("name", ""),
++                    "status": "failed"
++                    if c.find("failure") is not None
++                    else "error"
++                    if c.find("error") is not None
++                    else "skipped"
++                    if c.find("skipped") is not None
++                    else "passed",
++                }
++                for c in cases
++            ]
++            record["counts"] = {
++                s: sum(c["status"] == s for c in record["cases"])
++                for s in ("passed", "failed", "error", "skipped")
++            }
++        record["after"] = bindings()
++        record["unchanged"] = record["before"] == record["after"]
++        assert record["unchanged"], "Test execution changed source/config/workbooks"
++        # A clean child process must still resolve the production-default flag to OFF.
++        clean_env = env.copy()
++        clean_env.pop("POSTING_ENABLED", None)
++        check = subprocess.run(
++            [
++                sys.executable,
++                "-c",
++                "from app.config import POSTING_ENABLED; assert POSTING_ENABLED is False; print('default OFF')",
++            ],
++            cwd=ROOT,
++            env=clean_env,
++            capture_output=True,
++            check=False,
++        )
++        record["default_off_exit"] = check.returncode
++        assert check.returncode == 0, "Default feature gate no longer OFF"
++    except Exception as error:
++        record["error"] = type(error).__name__
++        code = 1
++        raise
++    finally:
++        engine.dispose()
++        if record["created"]:
++            with admin.connect() as db:
++                db.exec_driver_sql(f'DROP DATABASE "{name}" WITH (FORCE)')
++                record["removed"] = not bool(
++                    db.execute(
++                        text("SELECT 1 FROM pg_database WHERE datname=:n"), {"n": name}
++                    ).scalar()
++                )
++        admin.dispose()
++        record["artifacts"] = {
++            p.name: hashlib.sha256(p.read_bytes()).hexdigest()
++            for p in out.iterdir()
++            if p.is_file()
++        }
++        (out / "run.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
++        print(
++            json.dumps(
++                {
++                    k: record.get(k)
++                    for k in (
++                        "database",
++                        "exit_code",
++                        "counts",
++                        "unchanged",
++                        "removed",
++                        "default_off_exit",
++                    )
++                }
++            )
++        )
++        assert record["removed"], "Disposable database cleanup failed"
++    return code
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())

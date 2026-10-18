@@ -1,0 +1,46 @@
+EEEEEE                                                                   [100%]
+=================================== ERRORS ====================================
+_____ ERROR at setup of test_reverse_invoice_atomic_restores_stock_and_ar _____
+tests\test_invoice_reversal.py:20: in reversal_env
+    connection = engine.connect()
+                 ^^^^^^
+E   NameError: name 'engine' is not defined
+____ ERROR at setup of test_reversal_requires_active_void_reversal_reason _____
+tests\test_invoice_reversal.py:20: in reversal_env
+    connection = engine.connect()
+                 ^^^^^^
+E   NameError: name 'engine' is not defined
+_____ ERROR at setup of test_reversal_refused_when_active_receipts_exist ______
+tests\test_invoice_reversal.py:20: in reversal_env
+    connection = engine.connect()
+                 ^^^^^^
+E   NameError: name 'engine' is not defined
+_________ ERROR at setup of test_reverse_endpoint_owner_finance_only __________
+tests\test_invoice_reversal.py:20: in reversal_env
+    connection = engine.connect()
+                 ^^^^^^
+E   NameError: name 'engine' is not defined
+_________ ERROR at setup of test_reverse_endpoint_medical_rep_denied __________
+tests\test_invoice_reversal.py:20: in reversal_env
+    connection = engine.connect()
+                 ^^^^^^
+E   NameError: name 'engine' is not defined
+__ ERROR at setup of test_reversal_preserves_original_vat_and_line_snapshots __
+tests\test_invoice_reversal.py:20: in reversal_env
+    connection = engine.connect()
+                 ^^^^^^
+E   NameError: name 'engine' is not defined
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+ERROR tests/test_invoice_reversal.py::test_reverse_invoice_atomic_restores_stock_and_ar
+ERROR tests/test_invoice_reversal.py::test_reversal_requires_active_void_reversal_reason
+ERROR tests/test_invoice_reversal.py::test_reversal_refused_when_active_receipts_exist
+ERROR tests/test_invoice_reversal.py::test_reverse_endpoint_owner_finance_only
+ERROR tests/test_invoice_reversal.py::test_reverse_endpoint_medical_rep_denied
+ERROR tests/test_invoice_reversal.py::test_reversal_preserves_original_vat_and_line_snapshots
+1 warning, 6 errors in 0.40s

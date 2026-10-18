@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="9" skipped="0" tests="11" time="1.158" timestamp="2026-10-17T20:23:36.123374+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_collections" name="test_create_receipt_partial_payment" time="0.135"><failure message="AssertionError: {&quot;detail&quot;:&quot;Invoice or reference not found&quot;}&#10;assert 404 == 201&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\test_collections.py:128: in test_create_receipt_partial_payment
+    assert resp.status_code == 201, resp.text
+E   AssertionError: {"detail":"Invoice or reference not found"}
+E   assert 404 == 201
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.test_collections" name="test_create_receipt_final_payment" time="0.061"><failure message="AssertionError: {&quot;detail&quot;:&quot;Invoice or reference not found&quot;}&#10;assert 404 == 201&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\test_collections.py:161: in test_create_receipt_final_payment
+    assert resp.status_code == 201, resp.text
+E   AssertionError: {"detail":"Invoice or reference not found"}
+E   assert 404 == 201
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.test_collections" name="test_overpayment_rejected" time="0.064"><failure message="AssertionError: {&quot;detail&quot;:&quot;Invoice or reference not found&quot;}&#10;assert 404 == 409&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\test_collections.py:186: in test_overpayment_rejected
+    assert resp.status_code == 409, resp.text
+E   AssertionError: {"detail":"Invoice or reference not found"}
+E   assert 404 == 409
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.test_collections" name="test_partial_then_final_sum_rejects_overpayment" time="0.073"><failure message="assert 404 == 409&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\test_collections.py:217: in test_partial_then_final_sum_rejects_overpayment
+    assert resp.status_code == 409
+E   assert 404 == 409
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.test_collections" name="test_receipt_number_unique_per_branch" time="0.068"><failure message="assert 404 == 201&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\test_collections.py:240: in test_receipt_number_unique_per_branch
+    assert resp.status_code == 201
+E   assert 404 == 201
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.test_collections" name="test_receipt_requires_posted_invoice" time="0.072"><failure message="assert 404 == 409&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\test_collections.py:276: in test_receipt_requires_posted_invoice
+    assert resp.status_code == 409
+E   assert 404 == 409
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.test_collections" name="test_void_receipt_appends_ar_adjustment" time="0.060"><failure message="assert 404 == 201&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">tests\test_collections.py:298: in test_void_receipt_appends_ar_adjustment
+    assert create.status_code == 201
+E   assert 404 == 201
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="tests.test_collections" name="test_duplicate_void_receipt_returns_409" time="0.063"><failure message="KeyError: 'id'">tests\test_collections.py:337: in test_duplicate_void_receipt_returns_409
+    client.post(f"/collections/{receipt['id']}/void", json={
+                                ^^^^^^^^^^^^^
+E   KeyError: 'id'</failure></testcase><testcase classname="tests.test_collections" name="test_list_receipts_scoped" time="0.078"><failure message="assert 0 == 2&#10; +  where 0 = len([])">tests\test_collections.py:375: in test_list_receipts_scoped
+    assert len(receipts) == 2
+E   assert 0 == 2
+E    +  where 0 = len([])</failure></testcase><testcase classname="tests.test_collections" name="test_invalid_amount_rejected" time="0.078" /><testcase classname="tests.test_collections" name="test_invalid_method_rejected" time="0.054" /></testsuite></testsuites>

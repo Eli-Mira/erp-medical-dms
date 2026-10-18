@@ -1,0 +1,67 @@
+FFFFFFFFF..                                                              [100%]
+================================== FAILURES ===================================
+_____________________ test_create_receipt_partial_payment _____________________
+tests\test_collections.py:128: in test_create_receipt_partial_payment
+    assert resp.status_code == 201, resp.text
+E   AssertionError: {"detail":"Invoice or reference not found"}
+E   assert 404 == 201
+E    +  where 404 = <Response [404 Not Found]>.status_code
+______________________ test_create_receipt_final_payment ______________________
+tests\test_collections.py:161: in test_create_receipt_final_payment
+    assert resp.status_code == 201, resp.text
+E   AssertionError: {"detail":"Invoice or reference not found"}
+E   assert 404 == 201
+E    +  where 404 = <Response [404 Not Found]>.status_code
+__________________________ test_overpayment_rejected __________________________
+tests\test_collections.py:186: in test_overpayment_rejected
+    assert resp.status_code == 409, resp.text
+E   AssertionError: {"detail":"Invoice or reference not found"}
+E   assert 404 == 409
+E    +  where 404 = <Response [404 Not Found]>.status_code
+_______________ test_partial_then_final_sum_rejects_overpayment _______________
+tests\test_collections.py:217: in test_partial_then_final_sum_rejects_overpayment
+    assert resp.status_code == 409
+E   assert 404 == 409
+E    +  where 404 = <Response [404 Not Found]>.status_code
+____________________ test_receipt_number_unique_per_branch ____________________
+tests\test_collections.py:240: in test_receipt_number_unique_per_branch
+    assert resp.status_code == 201
+E   assert 404 == 201
+E    +  where 404 = <Response [404 Not Found]>.status_code
+____________________ test_receipt_requires_posted_invoice _____________________
+tests\test_collections.py:276: in test_receipt_requires_posted_invoice
+    assert resp.status_code == 409
+E   assert 404 == 409
+E    +  where 404 = <Response [404 Not Found]>.status_code
+___________________ test_void_receipt_appends_ar_adjustment ___________________
+tests\test_collections.py:298: in test_void_receipt_appends_ar_adjustment
+    assert create.status_code == 201
+E   assert 404 == 201
+E    +  where 404 = <Response [404 Not Found]>.status_code
+___________________ test_duplicate_void_receipt_returns_409 ___________________
+tests\test_collections.py:337: in test_duplicate_void_receipt_returns_409
+    client.post(f"/collections/{receipt['id']}/void", json={
+                                ^^^^^^^^^^^^^
+E   KeyError: 'id'
+__________________________ test_list_receipts_scoped __________________________
+tests\test_collections.py:375: in test_list_receipts_scoped
+    assert len(receipts) == 2
+E   assert 0 == 2
+E    +  where 0 = len([])
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_collections.py::test_create_receipt_partial_payment - Asser...
+FAILED tests/test_collections.py::test_create_receipt_final_payment - Asserti...
+FAILED tests/test_collections.py::test_overpayment_rejected - AssertionError:...
+FAILED tests/test_collections.py::test_partial_then_final_sum_rejects_overpayment
+FAILED tests/test_collections.py::test_receipt_number_unique_per_branch - ass...
+FAILED tests/test_collections.py::test_receipt_requires_posted_invoice - asse...
+FAILED tests/test_collections.py::test_void_receipt_appends_ar_adjustment - a...
+FAILED tests/test_collections.py::test_duplicate_void_receipt_returns_409 - K...
+FAILED tests/test_collections.py::test_list_receipts_scoped - assert 0 == 2
+9 failed, 2 passed, 1 warning in 1.17s

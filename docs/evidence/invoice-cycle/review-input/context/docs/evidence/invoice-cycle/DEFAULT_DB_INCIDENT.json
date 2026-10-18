@@ -1,0 +1,10 @@
+{
+  "assessment": "read-only; no repair attempted",
+  "database": "medical_dms",
+  "read_only": "on",
+  "revision": "0010_invoice_collections",
+  "receipt_table": "finance.payment_receipt",
+  "ar_columns": [],
+  "terminal_guard": 0,
+  "receipt_rows": 0
+}

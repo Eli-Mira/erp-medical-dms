@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="3" failures="0" skipped="0" tests="3" time="1.172" timestamp="2026-10-17T20:32:12.252183+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_invoice_cycle" name="test_full_cycle_invoice_post_collect_void_reverse" time="0.050"><error message="failed on setup with &quot;sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table &quot;user_territory&quot; violates foreign key constraint &quot;user_territory_territory_id_fkey&quot;&#10;DETAIL:  Key (territory_id)=(06ba6517-f01f-4c3e-aff6-9f1a72d984e6) is not present in table &quot;master_territory&quot;.&#10;[SQL: INSERT INTO platform.user_territory(user_id,territory_id) VALUES (%(uid)s,%(tid)s)]&#10;[parameters: {'uid': UUID('b84d9ff3-5928-4d63-b7a3-854b884e7f17'), 'tid': UUID('06ba6517-f01f-4c3e-aff6-9f1a72d984e6')}]&#10;(Background on this error at: https://sqlalche.me/e/20/gkpj)&quot;">C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.ForeignKeyViolation: insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(06ba6517-f01f-4c3e-aff6-9f1a72d984e6) is not present in table "master_territory".
+
+The above exception was the direct cause of the following exception:
+tests\test_invoice_cycle.py:40: in cycle_env
+    db.execute(text(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(06ba6517-f01f-4c3e-aff6-9f1a72d984e6) is not present in table "master_territory".
+E   [SQL: INSERT INTO platform.user_territory(user_id,territory_id) VALUES (%(uid)s,%(tid)s)]
+E   [parameters: {'uid': UUID('b84d9ff3-5928-4d63-b7a3-854b884e7f17'), 'tid': UUID('06ba6517-f01f-4c3e-aff6-9f1a72d984e6')}]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)</error></testcase><testcase classname="tests.test_invoice_cycle" name="test_concurrent_collection_rejects_overpayment" time="0.023"><error message="failed on setup with &quot;sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table &quot;user_territory&quot; violates foreign key constraint &quot;user_territory_territory_id_fkey&quot;&#10;DETAIL:  Key (territory_id)=(fdbbb908-5199-4eed-ac77-732ad731c509) is not present in table &quot;master_territory&quot;.&#10;[SQL: INSERT INTO platform.user_territory(user_id,territory_id) VALUES (%(uid)s,%(tid)s)]&#10;[parameters: {'uid': UUID('7cf24607-79ae-492c-a738-55ae813e14db'), 'tid': UUID('fdbbb908-5199-4eed-ac77-732ad731c509')}]&#10;(Background on this error at: https://sqlalche.me/e/20/gkpj)&quot;">C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.ForeignKeyViolation: insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(fdbbb908-5199-4eed-ac77-732ad731c509) is not present in table "master_territory".
+
+The above exception was the direct cause of the following exception:
+tests\test_invoice_cycle.py:40: in cycle_env
+    db.execute(text(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(fdbbb908-5199-4eed-ac77-732ad731c509) is not present in table "master_territory".
+E   [SQL: INSERT INTO platform.user_territory(user_id,territory_id) VALUES (%(uid)s,%(tid)s)]
+E   [parameters: {'uid': UUID('7cf24607-79ae-492c-a738-55ae813e14db'), 'tid': UUID('fdbbb908-5199-4eed-ac77-732ad731c509')}]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)</error></testcase><testcase classname="tests.test_invoice_cycle" name="test_flag_off_blocks_all_mutations" time="0.004"><error message="failed on setup with &quot;sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table &quot;user_territory&quot; violates foreign key constraint &quot;user_territory_territory_id_fkey&quot;&#10;DETAIL:  Key (territory_id)=(1a33e00b-1278-451c-8b46-17c56b6c1b3d) is not present in table &quot;master_territory&quot;.&#10;[SQL: INSERT INTO platform.user_territory(user_id,territory_id) VALUES (%(uid)s,%(tid)s)]&#10;[parameters: {'uid': UUID('2670f5aa-97c9-4c81-bd31-454bc4658539'), 'tid': UUID('1a33e00b-1278-451c-8b46-17c56b6c1b3d')}]&#10;(Background on this error at: https://sqlalche.me/e/20/gkpj)&quot;">C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.ForeignKeyViolation: insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(1a33e00b-1278-451c-8b46-17c56b6c1b3d) is not present in table "master_territory".
+
+The above exception was the direct cause of the following exception:
+tests\test_invoice_cycle.py:40: in cycle_env
+    db.execute(text(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table "user_territory" violates foreign key constraint "user_territory_territory_id_fkey"
+E   DETAIL:  Key (territory_id)=(1a33e00b-1278-451c-8b46-17c56b6c1b3d) is not present in table "master_territory".
+E   [SQL: INSERT INTO platform.user_territory(user_id,territory_id) VALUES (%(uid)s,%(tid)s)]
+E   [parameters: {'uid': UUID('2670f5aa-97c9-4c81-bd31-454bc4658539'), 'tid': UUID('1a33e00b-1278-451c-8b46-17c56b6c1b3d')}]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)</error></testcase></testsuite></testsuites>

@@ -1,0 +1,4779 @@
+{
+  "exit_code": 1,
+  "counts": 145,
+  "baseline_count": 169,
+  "new_findings": 0,
+  "diagnostics": [
+    {
+      "cell": null,
+      "code": "B008",
+      "end_location": {
+        "column": 49,
+        "row": 23
+      },
+      "filename": "app/auth/rbac.py",
+      "fix": null,
+      "location": {
+        "column": 24,
+        "row": 23
+      },
+      "message": "Do not perform function call `Depends` in argument defaults; instead, perform the call within the function, or read the default from a module-level singleton variable",
+      "name": "function-call-in-default-argument",
+      "noqa_row": 23,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/function-call-in-default-argument"
+    },
+    {
+      "cell": null,
+      "code": "B008",
+      "end_location": {
+        "column": 52,
+        "row": 31
+      },
+      "filename": "app/auth/rbac.py",
+      "fix": null,
+      "location": {
+        "column": 27,
+        "row": 31
+      },
+      "message": "Do not perform function call `Depends` in argument defaults; instead, perform the call within the function, or read the default from a module-level singleton variable",
+      "name": "function-call-in-default-argument",
+      "noqa_row": 31,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/function-call-in-default-argument"
+    },
+    {
+      "cell": null,
+      "code": "B008",
+      "end_location": {
+        "column": 47,
+        "row": 39
+      },
+      "filename": "app/auth/rbac.py",
+      "fix": null,
+      "location": {
+        "column": 25,
+        "row": 39
+      },
+      "message": "Do not perform function call `Depends` in argument defaults; instead, perform the call within the function, or read the default from a module-level singleton variable",
+      "name": "function-call-in-default-argument",
+      "noqa_row": 39,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/function-call-in-default-argument"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 30,
+        "row": 12
+      },
+      "filename": "app/auth/repo.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "import datetime\nimport uuid\n\nfrom sqlalchemy import text\n\nfrom ..db import SessionLocal\nfrom .security import hash_password  # re-exported for convenience\n\n",
+            "end_location": {
+              "column": 1,
+              "row": 14
+            },
+            "location": {
+              "column": 1,
+              "row": 6
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 1,
+        "row": 6
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 6,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "F401",
+      "end_location": {
+        "column": 12,
+        "row": 7
+      },
+      "filename": "app/auth/repo.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "",
+            "end_location": {
+              "column": 1,
+              "row": 8
+            },
+            "location": {
+              "column": 1,
+              "row": 7
+            }
+          }
+        ],
+        "message": "Remove unused import: `uuid`"
+      },
+      "location": {
+        "column": 8,
+        "row": 7
+      },
+      "message": "`uuid` imported but unused",
+      "name": "unused-import",
+      "noqa_row": 7,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-import"
+    },
+    {
+      "cell": null,
+      "code": "F401",
+      "end_location": {
+        "column": 30,
+        "row": 12
+      },
+      "filename": "app/auth/repo.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "",
+            "end_location": {
+              "column": 1,
+              "row": 13
+            },
+            "location": {
+              "column": 1,
+              "row": 12
+            }
+          }
+        ],
+        "message": "Remove unused import: `..db.SessionLocal`"
+      },
+      "location": {
+        "column": 18,
+        "row": 12
+      },
+      "message": "`..db.SessionLocal` imported but unused",
+      "name": "unused-import",
+      "noqa_row": 12,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-import"
+    },
+    {
+      "cell": null,
+      "code": "BLE001",
+      "end_location": {
+        "column": 21,
+        "row": 40
+      },
+      "filename": "app/auth/router.py",
+      "fix": null,
+      "location": {
+        "column": 12,
+        "row": 40
+      },
+      "message": "Do not catch blind exception: `Exception`",
+      "name": "blind-except",
+      "noqa_row": 40,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/blind-except"
+    },
+    {
+      "cell": null,
+      "code": "B008",
+      "end_location": {
+        "column": 65,
+        "row": 46
+      },
+      "filename": "app/auth/router.py",
+      "fix": null,
+      "location": {
+        "column": 43,
+        "row": 46
+      },
+      "message": "Do not perform function call `Depends` in argument defaults; instead, perform the call within the function, or read the default from a module-level singleton variable",
+      "name": "function-call-in-default-argument",
+      "noqa_row": 46,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/function-call-in-default-argument"
+    },
+    {
+      "cell": null,
+      "code": "B008",
+      "end_location": {
+        "column": 23,
+        "row": 47
+      },
+      "filename": "app/auth/router.py",
+      "fix": null,
+      "location": {
+        "column": 8,
+        "row": 47
+      },
+      "message": "Do not perform function call `Depends` in argument defaults; instead, perform the call within the function, or read the default from a module-level singleton variable",
+      "name": "function-call-in-default-argument",
+      "noqa_row": 47,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/function-call-in-default-argument"
+    },
+    {
+      "cell": null,
+      "code": "B008",
+      "end_location": {
+        "column": 65,
+        "row": 62
+      },
+      "filename": "app/auth/router.py",
+      "fix": null,
+      "location": {
+        "column": 50,
+        "row": 62
+      },
+      "message": "Do not perform function call `Depends` in argument defaults; instead, perform the call within the function, or read the default from a module-level singleton variable",
+      "name": "function-call-in-default-argument",
+      "noqa_row": 62,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/function-call-in-default-argument"
+    },
+    {
+      "cell": null,
+      "code": "B008",
+      "end_location": {
+        "column": 65,
+        "row": 85
+      },
+      "filename": "app/auth/router.py",
+      "fix": null,
+      "location": {
+        "column": 43,
+        "row": 85
+      },
+      "message": "Do not perform function call `Depends` in argument defaults; instead, perform the call within the function, or read the default from a module-level singleton variable",
+      "name": "function-call-in-default-argument",
+      "noqa_row": 85,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/function-call-in-default-argument"
+    },
+    {
+      "cell": null,
+      "code": "B008",
+      "end_location": {
+        "column": 85,
+        "row": 85
+      },
+      "filename": "app/auth/router.py",
+      "fix": null,
+      "location": {
+        "column": 70,
+        "row": 85
+      },
+      "message": "Do not perform function call `Depends` in argument defaults; instead, perform the call within the function, or read the default from a module-level singleton variable",
+      "name": "function-call-in-default-argument",
+      "noqa_row": 85,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/function-call-in-default-argument"
+    },
+    {
+      "cell": null,
+      "code": "B008",
+      "end_location": {
+        "column": 41,
+        "row": 98
+      },
+      "filename": "app/auth/router.py",
+      "fix": null,
+      "location": {
+        "column": 16,
+        "row": 98
+      },
+      "message": "Do not perform function call `Depends` in argument defaults; instead, perform the call within the function, or read the default from a module-level singleton variable",
+      "name": "function-call-in-default-argument",
+      "noqa_row": 98,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/function-call-in-default-argument"
+    },
+    {
+      "cell": null,
+      "code": "BLE001",
+      "end_location": {
+        "column": 21,
+        "row": 29
+      },
+      "filename": "app/auth/security.py",
+      "fix": null,
+      "location": {
+        "column": 12,
+        "row": 29
+      },
+      "message": "Do not catch blind exception: `Exception`",
+      "name": "blind-except",
+      "noqa_row": 29,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/blind-except"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 43,
+        "row": 13
+      },
+      "filename": "app/sales/calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "from decimal import ROUND_HALF_UP, Decimal\n\n",
+            "end_location": {
+              "column": 1,
+              "row": 15
+            },
+            "location": {
+              "column": 1,
+              "row": 13
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 1,
+        "row": 13
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 13,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 18,
+        "row": 17
+      },
+      "filename": "app/sales/calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "1",
+            "end_location": {
+              "column": 18,
+              "row": 17
+            },
+            "location": {
+              "column": 15,
+              "row": 17
+            }
+          }
+        ],
+        "message": "Replace with `1`"
+      },
+      "location": {
+        "column": 15,
+        "row": 17
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 17,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 24,
+        "row": 18
+      },
+      "filename": "app/sales/calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "100",
+            "end_location": {
+              "column": 24,
+              "row": 18
+            },
+            "location": {
+              "column": 19,
+              "row": 18
+            }
+          }
+        ],
+        "message": "Replace with `100`"
+      },
+      "location": {
+        "column": 19,
+        "row": 18
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 18,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 40,
+        "row": 23
+      },
+      "filename": "app/sales/schemas.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "0",
+            "end_location": {
+              "column": 40,
+              "row": 23
+            },
+            "location": {
+              "column": 37,
+              "row": 23
+            }
+          }
+        ],
+        "message": "Replace with `0`"
+      },
+      "location": {
+        "column": 37,
+        "row": 23
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 23,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 66,
+        "row": 50
+      },
+      "filename": "tests/test_ar_ledger.py",
+      "fix": null,
+      "location": {
+        "column": 54,
+        "row": 50
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 50,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 85
+      },
+      "filename": "tests/test_ar_ledger.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 85
+            },
+            "location": {
+              "column": 13,
+              "row": 85
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 85
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 85,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 95
+      },
+      "filename": "tests/test_ar_ledger.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 95
+            },
+            "location": {
+              "column": 13,
+              "row": 95
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 95
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 95,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 102
+      },
+      "filename": "tests/test_ar_ledger.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 102
+            },
+            "location": {
+              "column": 13,
+              "row": 102
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 102
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 102,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 110
+      },
+      "filename": "tests/test_ar_ledger.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 110
+            },
+            "location": {
+              "column": 13,
+              "row": 110
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 110
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 110,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 110
+      },
+      "filename": "tests/test_ar_ledger.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 110
+            },
+            "location": {
+              "column": 17,
+              "row": 110
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 110
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 110,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 36,
+        "row": 136
+      },
+      "filename": "tests/test_ar_ledger.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_entry",
+            "end_location": {
+              "column": 36,
+              "row": 136
+            },
+            "location": {
+              "column": 31,
+              "row": 136
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 31,
+        "row": 136
+      },
+      "message": "Unpacked variable `entry` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 136,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 36,
+        "row": 148
+      },
+      "filename": "tests/test_ar_ledger.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_entry",
+            "end_location": {
+              "column": 36,
+              "row": 148
+            },
+            "location": {
+              "column": 31,
+              "row": 148
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 31,
+        "row": 148
+      },
+      "message": "Unpacked variable `entry` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 148,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 39,
+        "row": 37
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": null,
+      "location": {
+        "column": 27,
+        "row": 37
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 37,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 94
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 94
+            },
+            "location": {
+              "column": 13,
+              "row": 94
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 94
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 94,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 119
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 119
+            },
+            "location": {
+              "column": 13,
+              "row": 119
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 119
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 119,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 11,
+        "row": 130
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_client",
+            "end_location": {
+              "column": 11,
+              "row": 130
+            },
+            "location": {
+              "column": 5,
+              "row": 130
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 5,
+        "row": 130
+      },
+      "message": "Unpacked variable `client` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 130,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 29,
+        "row": 130
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_headers",
+            "end_location": {
+              "column": 29,
+              "row": 130
+            },
+            "location": {
+              "column": 22,
+              "row": 130
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 22,
+        "row": 130
+      },
+      "message": "Unpacked variable `headers` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 130,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 39,
+        "row": 130
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_movement",
+            "end_location": {
+              "column": 39,
+              "row": 130
+            },
+            "location": {
+              "column": 31,
+              "row": 130
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 31,
+        "row": 130
+      },
+      "message": "Unpacked variable `movement` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 130,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "SIM117",
+      "end_location": {
+        "column": 32,
+        "row": 132
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": null,
+      "location": {
+        "column": 5,
+        "row": 131
+      },
+      "message": "Use a single `with` statement with multiple contexts instead of nested `with` statements",
+      "name": "multiple-with-statements",
+      "noqa_row": 131,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/multiple-with-statements"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 139
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 139
+            },
+            "location": {
+              "column": 13,
+              "row": 139
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 139
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 139,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 150
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 150
+            },
+            "location": {
+              "column": 13,
+              "row": 150
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 150
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 150,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 173
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 173
+            },
+            "location": {
+              "column": 13,
+              "row": 173
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 173
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 173,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 193
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 193
+            },
+            "location": {
+              "column": 13,
+              "row": 193
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 193
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 193,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 193
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 193
+            },
+            "location": {
+              "column": 17,
+              "row": 193
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 193
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 193,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 203
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 203
+            },
+            "location": {
+              "column": 13,
+              "row": 203
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 203
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 203,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 39,
+        "row": 247
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_movement",
+            "end_location": {
+              "column": 39,
+              "row": 247
+            },
+            "location": {
+              "column": 31,
+              "row": 247
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 31,
+        "row": 247
+      },
+      "message": "Unpacked variable `movement` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 247,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 262
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 262
+            },
+            "location": {
+              "column": 17,
+              "row": 262
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 262
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 262,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 276
+      },
+      "filename": "tests/test_inventory_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 276
+            },
+            "location": {
+              "column": 13,
+              "row": 276
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 276
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 276,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 103,
+        "row": 42
+      },
+      "filename": "tests/test_invoice_api.py",
+      "fix": null,
+      "location": {
+        "column": 91,
+        "row": 42
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 42,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 41,
+        "row": 60
+      },
+      "filename": "tests/test_invoice_api.py",
+      "fix": null,
+      "location": {
+        "column": 29,
+        "row": 60
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 60,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 192
+      },
+      "filename": "tests/test_invoice_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 192
+            },
+            "location": {
+              "column": 13,
+              "row": 192
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 192
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 192,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 192
+      },
+      "filename": "tests/test_invoice_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 192
+            },
+            "location": {
+              "column": 17,
+              "row": 192
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 192
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 192,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 216
+      },
+      "filename": "tests/test_invoice_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 216
+            },
+            "location": {
+              "column": 17,
+              "row": 216
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 216
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 216,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 229
+      },
+      "filename": "tests/test_invoice_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 229
+            },
+            "location": {
+              "column": 13,
+              "row": 229
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 229
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 229,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 229
+      },
+      "filename": "tests/test_invoice_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 229
+            },
+            "location": {
+              "column": 17,
+              "row": 229
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 229
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 229,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 235
+      },
+      "filename": "tests/test_invoice_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 235
+            },
+            "location": {
+              "column": 17,
+              "row": 235
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 235
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 235,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 249
+      },
+      "filename": "tests/test_invoice_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 249
+            },
+            "location": {
+              "column": 13,
+              "row": 249
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 249
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 249,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 249
+      },
+      "filename": "tests/test_invoice_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 249
+            },
+            "location": {
+              "column": 17,
+              "row": 249
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 249
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 249,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 105,
+        "row": 263
+      },
+      "filename": "tests/test_invoice_api.py",
+      "fix": null,
+      "location": {
+        "column": 93,
+        "row": 263
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 263,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 288
+      },
+      "filename": "tests/test_invoice_api.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 288
+            },
+            "location": {
+              "column": 17,
+              "row": 288
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 288
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 288,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "SIM117",
+      "end_location": {
+        "column": 32,
+        "row": 296
+      },
+      "filename": "tests/test_invoice_api.py",
+      "fix": null,
+      "location": {
+        "column": 5,
+        "row": 295
+      },
+      "message": "Use a single `with` statement with multiple contexts instead of nested `with` statements",
+      "name": "multiple-with-statements",
+      "noqa_row": 295,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/multiple-with-statements"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 52
+      },
+      "filename": "tests/test_invoice_boundaries.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 52
+            },
+            "location": {
+              "column": 13,
+              "row": 52
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 52
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 52,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 52
+      },
+      "filename": "tests/test_invoice_boundaries.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 52
+            },
+            "location": {
+              "column": 17,
+              "row": 52
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 52
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 52,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 58
+      },
+      "filename": "tests/test_invoice_boundaries.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 58
+            },
+            "location": {
+              "column": 17,
+              "row": 58
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 58
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 58,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 67
+      },
+      "filename": "tests/test_invoice_boundaries.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 67
+            },
+            "location": {
+              "column": 13,
+              "row": 67
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 67
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 67,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 67
+      },
+      "filename": "tests/test_invoice_boundaries.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 67
+            },
+            "location": {
+              "column": 17,
+              "row": 67
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 67
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 67,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 82
+      },
+      "filename": "tests/test_invoice_boundaries.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 82
+            },
+            "location": {
+              "column": 13,
+              "row": 82
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 82
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 82,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 82
+      },
+      "filename": "tests/test_invoice_boundaries.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 82
+            },
+            "location": {
+              "column": 17,
+              "row": 82
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 82
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 82,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 35,
+        "row": 19
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "250",
+            "end_location": {
+              "column": 35,
+              "row": 19
+            },
+            "location": {
+              "column": 30,
+              "row": 19
+            }
+          }
+        ],
+        "message": "Replace with `250`"
+      },
+      "location": {
+        "column": 30,
+        "row": 19
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 19,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 50,
+        "row": 19
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "30",
+            "end_location": {
+              "column": 50,
+              "row": 19
+            },
+            "location": {
+              "column": 46,
+              "row": 19
+            }
+          }
+        ],
+        "message": "Replace with `30`"
+      },
+      "location": {
+        "column": 46,
+        "row": 19
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 19,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 35,
+        "row": 20
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "180",
+            "end_location": {
+              "column": 35,
+              "row": 20
+            },
+            "location": {
+              "column": 30,
+              "row": 20
+            }
+          }
+        ],
+        "message": "Replace with `180`"
+      },
+      "location": {
+        "column": 30,
+        "row": 20
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 20,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 50,
+        "row": 20
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "30",
+            "end_location": {
+              "column": 50,
+              "row": 20
+            },
+            "location": {
+              "column": 46,
+              "row": 20
+            }
+          }
+        ],
+        "message": "Replace with `30`"
+      },
+      "location": {
+        "column": 46,
+        "row": 20
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 20,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 34,
+        "row": 21
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "95",
+            "end_location": {
+              "column": 34,
+              "row": 21
+            },
+            "location": {
+              "column": 30,
+              "row": 21
+            }
+          }
+        ],
+        "message": "Replace with `95`"
+      },
+      "location": {
+        "column": 30,
+        "row": 21
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 21,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 49,
+        "row": 21
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "30",
+            "end_location": {
+              "column": 49,
+              "row": 21
+            },
+            "location": {
+              "column": 45,
+              "row": 21
+            }
+          }
+        ],
+        "message": "Replace with `30`"
+      },
+      "location": {
+        "column": 45,
+        "row": 21
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 21,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 35,
+        "row": 22
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "100",
+            "end_location": {
+              "column": 35,
+              "row": 22
+            },
+            "location": {
+              "column": 30,
+              "row": 22
+            }
+          }
+        ],
+        "message": "Replace with `100`"
+      },
+      "location": {
+        "column": 30,
+        "row": 22
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 22,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 49,
+        "row": 22
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "0",
+            "end_location": {
+              "column": 49,
+              "row": 22
+            },
+            "location": {
+              "column": 46,
+              "row": 22
+            }
+          }
+        ],
+        "message": "Replace with `0`"
+      },
+      "location": {
+        "column": 46,
+        "row": 22
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 22,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 40,
+        "row": 27
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "114",
+            "end_location": {
+              "column": 40,
+              "row": 27
+            },
+            "location": {
+              "column": 35,
+              "row": 27
+            }
+          }
+        ],
+        "message": "Replace with `114`"
+      },
+      "location": {
+        "column": 35,
+        "row": 27
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 27,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 55,
+        "row": 27
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 55,
+              "row": 27
+            },
+            "location": {
+              "column": 51,
+              "row": 27
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 51,
+        "row": 27
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 27,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 40,
+        "row": 28
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "100",
+            "end_location": {
+              "column": 40,
+              "row": 28
+            },
+            "location": {
+              "column": 35,
+              "row": 28
+            }
+          }
+        ],
+        "message": "Replace with `100`"
+      },
+      "location": {
+        "column": 35,
+        "row": 28
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 28,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 55,
+        "row": 28
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 55,
+              "row": 28
+            },
+            "location": {
+              "column": 51,
+              "row": 28
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 51,
+        "row": 28
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 28,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 38,
+        "row": 29
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "0",
+            "end_location": {
+              "column": 38,
+              "row": 29
+            },
+            "location": {
+              "column": 35,
+              "row": 29
+            }
+          }
+        ],
+        "message": "Replace with `0`"
+      },
+      "location": {
+        "column": 35,
+        "row": 29
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 29,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 53,
+        "row": 29
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 53,
+              "row": 29
+            },
+            "location": {
+              "column": 49,
+              "row": 29
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 49,
+        "row": 29
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 29,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 41,
+        "row": 31
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "1000",
+            "end_location": {
+              "column": 41,
+              "row": 31
+            },
+            "location": {
+              "column": 35,
+              "row": 31
+            }
+          }
+        ],
+        "message": "Replace with `1000`"
+      },
+      "location": {
+        "column": 35,
+        "row": 31
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 31,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 55,
+        "row": 31
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "0",
+            "end_location": {
+              "column": 55,
+              "row": 31
+            },
+            "location": {
+              "column": 52,
+              "row": 31
+            }
+          }
+        ],
+        "message": "Replace with `0`"
+      },
+      "location": {
+        "column": 52,
+        "row": 31
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 31,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 45,
+        "row": 35
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "10",
+            "end_location": {
+              "column": 45,
+              "row": 35
+            },
+            "location": {
+              "column": 41,
+              "row": 35
+            }
+          }
+        ],
+        "message": "Replace with `10`"
+      },
+      "location": {
+        "column": 41,
+        "row": 35
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 35,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 61,
+        "row": 35
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "100",
+            "end_location": {
+              "column": 61,
+              "row": 35
+            },
+            "location": {
+              "column": 56,
+              "row": 35
+            }
+          }
+        ],
+        "message": "Replace with `100`"
+      },
+      "location": {
+        "column": 56,
+        "row": 35
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 35,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 76,
+        "row": 35
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "30",
+            "end_location": {
+              "column": 76,
+              "row": 35
+            },
+            "location": {
+              "column": 72,
+              "row": 35
+            }
+          }
+        ],
+        "message": "Replace with `30`"
+      },
+      "location": {
+        "column": 72,
+        "row": 35
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 35,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 91,
+        "row": 35
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 91,
+              "row": 35
+            },
+            "location": {
+              "column": 87,
+              "row": 35
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 87,
+        "row": 35
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 35,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 22,
+        "row": 43
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "10",
+            "end_location": {
+              "column": 22,
+              "row": 43
+            },
+            "location": {
+              "column": 18,
+              "row": 43
+            }
+          }
+        ],
+        "message": "Replace with `10`"
+      },
+      "location": {
+        "column": 18,
+        "row": 43
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 43,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 38,
+        "row": 43
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "100",
+            "end_location": {
+              "column": 38,
+              "row": 43
+            },
+            "location": {
+              "column": 33,
+              "row": 43
+            }
+          }
+        ],
+        "message": "Replace with `100`"
+      },
+      "location": {
+        "column": 33,
+        "row": 43
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 43,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 53,
+        "row": 43
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "30",
+            "end_location": {
+              "column": 53,
+              "row": 43
+            },
+            "location": {
+              "column": 49,
+              "row": 43
+            }
+          }
+        ],
+        "message": "Replace with `30`"
+      },
+      "location": {
+        "column": 49,
+        "row": 43
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 43,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 68,
+        "row": 43
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 68,
+              "row": 43
+            },
+            "location": {
+              "column": 64,
+              "row": 43
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 64,
+        "row": 43
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 43,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 21,
+        "row": 44
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "2",
+            "end_location": {
+              "column": 21,
+              "row": 44
+            },
+            "location": {
+              "column": 18,
+              "row": 44
+            }
+          }
+        ],
+        "message": "Replace with `2`"
+      },
+      "location": {
+        "column": 18,
+        "row": 44
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 44,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 37,
+        "row": 44
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "250",
+            "end_location": {
+              "column": 37,
+              "row": 44
+            },
+            "location": {
+              "column": 32,
+              "row": 44
+            }
+          }
+        ],
+        "message": "Replace with `250`"
+      },
+      "location": {
+        "column": 32,
+        "row": 44
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 44,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 52,
+        "row": 44
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "25",
+            "end_location": {
+              "column": 52,
+              "row": 44
+            },
+            "location": {
+              "column": 48,
+              "row": 44
+            }
+          }
+        ],
+        "message": "Replace with `25`"
+      },
+      "location": {
+        "column": 48,
+        "row": 44
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 44,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 67,
+        "row": 44
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 67,
+              "row": 44
+            },
+            "location": {
+              "column": 63,
+              "row": 44
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 63,
+        "row": 44
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 44,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 45,
+        "row": 61
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "1",
+            "end_location": {
+              "column": 45,
+              "row": 61
+            },
+            "location": {
+              "column": 42,
+              "row": 61
+            }
+          }
+        ],
+        "message": "Replace with `1`"
+      },
+      "location": {
+        "column": 42,
+        "row": 61
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 61,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 61,
+        "row": 61
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "114",
+            "end_location": {
+              "column": 61,
+              "row": 61
+            },
+            "location": {
+              "column": 56,
+              "row": 61
+            }
+          }
+        ],
+        "message": "Replace with `114`"
+      },
+      "location": {
+        "column": 56,
+        "row": 61
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 61,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 75,
+        "row": 61
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "0",
+            "end_location": {
+              "column": 75,
+              "row": 61
+            },
+            "location": {
+              "column": 72,
+              "row": 61
+            }
+          }
+        ],
+        "message": "Replace with `0`"
+      },
+      "location": {
+        "column": 72,
+        "row": 61
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 61,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 90,
+        "row": 61
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 90,
+              "row": 61
+            },
+            "location": {
+              "column": 86,
+              "row": 61
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 86,
+        "row": 61
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 61,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 40,
+        "row": 69
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "100",
+            "end_location": {
+              "column": 40,
+              "row": 69
+            },
+            "location": {
+              "column": 35,
+              "row": 69
+            }
+          }
+        ],
+        "message": "Replace with `100`"
+      },
+      "location": {
+        "column": 35,
+        "row": 69
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 69,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 55,
+        "row": 69
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 55,
+              "row": 69
+            },
+            "location": {
+              "column": 51,
+              "row": 69
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 51,
+        "row": 69
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 69,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 21,
+        "row": 83
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "1",
+            "end_location": {
+              "column": 21,
+              "row": 83
+            },
+            "location": {
+              "column": 18,
+              "row": 83
+            }
+          }
+        ],
+        "message": "Replace with `1`"
+      },
+      "location": {
+        "column": 18,
+        "row": 83
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 83,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 37,
+        "row": 83
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "101",
+            "end_location": {
+              "column": 37,
+              "row": 83
+            },
+            "location": {
+              "column": 32,
+              "row": 83
+            }
+          }
+        ],
+        "message": "Replace with `101`"
+      },
+      "location": {
+        "column": 32,
+        "row": 83
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 83,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 68,
+        "row": 83
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 68,
+              "row": 83
+            },
+            "location": {
+              "column": 64,
+              "row": 83
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 64,
+        "row": 83
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 83,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 21,
+        "row": 84
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "2",
+            "end_location": {
+              "column": 21,
+              "row": 84
+            },
+            "location": {
+              "column": 18,
+              "row": 84
+            }
+          }
+        ],
+        "message": "Replace with `2`"
+      },
+      "location": {
+        "column": 18,
+        "row": 84
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 84,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 37,
+        "row": 84
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "100",
+            "end_location": {
+              "column": 37,
+              "row": 84
+            },
+            "location": {
+              "column": 32,
+              "row": 84
+            }
+          }
+        ],
+        "message": "Replace with `100`"
+      },
+      "location": {
+        "column": 32,
+        "row": 84
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 84,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 52,
+        "row": 84
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "30",
+            "end_location": {
+              "column": 52,
+              "row": 84
+            },
+            "location": {
+              "column": 48,
+              "row": 84
+            }
+          }
+        ],
+        "message": "Replace with `30`"
+      },
+      "location": {
+        "column": 48,
+        "row": 84
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 84,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 67,
+        "row": 84
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 67,
+              "row": 84
+            },
+            "location": {
+              "column": 63,
+              "row": 84
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 63,
+        "row": 84
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 84,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 21,
+        "row": 95
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "1",
+            "end_location": {
+              "column": 21,
+              "row": 95
+            },
+            "location": {
+              "column": 18,
+              "row": 95
+            }
+          }
+        ],
+        "message": "Replace with `1`"
+      },
+      "location": {
+        "column": 18,
+        "row": 95
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 95,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 37,
+        "row": 95
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "360",
+            "end_location": {
+              "column": 37,
+              "row": 95
+            },
+            "location": {
+              "column": 32,
+              "row": 95
+            }
+          }
+        ],
+        "message": "Replace with `360`"
+      },
+      "location": {
+        "column": 32,
+        "row": 95
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 95,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 52,
+        "row": 95
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "28",
+            "end_location": {
+              "column": 52,
+              "row": 95
+            },
+            "location": {
+              "column": 48,
+              "row": 95
+            }
+          }
+        ],
+        "message": "Replace with `28`"
+      },
+      "location": {
+        "column": 48,
+        "row": 95
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 95,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 67,
+        "row": 95
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 67,
+              "row": 95
+            },
+            "location": {
+              "column": 63,
+              "row": 95
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 63,
+        "row": 95
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 95,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 21,
+        "row": 96
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "1",
+            "end_location": {
+              "column": 21,
+              "row": 96
+            },
+            "location": {
+              "column": 18,
+              "row": 96
+            }
+          }
+        ],
+        "message": "Replace with `1`"
+      },
+      "location": {
+        "column": 18,
+        "row": 96
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 96,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 37,
+        "row": 96
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "250",
+            "end_location": {
+              "column": 37,
+              "row": 96
+            },
+            "location": {
+              "column": 32,
+              "row": 96
+            }
+          }
+        ],
+        "message": "Replace with `250`"
+      },
+      "location": {
+        "column": 32,
+        "row": 96
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 96,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 52,
+        "row": 96
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "45",
+            "end_location": {
+              "column": 52,
+              "row": 96
+            },
+            "location": {
+              "column": 48,
+              "row": 96
+            }
+          }
+        ],
+        "message": "Replace with `45`"
+      },
+      "location": {
+        "column": 48,
+        "row": 96
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 96,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 67,
+        "row": 96
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 67,
+              "row": 96
+            },
+            "location": {
+              "column": 63,
+              "row": 96
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 63,
+        "row": 96
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 96,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 21,
+        "row": 97
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "1",
+            "end_location": {
+              "column": 21,
+              "row": 97
+            },
+            "location": {
+              "column": 18,
+              "row": 97
+            }
+          }
+        ],
+        "message": "Replace with `1`"
+      },
+      "location": {
+        "column": 18,
+        "row": 97
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 97,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 37,
+        "row": 97
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "100",
+            "end_location": {
+              "column": 37,
+              "row": 97
+            },
+            "location": {
+              "column": 32,
+              "row": 97
+            }
+          }
+        ],
+        "message": "Replace with `100`"
+      },
+      "location": {
+        "column": 32,
+        "row": 97
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 97,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 52,
+        "row": 97
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "31",
+            "end_location": {
+              "column": 52,
+              "row": 97
+            },
+            "location": {
+              "column": 48,
+              "row": 97
+            }
+          }
+        ],
+        "message": "Replace with `31`"
+      },
+      "location": {
+        "column": 48,
+        "row": 97
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 97,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 67,
+        "row": 97
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 67,
+              "row": 97
+            },
+            "location": {
+              "column": 63,
+              "row": 97
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 63,
+        "row": 97
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 97,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 21,
+        "row": 98
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "1",
+            "end_location": {
+              "column": 21,
+              "row": 98
+            },
+            "location": {
+              "column": 18,
+              "row": 98
+            }
+          }
+        ],
+        "message": "Replace with `1`"
+      },
+      "location": {
+        "column": 18,
+        "row": 98
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 98,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 37,
+        "row": 98
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "180",
+            "end_location": {
+              "column": 37,
+              "row": 98
+            },
+            "location": {
+              "column": 32,
+              "row": 98
+            }
+          }
+        ],
+        "message": "Replace with `180`"
+      },
+      "location": {
+        "column": 32,
+        "row": 98
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 98,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 52,
+        "row": 98
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "38",
+            "end_location": {
+              "column": 52,
+              "row": 98
+            },
+            "location": {
+              "column": 48,
+              "row": 98
+            }
+          }
+        ],
+        "message": "Replace with `38`"
+      },
+      "location": {
+        "column": 48,
+        "row": 98
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 98,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 67,
+        "row": 98
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 67,
+              "row": 98
+            },
+            "location": {
+              "column": 63,
+              "row": 98
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 63,
+        "row": 98
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 98,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 21,
+        "row": 99
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "3",
+            "end_location": {
+              "column": 21,
+              "row": 99
+            },
+            "location": {
+              "column": 18,
+              "row": 99
+            }
+          }
+        ],
+        "message": "Replace with `3`"
+      },
+      "location": {
+        "column": 18,
+        "row": 99
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 99,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 37,
+        "row": 99
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "101",
+            "end_location": {
+              "column": 37,
+              "row": 99
+            },
+            "location": {
+              "column": 32,
+              "row": 99
+            }
+          }
+        ],
+        "message": "Replace with `101`"
+      },
+      "location": {
+        "column": 32,
+        "row": 99
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 99,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 68,
+        "row": 99
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 68,
+              "row": 99
+            },
+            "location": {
+              "column": 64,
+              "row": 99
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 64,
+        "row": 99
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 99,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 39,
+        "row": 100
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "101",
+            "end_location": {
+              "column": 39,
+              "row": 100
+            },
+            "location": {
+              "column": 34,
+              "row": 100
+            }
+          }
+        ],
+        "message": "Replace with `101`"
+      },
+      "location": {
+        "column": 34,
+        "row": 100
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 100,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 70,
+        "row": 100
+      },
+      "filename": "tests/test_invoice_calc.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 70,
+              "row": 100
+            },
+            "location": {
+              "column": 66,
+              "row": 100
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 66,
+        "row": 100
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 100,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 53,
+        "row": 17
+      },
+      "filename": "tests/test_invoice_excel.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "from decimal import Decimal\nfrom pathlib import Path\n\nimport openpyxl\nimport pytest\n\nfrom app.sales.calc import invoice_totals, line_calc\n\n",
+            "end_location": {
+              "column": 1,
+              "row": 19
+            },
+            "location": {
+              "column": 1,
+              "row": 13
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 1,
+        "row": 13
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 13,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 64,
+        "row": 73
+      },
+      "filename": "tests/test_invoice_excel.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "100",
+            "end_location": {
+              "column": 64,
+              "row": 73
+            },
+            "location": {
+              "column": 59,
+              "row": 73
+            }
+          }
+        ],
+        "message": "Replace with `100`"
+      },
+      "location": {
+        "column": 59,
+        "row": 73
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 73,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 78,
+        "row": 74
+      },
+      "filename": "tests/test_invoice_excel.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 78,
+              "row": 74
+            },
+            "location": {
+              "column": 74,
+              "row": 74
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 74,
+        "row": 74
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 74,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 37,
+        "row": 112
+      },
+      "filename": "tests/test_invoice_excel.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 37,
+              "row": 112
+            },
+            "location": {
+              "column": 33,
+              "row": 112
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 33,
+        "row": 112
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 112,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "FURB157",
+      "end_location": {
+        "column": 29,
+        "row": 160
+      },
+      "filename": "tests/test_invoice_excel.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "14",
+            "end_location": {
+              "column": 29,
+              "row": 160
+            },
+            "location": {
+              "column": 25,
+              "row": 160
+            }
+          }
+        ],
+        "message": "Replace with `14`"
+      },
+      "location": {
+        "column": 25,
+        "row": 160
+      },
+      "message": "Verbose expression in `Decimal` constructor",
+      "name": "verbose-decimal-constructor",
+      "noqa_row": 160,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 29,
+        "row": 132
+      },
+      "filename": "tests/test_invoice_routing.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_payload",
+            "end_location": {
+              "column": 29,
+              "row": 132
+            },
+            "location": {
+              "column": 22,
+              "row": 132
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 22,
+        "row": 132
+      },
+      "message": "Unpacked variable `payload` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 132,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 29,
+        "row": 144
+      },
+      "filename": "tests/test_invoice_routing.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_payload",
+            "end_location": {
+              "column": 29,
+              "row": 144
+            },
+            "location": {
+              "column": 22,
+              "row": 144
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 22,
+        "row": 144
+      },
+      "message": "Unpacked variable `payload` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 144,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 29,
+        "row": 159
+      },
+      "filename": "tests/test_invoice_routing.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_payload",
+            "end_location": {
+              "column": 29,
+              "row": 159
+            },
+            "location": {
+              "column": 22,
+              "row": 159
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 22,
+        "row": 159
+      },
+      "message": "Unpacked variable `payload` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 159,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 171
+      },
+      "filename": "tests/test_invoice_routing.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 171
+            },
+            "location": {
+              "column": 13,
+              "row": 171
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 171
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 171,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 50,
+        "row": 19
+      },
+      "filename": "tests/test_posting.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "from datetime import date\nfrom decimal import Decimal\nfrom uuid import UUID, uuid4\n\nimport pytest\nfrom fastapi.testclient import TestClient\nfrom sqlalchemy import text\nfrom sqlalchemy.orm import Session\n\nfrom app.db import engine, get_db\nfrom app.inventory.service import InsufficientStock\nfrom app.main import app\nfrom app.sales.service import post_invoice_atomic\n\n\n",
+            "end_location": {
+              "column": 1,
+              "row": 22
+            },
+            "location": {
+              "column": 1,
+              "row": 7
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 1,
+        "row": 7
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 7,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 48,
+        "row": 57
+      },
+      "filename": "tests/test_posting.py",
+      "fix": null,
+      "location": {
+        "column": 36,
+        "row": 57
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 57,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 11,
+        "row": 75
+      },
+      "filename": "tests/test_posting.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_client",
+            "end_location": {
+              "column": 11,
+              "row": 75
+            },
+            "location": {
+              "column": 5,
+              "row": 75
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 5,
+        "row": 75
+      },
+      "message": "Unpacked variable `client` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 75,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 26,
+        "row": 75
+      },
+      "filename": "tests/test_posting.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_auth",
+            "end_location": {
+              "column": 26,
+              "row": 75
+            },
+            "location": {
+              "column": 22,
+              "row": 75
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 22,
+        "row": 75
+      },
+      "message": "Unpacked variable `auth` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 75,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 44,
+        "row": 75
+      },
+      "filename": "tests/test_posting.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_payload",
+            "end_location": {
+              "column": 44,
+              "row": 75
+            },
+            "location": {
+              "column": 37,
+              "row": 75
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 37,
+        "row": 75
+      },
+      "message": "Unpacked variable `payload` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 75,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 44,
+        "row": 101
+      },
+      "filename": "tests/test_posting.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_payload",
+            "end_location": {
+              "column": 44,
+              "row": 101
+            },
+            "location": {
+              "column": 37,
+              "row": 101
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 37,
+        "row": 101
+      },
+      "message": "Unpacked variable `payload` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 101,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 11,
+        "row": 116
+      },
+      "filename": "tests/test_posting.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_client",
+            "end_location": {
+              "column": 11,
+              "row": 116
+            },
+            "location": {
+              "column": 5,
+              "row": 116
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 5,
+        "row": 116
+      },
+      "message": "Unpacked variable `client` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 116,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 26,
+        "row": 116
+      },
+      "filename": "tests/test_posting.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_auth",
+            "end_location": {
+              "column": 26,
+              "row": 116
+            },
+            "location": {
+              "column": 22,
+              "row": 116
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 22,
+        "row": 116
+      },
+      "message": "Unpacked variable `auth` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 116,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 44,
+        "row": 116
+      },
+      "filename": "tests/test_posting.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_payload",
+            "end_location": {
+              "column": 44,
+              "row": 116
+            },
+            "location": {
+              "column": 37,
+              "row": 116
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 37,
+        "row": 116
+      },
+      "message": "Unpacked variable `payload` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 116,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 124
+      },
+      "filename": "tests/test_posting.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 124
+            },
+            "location": {
+              "column": 13,
+              "row": 124
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 124
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 124,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 124
+      },
+      "filename": "tests/test_posting.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 124
+            },
+            "location": {
+              "column": 17,
+              "row": 124
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 124
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 124,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 44,
+        "row": 124
+      },
+      "filename": "tests/test_posting.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_payload",
+            "end_location": {
+              "column": 44,
+              "row": 124
+            },
+            "location": {
+              "column": 37,
+              "row": 124
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 37,
+        "row": 124
+      },
+      "message": "Unpacked variable `payload` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 124,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    }
+  ]
+}

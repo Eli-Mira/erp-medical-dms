@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.848" timestamp="2026-10-17T20:43:08.909415+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_invoice_cycle_controls" name="test_posted_invoice_rejects_raw_snapshot_mutation" time="0.547"><failure message="Failed: DID NOT RAISE DBAPIError">tests\test_invoice_cycle_controls.py:138: in test_posted_invoice_rejects_raw_snapshot_mutation
+    with pytest.raises(DBAPIError):
+E   Failed: DID NOT RAISE DBAPIError</failure></testcase></testsuite></testsuites>

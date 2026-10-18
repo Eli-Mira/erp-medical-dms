@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="6" time="0.769" timestamp="2026-10-17T20:09:43.173861+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_invoice_reversal" name="test_reverse_invoice_atomic_restores_stock_and_ar" time="0.152" /><testcase classname="tests.test_invoice_reversal" name="test_reversal_requires_active_reversal_reason" time="0.060"><failure message="assert 409 == 422&#10; +  where 409 = &lt;Response [409 Conflict]&gt;.status_code">tests\test_invoice_reversal.py:169: in test_reversal_requires_active_reversal_reason
+    assert resp.status_code == 422
+E   assert 409 == 422
+E    +  where 409 = &lt;Response [409 Conflict]&gt;.status_code</failure></testcase><testcase classname="tests.test_invoice_reversal" name="test_reversal_refused_when_active_receipts_exist" time="0.056" /><testcase classname="tests.test_invoice_reversal" name="test_reverse_endpoint_owner_and_finance" time="0.081"><failure message="KeyError: 'id'">tests\test_invoice_reversal.py:223: in test_reverse_endpoint_owner_and_finance
+    post_resp = client.post(f"/invoices/{invoice['id']}/post", headers=headers("finance_user"))
+                                         ^^^^^^^^^^^^^
+E   KeyError: 'id'</failure></testcase><testcase classname="tests.test_invoice_reversal" name="test_reverse_endpoint_medical_rep_denied" time="0.057" /><testcase classname="tests.test_invoice_reversal" name="test_reversal_preserves_original_vat_and_line_snapshots" time="0.069"><failure message="AssertionError: assert Decimal('333.00') == '333.00'">tests\test_invoice_reversal.py:298: in test_reversal_preserves_original_vat_and_line_snapshots
+    assert reversed_inv["grand_total"] == "333.00"
+E   AssertionError: assert Decimal('333.00') == '333.00'</failure></testcase></testsuite></testsuites>

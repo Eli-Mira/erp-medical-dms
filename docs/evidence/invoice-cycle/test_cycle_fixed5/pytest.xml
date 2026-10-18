@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="0.958" timestamp="2026-10-17T20:38:27.336044+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_invoice_cycle" name="test_full_cycle_invoice_post_collect_void_reverse" time="0.311" /><testcase classname="tests.test_invoice_cycle" name="test_concurrent_collection_rejects_overpayment" time="0.100"><failure message="sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table &quot;payment_receipt&quot; violates foreign key constraint &quot;payment_receipt_invoice_id_fkey&quot;&#10;DETAIL:  Key (invoice_id)=(e2cb665f-5da7-4781-b9e3-6593950e85e8) is not present in table &quot;sales_invoice&quot;.&#10;[SQL: &#10;            INSERT INTO finance.payment_receipt&#10;                (invoice_id, branch_id, customer_id, receipt_no, receipt_date,&#10;                 amount, method, note, created_by, updated_by)&#10;            VALUES (%(inv)s, %(b)s, %(c)s, %(no)s, %(d)s, %(amt)s, %(m)s, %(note)s, %(actor)s, %(actor)s)&#10;            RETURNING id&#10;            ]&#10;[parameters: {'inv': UUID('e2cb665f-5da7-4781-b9e3-6593950e85e8'), 'b': UUID('db27193d-ec48-4e3e-902a-75676afd3eed'), 'c': UUID('3e255419-2530-476b-a524-5fd968f7991c'), 'no': 'CONC-R1', 'd': datetime.date(2026, 10, 17), 'amt': Decimal('150.00'), 'm': 'cash', 'note': None, 'actor': UUID('d7c452a8-78a4-43b8-94af-22756fba27c0')}]&#10;(Background on this error at: https://sqlalche.me/e/20/gkpj)">C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.ForeignKeyViolation: insert or update on table "payment_receipt" violates foreign key constraint "payment_receipt_invoice_id_fkey"
+E   DETAIL:  Key (invoice_id)=(e2cb665f-5da7-4781-b9e3-6593950e85e8) is not present in table "sales_invoice".
+
+The above exception was the direct cause of the following exception:
+tests\test_invoice_cycle.py:276: in test_concurrent_collection_rejects_overpayment
+    receipt_id_1 = payments.create_receipt(db2,
+app\finance\payments.py:52: in create_receipt
+    receipt_id = db.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table "payment_receipt" violates foreign key constraint "payment_receipt_invoice_id_fkey"
+E   DETAIL:  Key (invoice_id)=(e2cb665f-5da7-4781-b9e3-6593950e85e8) is not present in table "sales_invoice".
+E   [SQL: 
+E               INSERT INTO finance.payment_receipt
+E                   (invoice_id, branch_id, customer_id, receipt_no, receipt_date,
+E                    amount, method, note, created_by, updated_by)
+E               VALUES (%(inv)s, %(b)s, %(c)s, %(no)s, %(d)s, %(amt)s, %(m)s, %(note)s, %(actor)s, %(actor)s)
+E               RETURNING id
+E               ]
+E   [parameters: {'inv': UUID('e2cb665f-5da7-4781-b9e3-6593950e85e8'), 'b': UUID('db27193d-ec48-4e3e-902a-75676afd3eed'), 'c': UUID('3e255419-2530-476b-a524-5fd968f7991c'), 'no': 'CONC-R1', 'd': datetime.date(2026, 10, 17), 'amt': Decimal('150.00'), 'm': 'cash', 'note': None, 'actor': UUID('d7c452a8-78a4-43b8-94af-22756fba27c0')}]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)</failure></testcase><testcase classname="tests.test_invoice_cycle" name="test_flag_off_blocks_all_mutations" time="0.039" /></testsuite></testsuites>

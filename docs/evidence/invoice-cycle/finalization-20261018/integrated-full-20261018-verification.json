@@ -1,0 +1,71 @@
+{
+  "verdict": "PASS",
+  "phase": "integrated-full-20261018",
+  "verification": "fresh native full-suite execution, direct pytest exit 0; parent raw-record validation",
+  "base_commit": "f85b8f964b5b4b54139cbdf614e37a91bd6a45a4",
+  "candidate_commit": null,
+  "candidate_state": "working-tree candidate; final Git commit binding is a separate readback",
+  "source_sha256": {
+    "app/finance/ar.py": "96ed2b97020ea01ca9553f5d228a30dcc4272f3d5f77b9692aac0f9cc8fc30ad",
+    "app/finance/payments.py": "c2b68d33390e32ed12c4d075913a3c58d3c9477054db7987b848690a5952efb3",
+    "app/finance/payment_router.py": "f0a661fa139200690907349535533f1a1ef80c441f1e814a5f82d15de36cc3e2",
+    "app/finance/schemas.py": "b2c34b53c5ab4c9d2375fd5827ac464dc24b4e7a84175f83de21c23a449fb52d",
+    "app/inventory/service.py": "ed21dfc6a0c9b71838fca1bb19837731855d4c662657afd2fd199e8c7526b468",
+    "app/main.py": "d7ff95a482886457f273b7249500f29d014bcd809cc9cb067b4ecfbd28cdb142",
+    "app/sales/router.py": "4a8e0fa9c3e9b7a799a9a218a1070a2b7cf2692fe383df53bb95a76953ed569c",
+    "app/sales/service.py": "4c63795fa59ba22c44974aa4590e79753e7d2e580beb7437b36cbd2c7fd0ac67",
+    "tests/conftest.py": "fe3889c391e29bfc884c05086a88d11311663268db78c892dd70a2580be0f358",
+    "tests/test_collections.py": "d8c17365e6b2f45b1814bd5ed449a2a4ef41897fcfcc0244cc8bea68cd3fd4f0",
+    "tests/test_invoice_cycle.py": "f11e898c23f9c5813976905f018a22c21acf32da85cf22d28d3fc1b4c6750bd5",
+    "tests/test_invoice_cycle_controls.py": "7186f88321b87fbe1d894497ba61b4553ba94bec1e3e2e15ba0297b181a7d5a8",
+    "tests/test_invoice_cycle_safety.py": "9599081f1f7ca1933d2f3dee90f5ffaa69284276b20e160e43f9dc4061d148f1",
+    "tests/test_invoice_reversal.py": "312e7542a571d0cebd16b07a0037b8768612533e1458ec1532b84d8bcd3cf96c",
+    "tests/test_posting_flag.py": "ad877c642b6d356dff12f1ad62ef6186fab90dc3fc88e214335f38a65e371ec6",
+    "alembic/versions/0010_invoice_collections.py": "91d5695e2611c07ec3cc8a1168df658cfc37dd90bb68ce4447adca2ce3507051",
+    "scripts/verify_invoice_cycle.py": "b6cf7c038bace7364fbba6cb14bca12e3476034bf554c6726b3621356a6bbf72"
+  },
+  "run": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\integrated-full-20261018\\run.json",
+  "run_sha256": "6de0389c56eb08b418ab23e07384d60babf9050a64e7e0ef3896ac49d09b8d2a",
+  "counts": {
+    "passed": 315,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0
+  },
+  "exact_raw_case_identities_match": false,
+  "same_315_semantic_case_identities": true,
+  "identity_comparison": {
+    "source": "tests/test_invoice_cycle_safety.py:324-326",
+    "normalization": "Only the three named forged-field UUIDv4 parameter values; raw IDs retained in both native records.",
+    "old_only": [
+      "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[customer_id-6f75b0c3-e36a-4659-89da-3736d9f9f31f]",
+      "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[branch_id-2b8c6e7e-c025-4a78-bbc8-c777f250f1d3]",
+      "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[created_by-755991b6-bb2d-4bd4-b389-21710c2c6663]"
+    ],
+    "new_only": [
+      "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[customer_id-30b92073-2fd0-46e8-992f-ff1521808458]",
+      "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[branch_id-52ccef66-52a2-4bb1-9751-0fb26cf962ed]",
+      "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[created_by-502ffda7-6dd4-4bd7-a3d2-f626353b2832]"
+    ],
+    "initial_validator_failure": "Exact UUID parameter IDs differed across process collections; coordinator comparison error, not pytest/application RED. No source or tests changed."
+  },
+  "protected_files_unchanged": [
+    ".env.dev",
+    "app/config.py",
+    "app/db.py",
+    "docker-compose.yml",
+    "Dockerfile",
+    "requirements.txt",
+    "\u0627\u0644\u0645\u064a\u0632\u0627\u0646\u064a\u0629 \u0627\u0644\u0639\u0645\u0648\u0645\u064a\u0629 2026.xlsx",
+    "\u062d\u0633\u0627\u0628\u0627\u062a \u062e\u0627\u0635\u0647.xlsx",
+    "\u0645\u0628\u064a\u0639\u0627\u062a 6 \u0627\u0643\u062a\u0648\u0628\u0631 2026.xlsx",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u062f\u0642\u0647\u0644\u064a\u0647 2026.xlsx",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u0634\u0631\u0642\u064a\u0629 2026.xlsx",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u063a\u0631\u0628\u064a\u0629  2026.xlsx",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u0641\u064a\u0648\u0645 2026.xlsx"
+  ],
+  "default_off": true,
+  "disposable_database_removed": "dms_cycle_test_f31d68f51fa74ded9a39b2d4c57bf201",
+  "parent_validation_database_access": false,
+  "scope": "Current candidate code only; historical isolation incident/default DB recovery not waived."
+}

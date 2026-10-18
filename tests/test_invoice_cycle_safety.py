@@ -1,0 +1,631 @@
+"""Financial acceptance: persisted API results, real races and late rollback."""
+
+from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
+from threading import Barrier
+from uuid import UUID, uuid4
+
+import pytest
+from alembic.config import Config
+from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError
+from test_invoice_cycle_controls import scalar, sql, state
+
+from alembic import command
+from app.db import engine
+
+pytest_plugins = ["test_invoice_cycle_controls"]
+
+
+def balance(env):
+    return scalar(
+        "SELECT COALESCE(SUM(debit-credit),0) FROM finance.ar_entry WHERE customer_id=:c",
+        c=env.ids["customer"],
+    )
+
+
+def test_mixed_vat_discount_batch_cycle_persists_originals(life):
+    batch = uuid4()
+    sql(
+        "INSERT INTO inventory.batch_record(id,product_id,warehouse_id,batch_no,expiry_date) VALUES (:i,:p,:w,:n,:d)",
+        i=batch,
+        p=life.ids["product"],
+        w=life.ids["warehouse"],
+        n=uuid4().hex,
+        d=datetime.now(UTC).astimezone().date() + timedelta(days=365),
+    )
+    sql(
+        "INSERT INTO inventory.stock_balance(warehouse_id,product_id,batch_id,quantity) VALUES (:w,:p,:b,10)",
+        w=life.ids["warehouse"],
+        p=life.ids["product"],
+        b=batch,
+    )
+    draft = life.draft(
+        lines=[
+            {
+                "product_id": str(life.ids["product"]),
+                "batch_id": str(batch),
+                "quantity": "2",
+                "discount_pct": "10",
+            },
+            {"product_id": str(life.ids["product2"]), "quantity": "1"},
+        ]
+    )
+    posted = life.post(draft)
+    assert tuple(
+        Decimal(posted[k]) for k in ("grand_total", "total_net", "vat_amount")
+    ) == (Decimal("310.20"), Decimal("280.00"), Decimal("30.20"))
+    assert balance(life) == Decimal("310.20")
+    assert scalar(
+        "SELECT quantity FROM inventory.stock_balance WHERE batch_id=:b", b=batch
+    ) == Decimal(8)
+    # Master-price changes must never rewrite a posted tax snapshot or its compensation.
+    sql(
+        "UPDATE master_data.master_product SET base_price=999,vat_rate=0 WHERE id=:p",
+        p=life.ids["product"],
+    )
+    receipts = [life.collect(posted, amount).json() for amount in ("100.00", "210.20")]
+    assert balance(life) == 0
+    assert life.reverse(posted).status_code == 409
+    for receipt in receipts:
+        assert life.void(receipt).status_code == 200
+    assert balance(life) == Decimal("310.20")
+    reversed_response = life.reverse(posted)
+    assert reversed_response.status_code == 200, reversed_response.text
+    reversed_invoice = reversed_response.json()
+    assert reversed_invoice["lines"] == posted["lines"]
+    for key in ("grand_total", "total_net", "vat_amount", "posted_at", "posted_by"):
+        assert reversed_invoice[key] == posted[key]
+    assert (
+        scalar(
+            "SELECT quantity FROM inventory.stock_balance WHERE batch_id=:b", b=batch
+        )
+        == 10
+    )
+    assert balance(life) == 0
+    assert (
+        scalar(
+            "SELECT count(*) FROM finance.ar_entry WHERE invoice_id=:i",
+            i=UUID(posted["id"]),
+        )
+        == 6
+    )
+    assert (
+        scalar(
+            "SELECT count(*) FROM inventory.stock_movement WHERE source_id=:i",
+            i=UUID(posted["id"]),
+        )
+        == 4
+    )
+    audits = sql(
+        "SELECT action,old_values,new_values FROM audit.audit_log WHERE entity_id=:i ORDER BY created_at",
+        i=UUID(posted["id"]),
+    )
+    assert [row["action"] for row in audits] == ["created", "posted", "reversed"]
+    assert audits[1]["old_values"]["posting_status"] == "Draft"
+    assert audits[2]["new_values"]["posting_status"] == "Voided"
+    assert (
+        scalar(
+            "SELECT count(*) FROM audit.audit_log WHERE entity_type='payment_receipt'"
+        )
+        == 4
+    )
+    assert life.reverse(reversed_invoice).status_code == 409
+    assert (
+        life.client.post(
+            f"/invoices/{posted['id']}/post", headers=life.auth["owner"]
+        ).status_code
+        == 409
+    )
+    assert life.collect(reversed_invoice, "1").status_code == 409
+    # Posted-then-voided history is visible to an assigned auditor, not a draft.
+    for receipt in receipts:
+        assert (
+            life.client.get(
+                f"/collections/{receipt['id']}", headers=life.auth["read_only_auditor"]
+            ).status_code
+            == 200
+        )
+    assert (
+        life.client.get(
+            f"/invoices/{life.draft()['id']}", headers=life.auth["read_only_auditor"]
+        ).status_code
+        == 404
+    )
+
+
+@pytest.mark.parametrize("operation", ["post", "reverse", "collect", "void"])
+@pytest.mark.parametrize("failure", ["ar", "audit"])
+def test_late_failure_rolls_back_entire_transaction(
+    life, monkeypatch, operation, failure
+):
+    import app.sales.router as sales_router
+    from app.finance import ar, payment_router
+
+    invoice = life.draft() if operation == "post" else life.post()
+    receipt = life.collect(invoice).json() if operation == "void" else None
+    before = state(life)
+    if failure == "ar":
+        name = "record_sale" if operation == "post" else "record_entry"
+        original = getattr(ar, name)
+        target = ar
+    else:
+        name = "log_audit"
+        target = sales_router if operation in {"post", "reverse"} else payment_router
+        original = target.log_audit
+
+    def fail_after_write(*args, **kwargs):
+        original(*args, **kwargs)
+        raise RuntimeError("synthetic late transaction failure")
+
+    monkeypatch.setattr(target, name, fail_after_write)
+    if operation == "post":
+        response = life.client.post(
+            f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
+        )
+    elif operation == "reverse":
+        response = life.reverse(invoice)
+    elif operation == "collect":
+        response = life.collect(invoice)
+    else:
+        response = life.void(receipt)
+    assert response.status_code == 500
+    assert state(life) == before
+
+
+def test_later_line_insufficient_stock_undoes_earlier_deduction(life, monkeypatch):
+    from app.inventory import service
+
+    products = sorted((life.ids["product"], life.ids["product2"]), key=str)
+    invoice = life.draft(
+        lines=[
+            {"product_id": str(p), "quantity": q}
+            for p, q in zip(products, ("1", "999"), strict=True)
+        ]
+    )
+    before = state(life)
+    applied = []
+    original = service.record_movement
+
+    def record(*args, **kwargs):
+        result = original(*args, **kwargs)
+        applied.append(kwargs["product_id"])
+        return result
+
+    monkeypatch.setattr(service, "record_movement", record)
+    response = life.client.post(
+        f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
+    )
+    assert response.status_code == 409
+    assert applied == [products[0]]
+    assert state(life) == before
+
+
+@pytest.mark.parametrize("operation", ["post", "reverse", "collect", "void"])
+@pytest.mark.parametrize(
+    "role",
+    [
+        "owner",
+        "finance",
+        "sales_manager",
+        "district_manager",
+        "medical_rep",
+        "read_only_auditor",
+        "warehouse_staff",
+        "admin",
+    ],
+)
+def test_mutation_role_matrix(life, operation, role):
+    invoice = life.draft() if operation == "post" else life.post()
+    receipt = life.collect(invoice).json() if operation == "void" else None
+    before = state(life)
+    auth = life.auth[role]
+    if operation == "post":
+        response = life.client.post(f"/invoices/{invoice['id']}/post", headers=auth)
+        allowed = role in {"owner", "finance", "sales_manager", "district_manager"}
+    elif operation == "reverse":
+        response = life.client.post(
+            f"/invoices/{invoice['id']}/reverse",
+            headers=auth,
+            json={"version": invoice["version"], "reason_id": str(life.ids["reason"])},
+        )
+        allowed = role in {"owner", "finance"}
+    elif operation == "collect":
+        response = life.client.post(
+            "/collections",
+            headers=auth,
+            json={
+                "invoice_id": invoice["id"],
+                "invoice_version": invoice["version"],
+                "receipt_no": "role-test",
+                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
+                "amount": "1.00",
+                "method": "cash",
+            },
+        )
+        allowed = role in {"owner", "finance"}
+    else:
+        response = life.client.post(
+            f"/collections/{receipt['id']}/void",
+            headers=auth,
+            json={"version": receipt["version"], "reason_id": str(life.ids["reason"])},
+        )
+        allowed = role in {"owner", "finance"}
+    assert response.status_code in ({200, 201} if allowed else {403, 404}), (
+        response.text
+    )
+    if not allowed:
+        assert state(life) == before
+
+
+@pytest.mark.parametrize("operation", ["post", "reverse", "collect", "void"])
+@pytest.mark.parametrize("revoke", ["territory", "inactive", "owner_flag"])
+def test_permission_revocation_and_disabled_accounts(life, operation, revoke):
+    invoice = life.draft() if operation == "post" else life.post()
+    receipt = life.collect(invoice).json() if operation == "void" else None
+    role = "owner" if revoke == "owner_flag" else "finance"
+    if revoke == "territory":
+        sql("DELETE FROM platform.user_territory WHERE user_id=:u", u=life.ids[role])
+    elif revoke == "inactive":
+        sql(
+            "UPDATE platform.platform_user SET is_active=false WHERE id=:u",
+            u=life.ids[role],
+        )
+    else:
+        sql(
+            "UPDATE platform.platform_user SET is_owner=false WHERE id=:u",
+            u=life.ids[role],
+        )
+    auth = life.auth[role]
+    before = state(life)
+    if operation == "post":
+        response = life.client.post(f"/invoices/{invoice['id']}/post", headers=auth)
+    elif operation == "reverse":
+        response = life.client.post(
+            f"/invoices/{invoice['id']}/reverse",
+            json={"version": invoice["version"], "reason_id": str(life.ids["reason"])},
+            headers=auth,
+        )
+    elif operation == "collect":
+        response = life.client.post(
+            "/collections",
+            json={
+                "invoice_id": invoice["id"],
+                "invoice_version": invoice["version"],
+                "receipt_no": "forged",
+                "receipt_date": datetime.now(UTC).astimezone().date().isoformat(),
+                "amount": "1",
+                "method": "cash",
+            },
+            headers=auth,
+        )
+    else:
+        response = life.client.post(
+            f"/collections/{receipt['id']}/void",
+            json={"version": receipt["version"], "reason_id": str(life.ids["reason"])},
+            headers=auth,
+        )
+    expected = {"territory": 404, "inactive": 401, "owner_flag": 403}[revoke]
+    assert response.status_code == expected, response.text
+    assert state(life) == before
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("amount", "NaN"),
+        ("amount", "Infinity"),
+        ("amount", "-1"),
+        ("amount", "0"),
+        ("amount", "1.001"),
+        ("method", "crypto"),
+        ("receipt_no", " "),
+        ("customer_id", str(uuid4())),
+        ("branch_id", str(uuid4())),
+        ("created_by", str(uuid4())),
+        ("status", "Voided"),
+        ("invoice_version", True),
+    ],
+)
+def test_receipt_rejects_malformed_or_forged_fields(life, field, value):
+    invoice = life.post()
+    before = state(life)
+    response = life.collect(invoice, **{field: value})
+    assert response.status_code == 422, response.text
+    assert state(life) == before
+
+
+@pytest.mark.parametrize("operation", ["post", "reverse", "collect", "void"])
+def test_gate_off_blocks_every_real_mutation(life, monkeypatch, operation):
+    import app.finance.payment_router as pr
+    import app.sales.router as sr
+
+    invoice = life.draft() if operation == "post" else life.post()
+    receipt = life.collect(invoice).json() if operation == "void" else None
+    monkeypatch.setattr(sr, "POSTING_ENABLED", False)
+    monkeypatch.setattr(pr, "POSTING_ENABLED", False)
+    before = state(life)
+    if operation == "post":
+        response = life.client.post(
+            f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
+        )
+    elif operation == "reverse":
+        response = life.reverse(invoice)
+    elif operation == "collect":
+        response = life.collect(invoice)
+    else:
+        response = life.void(receipt)
+    assert response.status_code == 409
+    assert state(life) == before
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "UPDATE sales.sales_invoice_line SET quantity=99 WHERE invoice_id=:i",
+        "DELETE FROM sales.sales_invoice_line WHERE invoice_id=:i",
+        "DELETE FROM sales.sales_invoice WHERE id=:i",
+        "UPDATE inventory.stock_movement SET quantity=99 WHERE source_id=:i",
+        "DELETE FROM inventory.stock_movement WHERE source_id=:i",
+        "UPDATE finance.ar_entry SET debit=999 WHERE invoice_id=:i",
+        "DELETE FROM finance.ar_entry WHERE invoice_id=:i",
+        "UPDATE finance.payment_receipt SET amount=1 WHERE invoice_id=:i",
+        "DELETE FROM finance.payment_receipt WHERE invoice_id=:i",
+    ],
+)
+def test_raw_financial_history_is_immutable(life, mutation):
+    invoice = life.post()
+    assert life.collect(invoice).status_code == 201
+    before = state(life)
+    with pytest.raises(DBAPIError):
+        sql(mutation, i=UUID(invoice["id"]))
+    assert state(life) == before
+
+
+def race(life, monkeypatch, calls):
+    import app.finance.payment_router as pr
+    import app.sales.router as sr
+
+    barrier = Barrier(2)
+    # Surface actual server exceptions instead of hiding a failed race behind HTTP 500.
+    monkeypatch.setattr(life.client._transport, "raise_server_exceptions", True)
+    pids = set()
+    original = sr._invoice
+
+    def synchronized(db, user, invoice_id, *, lock=False):
+        if lock:
+            pids.add(db.execute(text("SELECT pg_backend_pid()")).scalar_one())
+            barrier.wait(timeout=10)
+        return original(db, user, invoice_id, lock=lock)
+
+    monkeypatch.setattr(sr, "_invoice", synchronized)
+    monkeypatch.setattr(pr, "_invoice", synchronized)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(call) for call in calls]
+        responses = [future.result(timeout=20) for future in futures]
+    assert len(pids) == 2, (
+        "Concurrency must use two independent PostgreSQL transactions"
+    )
+    return responses
+
+
+@pytest.mark.parametrize(
+    "operation", ["post", "reverse", "collect", "void", "stock", "reverse_collect"]
+)
+def test_concurrent_financial_operations(life, monkeypatch, operation):
+    invoice = life.draft() if operation in {"post", "stock"} else life.post()
+    if operation == "post":
+        calls = [
+            lambda: life.client.post(
+                f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
+            )
+        ] * 2
+    elif operation == "stock":
+        sql(
+            "UPDATE inventory.stock_balance SET quantity=3 WHERE product_id=:p",
+            p=life.ids["product"],
+        )
+        second = life.draft()
+        calls = [
+            lambda: life.client.post(
+                f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
+            ),
+            lambda: life.client.post(
+                f"/invoices/{second['id']}/post", headers=life.auth["owner"]
+            ),
+        ]
+    elif operation == "reverse":
+        calls = [lambda: life.reverse(invoice)] * 2
+    elif operation == "collect":
+        calls = [lambda: life.collect(invoice, "150.00")] * 2
+    elif operation == "void":
+        receipt = life.collect(invoice).json()
+        calls = [lambda: life.void(receipt)] * 2
+    else:
+        calls = [lambda: life.reverse(invoice), lambda: life.collect(invoice)]
+    responses = race(life, monkeypatch, calls)
+    codes = sorted(response.status_code for response in responses)
+    assert codes in ([200, 409], [201, 409]), [r.text for r in responses]
+    if operation in {"post", "stock"}:
+        assert (
+            scalar("SELECT count(*) FROM finance.ar_entry WHERE entry_type='invoice'")
+            == 1
+        )
+        expected_stock = Decimal(1) if operation == "stock" else Decimal(8)
+        assert (
+            scalar(
+                "SELECT quantity FROM inventory.stock_balance WHERE product_id=:p",
+                p=life.ids["product"],
+            )
+            == expected_stock
+        )
+    elif operation == "reverse":
+        assert balance(life) == 0
+        assert (
+            scalar(
+                "SELECT count(*) FROM finance.ar_entry WHERE reverses_entry_id IS NOT NULL"
+            )
+            == 1
+        )
+    elif operation == "collect":
+        assert balance(life) == Decimal("78.00")
+        assert scalar("SELECT count(*) FROM finance.payment_receipt") == 1
+    elif operation == "void":
+        assert balance(life) == Decimal("228.00")
+        assert (
+            scalar(
+                "SELECT count(*) FROM finance.ar_entry WHERE reverses_entry_id IS NOT NULL"
+            )
+            == 1
+        )
+    else:
+        status = scalar(
+            "SELECT posting_status FROM sales.sales_invoice WHERE id=:i",
+            i=UUID(invoice["id"]),
+        )
+        assert (status, balance(life)) in {
+            ("Posted", Decimal(128)),
+            ("Voided", Decimal(0)),
+        }
+
+
+def test_populated_downgrade_refuses_without_losing_history(life):
+    invoice = life.post()
+    assert life.collect(invoice).status_code == 201
+    before = state(life)
+    cfg = Config("alembic.ini")
+    cfg.set_main_option(
+        "sqlalchemy.url",
+        engine.url.render_as_string(hide_password=False).replace("%", "%%"),
+    )
+    with pytest.raises(RuntimeError, match="history must be preserved"):
+        command.downgrade(cfg, "0009_sales_source_warehouse")
+    assert state(life) == before
+    assert (
+        scalar("SELECT version_num FROM alembic_version") == "0010_invoice_collections"
+    )
+
+
+@pytest.mark.parametrize("operation", ["reverse", "collect", "void"])
+def test_stale_financial_versions_are_rejected(life, operation):
+    invoice = life.post()
+    receipt = life.collect(invoice).json() if operation == "void" else None
+    before = state(life)
+    if operation == "reverse":
+        response = life.reverse(invoice, version=invoice["version"] + 1)
+    elif operation == "collect":
+        response = life.collect(invoice, invoice_version=invoice["version"] + 1)
+    else:
+        response = life.void(receipt, version=receipt["version"] + 1)
+    assert response.status_code == 409
+    assert state(life) == before
+
+
+@pytest.mark.parametrize("operation", ["reverse", "void"])
+@pytest.mark.parametrize("invalid", ["inactive", "wrong_category", "unknown"])
+def test_reversals_require_valid_reasons(life, operation, invalid):
+    invoice = life.post()
+    receipt = life.collect(invoice).json() if operation == "void" else None
+    reason = life.ids["reason"]
+    if invalid == "inactive":
+        sql("UPDATE audit.reason_code SET is_active=false WHERE id=:i", i=reason)
+    elif invalid == "wrong_category":
+        sql("UPDATE audit.reason_code SET category='unrelated' WHERE id=:i", i=reason)
+    else:
+        reason = uuid4()
+    before = state(life)
+    response = (
+        life.reverse(invoice, reason_id=str(reason))
+        if operation == "reverse"
+        else life.void(receipt, reason_id=str(reason))
+    )
+    assert response.status_code == 422
+    assert state(life) == before
+
+
+@pytest.mark.parametrize("reference", ["customer", "warehouse", "product"])
+def test_posting_rejects_deactivated_references(life, reference):
+    invoice = life.draft()
+    table = {
+        "customer": "master_customer",
+        "warehouse": "master_warehouse",
+        "product": "master_product",
+    }[reference]
+    sql(
+        f"UPDATE master_data.{table} SET is_active=false WHERE id=:i",
+        i=life.ids[reference],
+    )
+    before = state(life)
+    response = life.client.post(
+        f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
+    )
+    assert response.status_code in {404, 409}
+    assert state(life) == before
+
+
+def test_shared_source_route_revalidated_without_expanding_inventory_scope(life):
+    sql(
+        "INSERT INTO inventory.branch_warehouse VALUES (:b,:w)",
+        b=life.ids["other_branch"],
+        w=life.ids["warehouse"],
+    )
+    invoice = life.draft(
+        branch_id=str(life.ids["other_branch"]),
+        customer_id=str(life.ids["other_customer"]),
+    )
+    sql(
+        "DELETE FROM inventory.branch_warehouse WHERE branch_id=:b",
+        b=life.ids["other_branch"],
+    )
+    before = state(life)
+    response = life.client.post(
+        f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
+    )
+    assert response.status_code == 409
+    assert state(life) == before
+    sql(
+        "INSERT INTO inventory.branch_warehouse VALUES (:b,:w)",
+        b=life.ids["other_branch"],
+        w=life.ids["warehouse"],
+    )
+    posted = life.post(invoice)
+    assert posted["branch_id"] == str(life.ids["other_branch"])
+    assert scalar(
+        "SELECT debit FROM finance.ar_entry WHERE customer_id=:c",
+        c=life.ids["other_customer"],
+    ) == Decimal(posted["grand_total"])
+    assert balance(life) == 0
+
+
+def test_managers_receipt_reads_require_branch_and_territory(life):
+    invoice = life.post()
+    receipt = life.collect(invoice).json()
+    auth = life.auth["sales_manager"]
+    response = life.client.get("/collections", headers=auth)
+    assert response.status_code == 200, response.text
+    assert [row["id"] for row in response.json()] == [receipt["id"]]
+    sql(
+        "DELETE FROM platform.user_branch WHERE user_id=:u", u=life.ids["sales_manager"]
+    )
+    assert life.client.get("/collections", headers=auth).json() == []
+    assert (
+        life.client.get(f"/collections/{receipt['id']}", headers=auth).status_code
+        == 404
+    )
+
+
+def test_posting_rejects_inconsistent_draft_snapshot(life):
+    invoice = life.draft()
+    sql(
+        "UPDATE sales.sales_invoice_line SET vat_amount=0 WHERE invoice_id=:i",
+        i=UUID(invoice["id"]),
+    )
+    before = state(life)
+    assert (
+        life.client.post(
+            f"/invoices/{invoice['id']}/post", headers=life.auth["owner"]
+        ).status_code
+        == 409
+    )
+    assert state(life) == before

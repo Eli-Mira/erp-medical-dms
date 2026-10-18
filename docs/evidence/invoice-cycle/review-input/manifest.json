@@ -1,0 +1,244 @@
+{
+  "base": "f85b8f964b5b4b54139cbdf614e37a91bd6a45a4",
+  "files": {
+    "app/finance/ar.py": {
+      "sha256": "96ed2b97020ea01ca9553f5d228a30dcc4272f3d5f77b9692aac0f9cc8fc30ad",
+      "bytes": 3768,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "73909e1653aff6986b6865aa967fafa87024c9a394af21ef6532a6f9d3df00b3",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\app\\finance\\ar.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\app__finance__ar.py.diff"
+    },
+    "app/finance/payments.py": {
+      "sha256": "c2b68d33390e32ed12c4d075913a3c58d3c9477054db7987b848690a5952efb3",
+      "bytes": 6447,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "d08a6b8dc35fead73f295ccea7fc90c21ce44b51a982d3438f070271a0a9ea90",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\app\\finance\\payments.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\app__finance__payments.py.diff"
+    },
+    "app/finance/payment_router.py": {
+      "sha256": "f0a661fa139200690907349535533f1a1ef80c441f1e814a5f82d15de36cc3e2",
+      "bytes": 8044,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "9a5b1b3263a8d6f2e454d51ffc2657ad9fdec20426e8ac6883ed77e6c538e9e1",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\app\\finance\\payment_router.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\app__finance__payment_router.py.diff"
+    },
+    "app/finance/schemas.py": {
+      "sha256": "b2c34b53c5ab4c9d2375fd5827ac464dc24b4e7a84175f83de21c23a449fb52d",
+      "bytes": 2657,
+      "hunks": 2,
+      "replay_verified": true,
+      "diff_sha256": "42b0cdee90366bea88d26fe88026c17ced4365b33ac3ac1b0cdc72fc3bcb677d",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\app\\finance\\schemas.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\app__finance__schemas.py.diff"
+    },
+    "app/inventory/service.py": {
+      "sha256": "ed21dfc6a0c9b71838fca1bb19837731855d4c662657afd2fd199e8c7526b468",
+      "bytes": 6486,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "766a809bc8160bdfd4ec51a59717c8fe99ffe0c1426ec84e3acd61a6372afd2d",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\app\\inventory\\service.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\app__inventory__service.py.diff"
+    },
+    "app/main.py": {
+      "sha256": "d7ff95a482886457f273b7249500f29d014bcd809cc9cb067b4ecfbd28cdb142",
+      "bytes": 1331,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "c7a488630810a59c58f39856cc419060b78b029a36f8673cf165cca55e32dd99",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\app\\main.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\app__main.py.diff"
+    },
+    "app/sales/router.py": {
+      "sha256": "4a8e0fa9c3e9b7a799a9a218a1070a2b7cf2692fe383df53bb95a76953ed569c",
+      "bytes": 17429,
+      "hunks": 5,
+      "replay_verified": true,
+      "diff_sha256": "a4f419230eaa21d3a896d222bf32e122c757756bc075e64b615b8f688ecb2a4b",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\app\\sales\\router.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\app__sales__router.py.diff"
+    },
+    "app/sales/service.py": {
+      "sha256": "4c63795fa59ba22c44974aa4590e79753e7d2e580beb7437b36cbd2c7fd0ac67",
+      "bytes": 7567,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "d64780ff5248022bb4804dcd9a54b6c0ccead4b4e15a3b45c5ad80301ea73041",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\app\\sales\\service.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\app__sales__service.py.diff"
+    },
+    "tests/conftest.py": {
+      "sha256": "fe3889c391e29bfc884c05086a88d11311663268db78c892dd70a2580be0f358",
+      "bytes": 4604,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "13872a6c97f4549af448753895f1c145b40f0ddbf0e1987f7e9be3717c226171",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\tests\\conftest.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\tests__conftest.py.diff"
+    },
+    "tests/test_collections.py": {
+      "sha256": "d8c17365e6b2f45b1814bd5ed449a2a4ef41897fcfcc0244cc8bea68cd3fd4f0",
+      "bytes": 20902,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "ea77659fd8c66ded5def0441a5df992a05643e67b561bda17823afc25ac1493f",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\tests\\test_collections.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\tests__test_collections.py.diff"
+    },
+    "tests/test_invoice_cycle.py": {
+      "sha256": "f11e898c23f9c5813976905f018a22c21acf32da85cf22d28d3fc1b4c6750bd5",
+      "bytes": 17814,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "f3fc0c15be91f87aa64105cbc64856837be5a38a531560a28f25ef02fef59f4a",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\tests\\test_invoice_cycle.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\tests__test_invoice_cycle.py.diff"
+    },
+    "tests/test_invoice_cycle_controls.py": {
+      "sha256": "7186f88321b87fbe1d894497ba61b4553ba94bec1e3e2e15ba0297b181a7d5a8",
+      "bytes": 10803,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "5612360b99bca27c8c64c211b9f900b17cfe3dfa4d2d1e219f584f9e918d8882",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\tests\\test_invoice_cycle_controls.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\tests__test_invoice_cycle_controls.py.diff"
+    },
+    "tests/test_invoice_cycle_safety.py": {
+      "sha256": "9599081f1f7ca1933d2f3dee90f5ffaa69284276b20e160e43f9dc4061d148f1",
+      "bytes": 22559,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "7a389a43dddee8adc7d7609c0839418a1364d569e43a5146ac806e29e8c54379",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\tests\\test_invoice_cycle_safety.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\tests__test_invoice_cycle_safety.py.diff"
+    },
+    "tests/test_invoice_reversal.py": {
+      "sha256": "312e7542a571d0cebd16b07a0037b8768612533e1458ec1532b84d8bcd3cf96c",
+      "bytes": 14610,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "cf7175b4ad087e279cccb58a0ca6f8ef107bfa3f3f7bb27ddfaf5eafbf5e46dc",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\tests\\test_invoice_reversal.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\tests__test_invoice_reversal.py.diff"
+    },
+    "tests/test_posting_flag.py": {
+      "sha256": "ad877c642b6d356dff12f1ad62ef6186fab90dc3fc88e214335f38a65e371ec6",
+      "bytes": 3643,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "cd455548993ec53ad444442e87c9b735c85cde5b2ae597c5ad4d5cef8fd8fc39",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\tests\\test_posting_flag.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\tests__test_posting_flag.py.diff"
+    },
+    "alembic/versions/0010_invoice_collections.py": {
+      "sha256": "91d5695e2611c07ec3cc8a1168df658cfc37dd90bb68ce4447adca2ce3507051",
+      "bytes": 9360,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "f75d5f770c4344c842759d47899c4aeb6a86d3e94032da11b2dfbba85fa841d3",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\alembic\\versions\\0010_invoice_collections.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\alembic__versions__0010_invoice_collections.py.diff"
+    },
+    "scripts/verify_invoice_cycle.py": {
+      "sha256": "b6cf7c038bace7364fbba6cb14bca12e3476034bf554c6726b3621356a6bbf72",
+      "bytes": 7946,
+      "hunks": 1,
+      "replay_verified": true,
+      "diff_sha256": "1822b5d3a9f4868ea9e7c2d21ea8bf0aa45e311cf154ad321e2fd8c554e7057f",
+      "source": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\files\\scripts\\verify_invoice_cycle.py",
+      "diff": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\diffs\\scripts__verify_invoice_cycle.py.diff"
+    }
+  },
+  "proof": {
+    "final-full-suite": {
+      "run": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\final-full-suite\\run.json",
+      "sha256": "ca478b2a76f83ec541faae181ecafd5fd4f6c07698d7586d7abe33bf34fa5c4c",
+      "counts": {
+        "passed": 315,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      }
+    },
+    "final-repeat-cycle-races": {
+      "run": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\final-repeat-cycle-races\\run.json",
+      "sha256": "bd86340b97e1e93ebefdefe46b65fab10ace69a9d9fb64147ecd55fd8d531175",
+      "counts": {
+        "passed": 16,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      }
+    }
+  },
+  "context": {
+    "app/sales/repo.py": {
+      "path": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\context\\app\\sales\\repo.py",
+      "sha256": "3f863eafcceb14d32e5c52fa4b810035316214699bfb54703f209afca8709e62"
+    },
+    "app/sales/calc.py": {
+      "path": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\context\\app\\sales\\calc.py",
+      "sha256": "d30623b1e77ab38ea8651ec81cb13c5074b9e6d621148b6d83a296cdfc2ea16b"
+    },
+    "app/sales/schemas.py": {
+      "path": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\context\\app\\sales\\schemas.py",
+      "sha256": "5e43bb643d92c6d2429463c6930d49ab3fc10e602fc68495d34eb49e094ab7b7"
+    },
+    "app/auth/router.py": {
+      "path": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\context\\app\\auth\\router.py",
+      "sha256": "d7dbe8017252256eaa197ed1585782ee47a247de3e29ca7391f36e41708c5f67"
+    },
+    "app/finance/router.py": {
+      "path": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\context\\app\\finance\\router.py",
+      "sha256": "2d731e5bf4dd873318b380fe5cf58dea99a4319498f9f81d405bac612a5d2145"
+    },
+    "app/config.py": {
+      "path": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\context\\app\\config.py",
+      "sha256": "895535de20d97fe05b35934ea87ff8c051131cb62f0051000419c1160978b6da"
+    },
+    "docs/milestones/INVOICE_COLLECTION.md": {
+      "path": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\context\\docs\\milestones\\INVOICE_COLLECTION.md",
+      "sha256": "7932df7e634b8085b22238d37047e44b461a533f547f727fe516c812f3e8d516"
+    },
+    "docs/evidence/invoice-cycle/PARENT_REPORT.md": {
+      "path": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\context\\docs\\evidence\\invoice-cycle\\PARENT_REPORT.md",
+      "sha256": "ee701c6561a78ef2cdfcf5782d711369ad5f52b63960c6380aa368d8cab2d0d9"
+    },
+    "docs/evidence/invoice-cycle/DEFAULT_DB_INCIDENT.json": {
+      "path": "C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\review-input\\context\\docs\\evidence\\invoice-cycle\\DEFAULT_DB_INCIDENT.json",
+      "sha256": "891d6f53472c0b079ff5bf43b7e82549227e728b5909cc902d282e691f53f97e"
+    }
+  },
+  "protected_unchanged": {
+    ".env.dev": "b4ae1a085a3b43d186e65a4c318049ece0ca055d4fa63a62ab1702094c66f1ae",
+    "app/config.py": "895535de20d97fe05b35934ea87ff8c051131cb62f0051000419c1160978b6da",
+    "app/db.py": "854cd21a826380ab725cb4fa618a15db60bc1f8bafd7fbfc965e84cd48f40c1e",
+    "docker-compose.yml": "96712294390bd12be484a69e605dccc3d474ba077eaa4a228ba421f43b23833e",
+    "Dockerfile": "f23cbc4bbc58f90fff4d47a669f726ca7c0bc4506d44dd2b8b52b95657d0e10f",
+    "requirements.txt": "3f11fc24159b9f2867d01d70faae5c988584aa72e1ba2b53015593ed1bd2da63",
+    "\u0627\u0644\u0645\u064a\u0632\u0627\u0646\u064a\u0629 \u0627\u0644\u0639\u0645\u0648\u0645\u064a\u0629 2026.xlsx": "d4a64fb777ceaa0e4f1398cdf057e3548e1771baac36daa930cc93623f48b884",
+    "\u062d\u0633\u0627\u0628\u0627\u062a \u062e\u0627\u0635\u0647.xlsx": "37dac95c617ed6c69e2bd89eb944fd4681ff7d4a2945814ec9c8b7c985f19c37",
+    "\u0645\u0628\u064a\u0639\u0627\u062a 6 \u0627\u0643\u062a\u0648\u0628\u0631 2026.xlsx": "abf2b8163d33cae49d1a86572c593041faf59a166322cf5c8cf9b3f67b64cb7f",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u062f\u0642\u0647\u0644\u064a\u0647 2026.xlsx": "497f382926f18d5688346c2cf2b4d74fd9f2def379f143550385ca04d16277ca",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u0634\u0631\u0642\u064a\u0629 2026.xlsx": "06a0fbf918215b1aefed4735085ceceeedcc487256aa2dd5e4e2fad4aa8b735d",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u063a\u0631\u0628\u064a\u0629  2026.xlsx": "57a14aaa84a401025d7e605a2c24a5ade4452dce49f1da021668a6886ea2945c",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u0641\u064a\u0648\u0645 2026.xlsx": "9824a300452c85030cbe17fa14964bcef11ecddf40bad962aff29055b5f94b08"
+  },
+  "lint": {
+    "exit_code": 1,
+    "counts": 145,
+    "baseline_count": 169,
+    "new_findings": 0
+  },
+  "raw_trace": {
+    "private_path": "C:\\Users\\emadg\\AppData\\Local\\hermes\\audits\\medical-dms\\invoice-cycle-20261017\\worker-trace.txt",
+    "sha256": "02093da36453f4594978cb9d8b58608120dcb0db19e05a38a2e326e2b583841e",
+    "raw_in_git": false
+  }
+}

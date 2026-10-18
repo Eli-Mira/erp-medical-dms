@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="3" time="0.675" timestamp="2026-10-17T20:37:35.464176+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_invoice_cycle" name="test_full_cycle_invoice_post_collect_void_reverse" time="0.250" /><testcase classname="tests.test_invoice_cycle" name="test_concurrent_collection_rejects_overpayment" time="0.078"><failure message="Failed: DID NOT RAISE Exception">tests\test_invoice_cycle.py:284: in test_concurrent_collection_rejects_overpayment
+    with pytest.raises(Exception):  # IntegrityError or app-level 409 via API
+E   Failed: DID NOT RAISE Exception</failure></testcase><testcase classname="tests.test_invoice_cycle" name="test_flag_off_blocks_all_mutations" time="0.040"><failure message="NameError: name 'orig_cfg' is not defined">tests\test_invoice_cycle.py:329: in test_flag_off_blocks_all_mutations
+    cfg.POSTING_ENABLED = orig_cfg
+                          ^^^^^^^^
+E   NameError: name 'orig_cfg' is not defined</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,27 @@
+.F.F.F                                                                   [100%]
+================================== FAILURES ===================================
+________________ test_reversal_requires_active_reversal_reason ________________
+tests\test_invoice_reversal.py:169: in test_reversal_requires_active_reversal_reason
+    assert resp.status_code == 422
+E   assert 409 == 422
+E    +  where 409 = <Response [409 Conflict]>.status_code
+___________________ test_reverse_endpoint_owner_and_finance ___________________
+tests\test_invoice_reversal.py:223: in test_reverse_endpoint_owner_and_finance
+    post_resp = client.post(f"/invoices/{invoice['id']}/post", headers=headers("finance_user"))
+                                         ^^^^^^^^^^^^^
+E   KeyError: 'id'
+___________ test_reversal_preserves_original_vat_and_line_snapshots ___________
+tests\test_invoice_reversal.py:298: in test_reversal_preserves_original_vat_and_line_snapshots
+    assert reversed_inv["grand_total"] == "333.00"
+E   AssertionError: assert Decimal('333.00') == '333.00'
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_invoice_reversal.py::test_reversal_requires_active_reversal_reason
+FAILED tests/test_invoice_reversal.py::test_reverse_endpoint_owner_and_finance
+FAILED tests/test_invoice_reversal.py::test_reversal_preserves_original_vat_and_line_snapshots
+3 failed, 3 passed, 1 warning in 0.79s

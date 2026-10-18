@@ -1,0 +1,1672 @@
+{
+  "exit_code": 1,
+  "diagnostics": [
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 29,
+        "row": 154
+      },
+      "filename": "app/finance/payments.py",
+      "fix": null,
+      "location": {
+        "column": 17,
+        "row": 154
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 154,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "SIM102",
+      "end_location": {
+        "column": 11,
+        "row": 70
+      },
+      "filename": "app/sales/router.py",
+      "fix": null,
+      "location": {
+        "column": 5,
+        "row": 66
+      },
+      "message": "Use a single `if` statement instead of nested `if` statements",
+      "name": "collapsible-if",
+      "noqa_row": 66,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/collapsible-if"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 29,
+        "row": 131
+      },
+      "filename": "app/sales/service.py",
+      "fix": null,
+      "location": {
+        "column": 17,
+        "row": 131
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 131,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "PLW1510",
+      "end_location": {
+        "column": 32,
+        "row": 87
+      },
+      "filename": "scripts/verify_invoice_cycle.py",
+      "fix": {
+        "applicability": "displayonly",
+        "edits": [
+          {
+            "content": "check=False, ",
+            "end_location": {
+              "column": 39,
+              "row": 87
+            },
+            "location": {
+              "column": 39,
+              "row": 87
+            }
+          }
+        ],
+        "message": "Add explicit `check=False`"
+      },
+      "location": {
+        "column": 18,
+        "row": 87
+      },
+      "message": "`subprocess.run` without explicit `check` argument",
+      "name": "subprocess-run-without-check",
+      "noqa_row": 87,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/subprocess-run-without-check"
+    },
+    {
+      "cell": null,
+      "code": "PLW1510",
+      "end_location": {
+        "column": 31,
+        "row": 108
+      },
+      "filename": "scripts/verify_invoice_cycle.py",
+      "fix": {
+        "applicability": "displayonly",
+        "edits": [
+          {
+            "content": "check=False, ",
+            "end_location": {
+              "column": 32,
+              "row": 109
+            },
+            "location": {
+              "column": 32,
+              "row": 109
+            }
+          }
+        ],
+        "message": "Add explicit `check=False`"
+      },
+      "location": {
+        "column": 17,
+        "row": 108
+      },
+      "message": "`subprocess.run` without explicit `check` argument",
+      "name": "subprocess-run-without-check",
+      "noqa_row": 108,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/subprocess-run-without-check"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 48,
+        "row": 68
+      },
+      "filename": "tests/conftest.py",
+      "fix": null,
+      "location": {
+        "column": 36,
+        "row": 68
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 68,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 41,
+        "row": 84
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 29,
+        "row": 84
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 84,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 41,
+        "row": 126
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 29,
+        "row": 126
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 126,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 41,
+        "row": 160
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 29,
+        "row": 160
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 160,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 41,
+        "row": 185
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 29,
+        "row": 185
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 185,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 64,
+        "row": 211
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 52,
+        "row": 211
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 211,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 64,
+        "row": 217
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 52,
+        "row": 217
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 217,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 229
+      },
+      "filename": "tests/test_collections.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 229
+            },
+            "location": {
+              "column": 13,
+              "row": 229
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 229
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 229,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 229
+      },
+      "filename": "tests/test_collections.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 229
+            },
+            "location": {
+              "column": 17,
+              "row": 229
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 229
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 229,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 66,
+        "row": 240
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 54,
+        "row": 240
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 240,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 66,
+        "row": 247
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 54,
+        "row": 247
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 247,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 258
+      },
+      "filename": "tests/test_collections.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 258
+            },
+            "location": {
+              "column": 13,
+              "row": 258
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 258
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 258,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 37,
+        "row": 258
+      },
+      "filename": "tests/test_collections.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_posted",
+            "end_location": {
+              "column": 37,
+              "row": 258
+            },
+            "location": {
+              "column": 31,
+              "row": 258
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 31,
+        "row": 258
+      },
+      "message": "Unpacked variable `posted` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 258,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 37,
+        "row": 263
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 25,
+        "row": 263
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 263,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 68,
+        "row": 276
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 56,
+        "row": 276
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 276,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 67,
+        "row": 298
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 55,
+        "row": 298
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 298,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 325
+      },
+      "filename": "tests/test_collections.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 325
+            },
+            "location": {
+              "column": 13,
+              "row": 325
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 325
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 325,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 67,
+        "row": 335
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 55,
+        "row": 335
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 335,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 355
+      },
+      "filename": "tests/test_collections.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 355
+            },
+            "location": {
+              "column": 13,
+              "row": 355
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 355
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 355,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 355
+      },
+      "filename": "tests/test_collections.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 355
+            },
+            "location": {
+              "column": 17,
+              "row": 355
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 355
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 355,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 65,
+        "row": 366
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 53,
+        "row": 366
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 366,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 65,
+        "row": 371
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 53,
+        "row": 371
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 371,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 386
+      },
+      "filename": "tests/test_collections.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 386
+            },
+            "location": {
+              "column": 13,
+              "row": 386
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 386
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 386,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 386
+      },
+      "filename": "tests/test_collections.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 386
+            },
+            "location": {
+              "column": 17,
+              "row": 386
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 386
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 386,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 81,
+        "row": 397
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 69,
+        "row": 397
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 397,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 407
+      },
+      "filename": "tests/test_collections.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 407
+            },
+            "location": {
+              "column": 13,
+              "row": 407
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 407
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 407,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 407
+      },
+      "filename": "tests/test_collections.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 407
+            },
+            "location": {
+              "column": 17,
+              "row": 407
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 407
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 407,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 67,
+        "row": 417
+      },
+      "filename": "tests/test_collections.py",
+      "fix": null,
+      "location": {
+        "column": 55,
+        "row": 417
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 417,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 41,
+        "row": 107
+      },
+      "filename": "tests/test_invoice_cycle.py",
+      "fix": null,
+      "location": {
+        "column": 29,
+        "row": 107
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 107,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 65,
+        "row": 133
+      },
+      "filename": "tests/test_invoice_cycle.py",
+      "fix": null,
+      "location": {
+        "column": 53,
+        "row": 133
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 133,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 65,
+        "row": 142
+      },
+      "filename": "tests/test_invoice_cycle.py",
+      "fix": null,
+      "location": {
+        "column": 53,
+        "row": 142
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 142,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 65,
+        "row": 234
+      },
+      "filename": "tests/test_invoice_cycle.py",
+      "fix": null,
+      "location": {
+        "column": 53,
+        "row": 234
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 234,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 41,
+        "row": 261
+      },
+      "filename": "tests/test_invoice_cycle.py",
+      "fix": null,
+      "location": {
+        "column": 29,
+        "row": 261
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 261,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 66,
+        "row": 271
+      },
+      "filename": "tests/test_invoice_cycle.py",
+      "fix": null,
+      "location": {
+        "column": 54,
+        "row": 271
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 271,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 66,
+        "row": 280
+      },
+      "filename": "tests/test_invoice_cycle.py",
+      "fix": null,
+      "location": {
+        "column": 54,
+        "row": 280
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 280,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 294
+      },
+      "filename": "tests/test_invoice_cycle.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 294
+            },
+            "location": {
+              "column": 13,
+              "row": 294
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 294
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 294,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 41,
+        "row": 308
+      },
+      "filename": "tests/test_invoice_cycle.py",
+      "fix": null,
+      "location": {
+        "column": 29,
+        "row": 308
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 308,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 48,
+        "row": 92
+      },
+      "filename": "tests/test_invoice_cycle_controls.py",
+      "fix": null,
+      "location": {
+        "column": 36,
+        "row": 92
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 92,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 80,
+        "row": 107
+      },
+      "filename": "tests/test_invoice_cycle_controls.py",
+      "fix": null,
+      "location": {
+        "column": 68,
+        "row": 107
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 107,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 23,
+        "row": 29
+      },
+      "filename": "tests/test_invoice_cycle_safety.py",
+      "fix": null,
+      "location": {
+        "column": 11,
+        "row": 29
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 29,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 68,
+        "row": 145
+      },
+      "filename": "tests/test_invoice_cycle_safety.py",
+      "fix": null,
+      "location": {
+        "column": 56,
+        "row": 145
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 145,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 179,
+        "row": 175
+      },
+      "filename": "tests/test_invoice_cycle_safety.py",
+      "fix": null,
+      "location": {
+        "column": 167,
+        "row": 175
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 175,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 41,
+        "row": 85
+      },
+      "filename": "tests/test_invoice_reversal.py",
+      "fix": null,
+      "location": {
+        "column": 29,
+        "row": 85
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 85,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 11,
+        "row": 119
+      },
+      "filename": "tests/test_invoice_reversal.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_client",
+            "end_location": {
+              "column": 11,
+              "row": 119
+            },
+            "location": {
+              "column": 5,
+              "row": 119
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 5,
+        "row": 119
+      },
+      "message": "Unpacked variable `client` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 119,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 29,
+        "row": 119
+      },
+      "filename": "tests/test_invoice_reversal.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_headers",
+            "end_location": {
+              "column": 29,
+              "row": 119
+            },
+            "location": {
+              "column": 22,
+              "row": 119
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 22,
+        "row": 119
+      },
+      "message": "Unpacked variable `headers` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 119,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 11,
+        "row": 181
+      },
+      "filename": "tests/test_invoice_reversal.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_client",
+            "end_location": {
+              "column": 11,
+              "row": 181
+            },
+            "location": {
+              "column": 5,
+              "row": 181
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 5,
+        "row": 181
+      },
+      "message": "Unpacked variable `client` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 181,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 29,
+        "row": 181
+      },
+      "filename": "tests/test_invoice_reversal.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_headers",
+            "end_location": {
+              "column": 29,
+              "row": 181
+            },
+            "location": {
+              "column": 22,
+              "row": 181
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 22,
+        "row": 181
+      },
+      "message": "Unpacked variable `headers` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 181,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 34,
+        "row": 186
+      },
+      "filename": "tests/test_invoice_reversal.py",
+      "fix": null,
+      "location": {
+        "column": 22,
+        "row": 186
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 186,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 195
+      },
+      "filename": "tests/test_invoice_reversal.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 195
+            },
+            "location": {
+              "column": 13,
+              "row": 195
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 195
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 195,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "DTZ011",
+      "end_location": {
+        "column": 37,
+        "row": 218
+      },
+      "filename": "tests/test_invoice_reversal.py",
+      "fix": null,
+      "location": {
+        "column": 25,
+        "row": 218
+      },
+      "message": "`datetime.date.today()` used",
+      "name": "call-date-today",
+      "noqa_row": 218,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+    },
+    {
+      "cell": null,
+      "code": "F821",
+      "end_location": {
+        "column": 39,
+        "row": 263
+      },
+      "filename": "tests/test_invoice_reversal.py",
+      "fix": null,
+      "location": {
+        "column": 31,
+        "row": 263
+      },
+      "message": "Undefined name `orig_cfg`",
+      "name": "undefined-name",
+      "noqa_row": 263,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/undefined-name"
+    },
+    {
+      "cell": null,
+      "code": "F821",
+      "end_location": {
+        "column": 37,
+        "row": 264
+      },
+      "filename": "tests/test_invoice_reversal.py",
+      "fix": null,
+      "location": {
+        "column": 30,
+        "row": 264
+      },
+      "message": "Undefined name `orig_sr`",
+      "name": "undefined-name",
+      "noqa_row": 264,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/undefined-name"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 11,
+        "row": 269
+      },
+      "filename": "tests/test_invoice_reversal.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_client",
+            "end_location": {
+              "column": 11,
+              "row": 269
+            },
+            "location": {
+              "column": 5,
+              "row": 269
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 5,
+        "row": 269
+      },
+      "message": "Unpacked variable `client` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 269,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 29,
+        "row": 269
+      },
+      "filename": "tests/test_invoice_reversal.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_headers",
+            "end_location": {
+              "column": 29,
+              "row": 269
+            },
+            "location": {
+              "column": 22,
+              "row": 269
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 22,
+        "row": 269
+      },
+      "message": "Unpacked variable `headers` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 269,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 17
+      },
+      "filename": "tests/test_posting_flag.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 17
+            },
+            "location": {
+              "column": 13,
+              "row": 17
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 17
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 17,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 20,
+        "row": 17
+      },
+      "filename": "tests/test_posting_flag.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_ids",
+            "end_location": {
+              "column": 20,
+              "row": 17
+            },
+            "location": {
+              "column": 17,
+              "row": 17
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 17,
+        "row": 17
+      },
+      "message": "Unpacked variable `ids` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 17,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 44,
+        "row": 17
+      },
+      "filename": "tests/test_posting_flag.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_payload",
+            "end_location": {
+              "column": 44,
+              "row": 17
+            },
+            "location": {
+              "column": 37,
+              "row": 17
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 37,
+        "row": 17
+      },
+      "message": "Unpacked variable `payload` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 17,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 15,
+        "row": 29
+      },
+      "filename": "tests/test_posting_flag.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_db",
+            "end_location": {
+              "column": 15,
+              "row": 29
+            },
+            "location": {
+              "column": 13,
+              "row": 29
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 13,
+        "row": 29
+      },
+      "message": "Unpacked variable `db` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 29,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 44,
+        "row": 29
+      },
+      "filename": "tests/test_posting_flag.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_payload",
+            "end_location": {
+              "column": 44,
+              "row": 29
+            },
+            "location": {
+              "column": 37,
+              "row": 29
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 37,
+        "row": 29
+      },
+      "message": "Unpacked variable `payload` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 29,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    },
+    {
+      "cell": null,
+      "code": "RUF059",
+      "end_location": {
+        "column": 44,
+        "row": 65
+      },
+      "filename": "tests/test_posting_flag.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "_payload",
+            "end_location": {
+              "column": 44,
+              "row": 65
+            },
+            "location": {
+              "column": 37,
+              "row": 65
+            }
+          }
+        ],
+        "message": "Prefix it with an underscore or any other dummy variable pattern"
+      },
+      "location": {
+        "column": 37,
+        "row": 65
+      },
+      "message": "Unpacked variable `payload` is never used",
+      "name": "unused-unpacked-variable",
+      "noqa_row": 65,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-unpacked-variable"
+    }
+  ]
+}

@@ -1,0 +1,246 @@
+--- a/app/sales/service.py
++++ b/app/sales/service.py
+@@ -1,66 +1,220 @@
+-"""Atomic invoice posting: stock decrement + AR debit in one transaction.
+-
+-Kept as a unit-testable function. The HTTP endpoint (app.sales.router.post_invoice)
+-intentionally stays disabled (409) until this transaction is verified and
+-Eli signs off on enabling production posting.
++"""Atomic invoice posting and reversal: stock + AR in one transaction.
++
++Kept as unit-testable functions. HTTP endpoints intentionally stay disabled (409)
++until these transactions are verified and Eli signs off on enabling production.
+ """
++
+ from sqlalchemy import text
+ 
+ from app.finance import ar as finance
+ from app.inventory import service as inventory
++from app.sales.calc import invoice_totals, line_calc
+ 
+ 
+ def _lock_invoice(db, invoice_id):
+-    row = db.execute(text(
+-        "SELECT * FROM sales.sales_invoice WHERE id=:id FOR UPDATE"), {"id": invoice_id}).mappings().one_or_none()
++    row = (
++        db.execute(
++            text("SELECT * FROM sales.sales_invoice WHERE id=:id FOR UPDATE"),
++            {"id": invoice_id},
++        )
++        .mappings()
++        .one_or_none()
++    )
+     if row is None:
+         return None
+     return dict(row)
+ 
+ 
+ def _lines(db, invoice_id):
+-    rows = db.execute(text(
+-        "SELECT * FROM sales.sales_invoice_line WHERE invoice_id=:id ORDER BY line_no"),
+-        {"id": invoice_id}).mappings()
++    rows = db.execute(
++        text(
++            "SELECT * FROM sales.sales_invoice_line WHERE invoice_id=:id ORDER BY line_no"
++        ),
++        {"id": invoice_id},
++    ).mappings()
+     return [dict(r) for r in rows]
+ 
+ 
+ def post_invoice_atomic(db, invoice_id, actor_id):
+     """Post a draft invoice atomically:
+ 
+     1. decrement stock for each line (inventory.stock_movement, type 'sale');
+     2. create one receivables debit entry (finance.ar_entry, type 'invoice');
+     3. flip the invoice to Posted.
+ 
+     All three happen in the caller's transaction. Insufficient stock rolls
+     back everything (balance never went negative, no AR entry written, invoice
+     stays Draft). The DB posting gates (ck_invoice_posting_status /
+     ck_invoice_posted_at) backstop a partial Posted row.
+     """
+     invoice = _lock_invoice(db, invoice_id)
+     if invoice is None:
+         return None
+     if invoice["posting_status"] != "Draft":
+         raise ValueError("Only a draft can be posted")
+-    if any(line["quantity"] <= 0 for line in _lines(db, invoice_id)):
+-        raise ValueError("Invoice has non-positive line quantity")
+-
+     lines = _lines(db, invoice_id)
+-    for line in lines:
++    if not lines or any(line["quantity"] <= 0 for line in lines):
++        raise ValueError("Invoice requires positive line quantities")
++    calculations = [
++        (line["quantity"], line["unit_price"], line["discount_pct"], line["vat_rate"])
++        for line in lines
++    ]
++    for line, values in zip(lines, calculations, strict=True):
++        if line_calc(*values) != (
++            line["net_price"],
++            line["line_total"],
++            line["vat_amount"],
++        ):
++            raise ValueError("Invoice line snapshot does not reconcile")
++    if any(
++        invoice[key] != value for key, value in invoice_totals(calculations).items()
++    ):
++        raise ValueError("Invoice totals do not reconcile")
++    # Lock stock keys consistently across invoices to avoid cross-line deadlocks.
++    for line in sorted(
++        lines,
++        key=lambda row: (
++            str(row["product_id"]),
++            str(row["batch_id"] or ""),
++            row["line_no"],
++        ),
++    ):
+         inventory.record_movement(
+-            db, actor_id=actor_id, warehouse_id=invoice["warehouse_id"],
+-            product_id=line["product_id"], batch_id=line["batch_id"],
+-            movement_type="sale", quantity=-abs(line["quantity"]),
+-            unit_cost=line["unit_price"], source_type="invoice", source_id=invoice_id)
++            db,
++            actor_id=actor_id,
++            warehouse_id=invoice["warehouse_id"],
++            product_id=line["product_id"],
++            batch_id=line["batch_id"],
++            movement_type="sale",
++            quantity=-line["quantity"],
++            unit_cost=line["unit_price"],
++            source_type="invoice",
++            source_id=invoice_id,
++            invoice_line_id=line["id"],
++        )
+     finance.record_sale(
+-        db, customer_id=invoice["customer_id"], invoice_id=invoice_id,
+-        amount=invoice["grand_total"], on_date=invoice["invoice_date"],
+-        actor_id=actor_id)
+-    db.execute(text("""
++        db,
++        customer_id=invoice["customer_id"],
++        invoice_id=invoice_id,
++        amount=invoice["grand_total"],
++        on_date=invoice["invoice_date"],
++        actor_id=actor_id,
++    )
++    db.execute(
++        text("""
+         UPDATE sales.sales_invoice
+            SET posting_status='Posted', posted_at=now(), posted_by=:actor,
+                version=version+1
+          WHERE id=:id
+-    """), {"actor": actor_id, "id": invoice_id})
++    """),
++        {"actor": actor_id, "id": invoice_id},
++    )
+     updated = _lock_invoice(db, invoice_id)
+     return dict(updated)
++
++
++def reverse_invoice_atomic(db, invoice_id, actor_id, reason_id):
++    """Reverse a Posted invoice atomically (append-only compensating entries):
++
++    1. stock: record 'return' movements (+qty) for each line;
++    2. AR: create a 'credit_note' credit entry equal to grand_total;
++    3. flip invoice to Voided with void metadata.
++
++    All in the caller's transaction. Prevents reversal if Active receipts exist.
++    """
++    invoice = _lock_invoice(db, invoice_id)
++    if invoice is None:
++        return None
++    if invoice["posting_status"] != "Posted":
++        raise ValueError("Only a Posted invoice can be reversed")
++    # Active receipts check
++    active = db.execute(
++        text(
++            "SELECT COALESCE(SUM(amount), 0) FROM finance.payment_receipt "
++            "WHERE invoice_id=:i AND status='Active'"
++        ),
++        {"i": invoice_id},
++    ).scalar()
++    if active and active > 0:
++        raise ValueError("Active receipts exist; void them first")
++
++    movements = list(
++        db.execute(
++            text(
++                "SELECT * FROM inventory.stock_movement WHERE source_type='invoice' "
++                "AND source_id=:i AND movement_type='sale' ORDER BY product_id,batch_id NULLS FIRST,id"
++            ),
++            {"i": invoice_id},
++        ).mappings()
++    )
++    lines = _lines(db, invoice_id)
++    if len(movements) != len(lines) or not movements:
++        raise ValueError("Original stock posting does not reconcile")
++    line_map = {line["id"]: line for line in lines}
++    for movement in movements:
++        line = line_map.get(movement["invoice_line_id"])
++        if (
++            line is None
++            or movement["product_id"] != line["product_id"]
++            or movement["batch_id"] != line["batch_id"]
++            or movement["warehouse_id"] != invoice["warehouse_id"]
++            or movement["quantity"] != -line["quantity"]
++        ):
++            raise ValueError("Original stock posting does not reconcile")
++    debit = (
++        db.execute(
++            text(
++                "SELECT * FROM finance.ar_entry WHERE invoice_id=:i AND entry_type='invoice'"
++            ),
++            {"i": invoice_id},
++        )
++        .mappings()
++        .one_or_none()
++    )
++    if (
++        debit is None
++        or debit["customer_id"] != invoice["customer_id"]
++        or debit["debit"] != invoice["grand_total"]
++        or debit["credit"] != 0
++    ):
++        raise ValueError("Original receivables posting does not reconcile")
++    for movement in movements:
++        inventory.record_movement(
++            db,
++            actor_id=actor_id,
++            warehouse_id=movement["warehouse_id"],
++            product_id=movement["product_id"],
++            batch_id=movement["batch_id"],
++            movement_type="return",
++            quantity=-movement["quantity"],
++            unit_cost=movement["unit_cost"],
++            source_type="invoice",
++            source_id=invoice_id,
++            reverses_movement_id=movement["id"],
++            note="Invoice reversal",
++        )
++    finance.record_entry(
++        db,
++        customer_id=debit["customer_id"],
++        invoice_id=invoice_id,
++        entry_type="credit_note",
++        debit=0,
++        credit=debit["debit"],
++        on_date=db.execute(text("SELECT CURRENT_DATE")).scalar_one(),
++        reason_id=reason_id,
++        reverses_entry_id=debit["id"],
++        note="Invoice reversal",
++        actor_id=actor_id,
++    )
++    db.execute(
++        text("""
++        UPDATE sales.sales_invoice
++           SET posting_status='Voided', voided_at=now(), voided_by=:actor,
++               void_reason_id=:reason, updated_by=:actor, updated_at=now(),
++               version=version+1
++         WHERE id=:id
++    """),
++        {"actor": actor_id, "reason": reason_id, "id": invoice_id},
++    )
++    updated = _lock_invoice(db, invoice_id)
++    return dict(updated)
