@@ -131,6 +131,9 @@
       <button type="button" class="nav-item sub" data-view="invoicelist">
         <span class="glyph" aria-hidden="true">📄</span><span data-i18n="nav_invoicelist">قائمة الفواتير</span>
       </button>
+      <button type="button" class="nav-item sub" data-view="targets" data-roles="owner,finance,sales_manager,district_manager,medical_rep,read_only_auditor">
+        <span class="glyph" aria-hidden="true">🎯</span><span data-i18n="nav_targets">الأهداف</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
+      </button>
       <button type="button" class="nav-item sub" data-view="cover" data-roles="owner,finance,sales_manager">
         <span class="glyph" aria-hidden="true">🗓️</span><span data-i18n="nav_cover">غطاء المخزون</span><span class="proto-dot">نموذج</span>
       </button>
@@ -716,6 +719,33 @@
           </table>
         </div>
         <div id="kolspend-preview"></div>
+      </section>
+
+      <!-- ---------- Targets (real) ---------- -->
+      <section id="targets-view" class="hidden" aria-labelledby="targets-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="targets-title" data-i18n="targets_title">الأهداف</h1>
+            <p class="desc" data-i18n="targets_desc">أهداف المندوبين حسب الشهر (بيانات فعلية من الخادم).</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="targets" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="targets-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead>
+              <tr>
+                <th data-i18n="rep">المندوب</th>
+                <th data-i18n="product">المنتج</th>
+                <th data-i18n="period">الشهر</th>
+                <th class="num" data-i18n="target_quantity">الهدف</th>
+                <th class="num" data-i18n="actual_quantity">الفعلي</th>
+              </tr>
+            </thead>
+            <tbody id="target-rows"></tbody>
+          </table>
+        </div>
       </section>
 
       <!-- ---------- Invoice list (real, header snapshots) ---------- -->

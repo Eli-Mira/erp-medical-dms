@@ -1,0 +1,24 @@
+.........................F.............................................. [ 19%]
+........................................................................ [ 38%]
+........................................................................ [ 57%]
+........................................................................ [ 77%]
+........................................................................ [ 96%]
+.............                                                            [100%]
+================================== FAILURES ===================================
+______________________ test_audit_filters_and_pagination ______________________
+tests\test_audit_read.py:25: in test_audit_filters_and_pagination
+    assert body[0]["action"] == "upserted"  # newest first
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: assert 'created' == 'upserted'
+E     
+E     - upserted
+E     + created
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_audit_read.py::test_audit_filters_and_pagination - Assertio...
+1 failed, 372 passed, 1 warning in 129.07s (0:02:09)

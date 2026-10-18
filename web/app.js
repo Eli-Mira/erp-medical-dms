@@ -282,7 +282,7 @@
     ledger: "ledger-view", invoicelist: "invoicelist-view", balances: "balances-view", collections: "collections-view",
     customers: "customers-view", products: "products-view", warehouses: "warehouses-view",
     suppliers: "suppliers-view", accounts: "accounts-view", doctors: "doctors-view",
-    visits: "visits-view",
+    visits: "visits-view", targets: "targets-view",
   };
 
   var ROLE_OK = {
@@ -396,6 +396,7 @@
       else if (name === "inventory") loadInventory();
       else if (name === "ledger") loadLedger();
       else if (name === "invoicelist") loadInvoiceList();
+      else if (name === "targets") loadTargets();
       else if (name === "balances") loadBalances();
       else if (name === "collections") loadCollections();
       else if (name === "customers") loadCustomers();
@@ -1560,6 +1561,29 @@
     }).catch(function (error) { showError(el.invoicelistError, messageFor(error)); });
   }
 
+  function loadTargets() {
+    clearError(el.targetsError);
+    el.targetRows.innerHTML = "";
+    var loading = document.createElement("tr");
+    var tdLoad = document.createElement("td");
+    tdLoad.colSpan = 5; tdLoad.className = "muted"; tdLoad.textContent = "…";
+    loading.appendChild(tdLoad);
+    el.targetRows.appendChild(loading);
+    return api("/targets").then(function (rows) {
+      if (!rows.length) { emptyRow(el.targetRows, 5, "empty_rows"); return; }
+      renderRows(el.targetRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell("rep", row.rep_id));
+        tr.appendChild(cell("product", row.product_id ? productLineLabel(row.product_id) : "—"));
+        tr.appendChild(cell("period", fmtDate(row.period_month)));
+        tr.appendChild(cell("target", fmtQty(row.target_quantity), true));
+        var actual = row.actual_quantity == null ? "—" : fmtQty(row.actual_quantity);
+        tr.appendChild(cell("actual", actual, true));
+        return tr;
+      });
+    }).catch(function (error) { showError(el.targetsError, messageFor(error)); });
+  }
+
   function loadLedger() {
     clearError(el.ledgerError);
     var labels = { d: t("mv_date"), ty: t("mv_type"), wh: t("warehouse"), p: t("product"), q: t("quantity"), n: t("notes") };
@@ -2085,8 +2109,10 @@
     el.accountsView = $("accounts-view");
     el.doctorsView = $("doctors-view");
     el.visitsView = $("visits-view");
+    el.targetsView = $("targets-view");
     el.moduleView = $("module-view");
-    el.moduleTitle = $("module-title");
+    el.targetsError = $("targets-error");
+    el.targetRows = $("target-rows");
     el.moduleDesc = $("module-desc");
     el.moduleContent = $("module-content");
 

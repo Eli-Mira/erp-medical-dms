@@ -42,7 +42,7 @@
   "nav_transfers": "Warehouse transfers",
   "nav_returns": "Returns",
   "nav_balances": "Receivables & statements",
-  "nav_targets": "Sales targets",
+  "nav_targets": "Targets",
   "nav_visits": "Stock visits",
   "nav_inventory": "Stock balances",
   "nav_ledger": "Stock ledger (movements)",
@@ -100,7 +100,7 @@
   "draft_registry_cleaned": "This draft was removed from the device list because the server no longer has it",
   "receipt_no": "Receipt",
   "receipt_date": "Date",
-  "invoice_no": "Invoice",
+  "invoice_no": "Invoice no.",
   "method": "Method",
   "amount": "Amount",
   "status": "Status",
@@ -112,7 +112,6 @@
   "status_draft": "Draft",
   "status_posted": "Posted",
   "status_voided": "Voided",
-  "invoice_no": "Invoice no.",
   "invoice_date": "Invoice date",
   "customer": "Customer",
   "branch": "Branch",
@@ -244,5 +243,10 @@
   "offline_no": "Online",
   "pwa_install_h": "How to install (optional)",
   "pwa_install_steps": "Desktop (Chrome/Edge): the install button in the address bar, or the browser menu → “Install Medical Company System”.||Mobile (Android/Chrome): browser menu → “Add to Home screen”, then “Install”.||It also runs straight from the link as a normal web page — no app store needed.",
-  "pwa_note": "PWA install is optional; this demo requires no app-store installation."
+  "pwa_note": "PWA install is optional; this demo requires no app-store installation.",
+  "targets_title": "Targets",
+  "targets_desc": "Rep targets by month (live server data).",
+  "target_quantity": "Target",
+  "actual_quantity": "Actual",
+  "period": "Month"
 }
