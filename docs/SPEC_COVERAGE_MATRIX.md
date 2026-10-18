@@ -40,24 +40,24 @@ not ship while any §2B item is absent or misrepresented.
 |---|---|---|---|---|---|
 | 1 | Territory ≠ source warehouse (2B.1) | REAL — separate fields enforced server-side (sales routing slice `c50bb02`) | REAL — invoice form collects both | COVERED | — |
 | 2 | Warehouse-routing rules (2B.2) | REAL — routing decoupled from territory, grants via `platform.user_branch` | REAL — warehouse options re-fetched per customer branch | COVERED | — |
-| 3 | Warehouse→warehouse transfers (2B.3) | MISSING (only generic `POST /inventory/movements`) | PROTO (garbled text — see §5) | HOLE | Needs PROTO upgrade + future endpoint; must keep transfer≠sale |
-| 4 | Hide zero-qty invoice lines on print (2B.4) | n/a (presentation rule) | **MISSING — no print/PDF path at all** | HOLE | Needs print view honoring the rule |
+| 3 | Warehouse→warehouse transfers (2B.3) | MISSING (only generic `POST /inventory/movements`) | PROTO — principle text clean (garble fixed, see §5) | HOLE | Backend endpoints; must keep transfer≠sale |
+| 4 | Hide zero-qty invoice lines on print (2B.4) | n/a (presentation rule) | **REAL (presentation)** — print view on drafted invoice, zero-qty lines hidden in print, dimmed on screen; "Save as PDF" = real PDF file via browser (commit `08a4b11`, D45) | COVERED (browser print) | Server-side PDF library needs owner approval for protected `requirements.txt` (D45) |
 | 5 | VAT per line, approved formula (2B.5) | REAL — `app/sales/calc.py` inclusive VAT, server-authoritative, snapshot on invoice | REAL — estimate tape + server totals | COVERED | — |
 | 6 | Batch tracking (2B.6) | REAL-VALIDATION — batch locked/validated on invoice + movement lines; balances keyed by batch | REAL (stock/movements carry `batch_id`) | COVERED (no batch master read API — acceptable for prototype, note it) |
-| 7 | Expiry tracking (2B.7) | REAL-VALIDATION — `expiry_date >= invoice_date` check | PARTIAL — expiry not surfaced in views | HOLE (small) | Expiry view / warning screen |
+| 7 | Expiry tracking (2B.7) | REAL-VALIDATION — `expiry_date >= invoice_date` check | PROTO — batches view shows expiry-sorted demo table with status column (expired blocked / near-expiry warning / fine), thresholds configurable | PROTO done | Batch/expiry read API is a backend slice (step 5) |
 | 8 | Sell-in separate (2B.8) | REAL — invoiced quantities on invoices | REAL (home KPI derives ledger revenue) | COVERED | — |
 | 9 | Sell-through separate (2B.9) | MISSING — no storage | PROTO-LOCAL (visits screen) | HOLE (backend) | Acceptable as labelled prototype |
 | 10 | Customer stock-visit workflow (2B.10) | MISSING | **PROTO-LOCAL, interactive** — mobile form: per-product prev/delivered/returns/current + payment + notes | COVERED (as prototype) | Persistence is browser-only — must be labelled |
 | 11 | Auto sell-through calc (2B.11) | n/a for prototype | REAL-in-prototype — exact formula `prev + delivered − returns − current`, live recompute, negative warnings | COVERED (formula must never change silently — V2 §2B.11) | — |
-| 12 | Explicit returns (2B.12) | MISSING | PROTO only | HOLE | Needs PROTO upgrade to show the explicit-transaction principle (never edit old invoices) |
-| 13 | Sales targets (2B.13) | MISSING | PROTO only | HOLE | Rep/territory/product/period target vs actual |
-| 14 | Stock cover (2B.14) | MISSING | PROTO sample row | HOLE | `stock ÷ recent avg sales rate`, configurable window |
-| 15 | Overstock alerts (2B.15) | MISSING | PROTO sample row | HOLE | Configurable threshold, never hardcoded |
-| 16 | Doctor/KOL spend (2B.16) | REAL (directory `/master/doctors`), spend ledger MISSING | PROTO preview inline in doctors screen | PARTIAL | Spend linking (specialty/area/date/amount/activity) |
-| 17 | Product/brand-linked spend (2B.17) | MISSING | PROTO screen | HOLE | Explicit product/brand link, no free-text inference |
-| 18 | Marketing objective + result/KPI (2B.18) | MISSING | PROTO screen | HOLE | Objective/KPI/actual/follow-up fields |
+| 12 | Explicit returns (2B.12) | MISSING | PROTO — explicit-transaction principle already stated (never edit old invoices; steps enumerated) | HOLE (backend) | Returns endpoints |
+| 13 | Sales targets (2B.13) | MISSING | PROTO — rep/territory/product/period vs actual, role-visible scoping stated | HOLE (backend) | Targets model |
+| 14 | Stock cover (2B.14) | MISSING | PROTO — 30-day rolling window default (D41) stated, per-product reorder threshold configurable (UQ-5) | HOLE (backend) | Real daily-average computation needs full-period sales history |
+| 15 | Overstock alerts (2B.15) | MISSING | PROTO — 180-day default threshold (D41), clearance-warehouse action stated | HOLE (backend) | Same cover dependency |
+| 16 | Doctor/KOL spend (2B.16) | REAL (directory `/master/doctors`), spend ledger MISSING | PROTO — structured spend table (doctor/specialty/territory/type/date/amount) bound to the real directory, no free-text entry | PARTIAL | Spend ledger backend |
+| 17 | Product/brand-linked spend (2B.17) | MISSING | PROTO — structured table (campaign/brand/type/date/amount); mandatory structured link, no free-text inference | PARTIAL | Product/brand spend ledger |
+| 18 | Marketing objective + result/KPI (2B.18) | MISSING | PROTO — objectives/KPI/actual/follow-up table, no complex ROI model (V1) | PARTIAL | Objectives/KPI storage |
 
-**Net §2B status: 7 fully covered, 6 hole-as-backend-but-present-as-labelled-prototype, 5 real holes (3 transfers, 4 print, 16/17/18 marketing spine).**
+**Net §2B status (2026-10-19): 8 fully covered (1,2,4-presentation,5,6,8,10,11), 6 hole-as-backend-but-present-as-labelled-prototype (3,9,12,13,14,15), 4 partial (7,16,17,18) — remaining demo-visible work is backend slices; every presentation-level hole now has a company-correct labelled prototype.**
 
 ## 2. Owner's missing-coverage list (merged with evidence)
 
@@ -99,7 +99,7 @@ not ship while any §2B item is absent or misrepresented.
 
 1. **Uncommitted work:** ~2,900 lines across `web/app.js`, `web/index.html`, `web/styles.css`, `scripts/make_demo.py` uncommitted on `feature/client-prototype`. Commit to the feature branch (never `master`, never push) so nothing is lost.
 2. ~~Corrupted PROTON strings~~ FIXED 2026-10-18: five garbled Arabic strings corrected and mixed-script leftovers swept (`grep -nP "\p{Arabic}\p{Ll}"` clean); `representatives` + `privateaccounts` prototype screens added; `node --check` + JSON validation pass.
-3. ~~Unverifiable coverage claims~~ RESOLVED 2026-10-18: `docs/evidence/invoice-cycle/client-proto-fix-20261018/` now exists with real artifacts (`pytest.log`: **345 passed, 1 warning**, disposable DB `dms_cycle_test_480…`, `POSTING_ENABLED=false` verified in `run.json`). Remaining nit: `docs/REQUIREMENTS_COVERAGE.md` cites a `SUMMARY.md` in that directory that was never written — cite `pytest.log`/`run.json` instead.
+3. ~~Unverifiable coverage claims~~ RESOLVED 2026-10-18: `docs/evidence/invoice-cycle/client-proto-fix-20261018/` now exists with real artifacts (`pytest.log`: **345 passed, 1 warning**, disposable DB `dms_cycle_test_480…`, `POSTING_ENABLED=false` verified in `run.json`). Remaining ~~nit~~: pointer fixed 2026-10-19 — `docs/REQUIREMENTS_COVERAGE.md` now cites the real artifacts.
 4. **Missing representative screen** while the owner's list explicitly requires it.
 
 ## 5. Recommended build order (client prototype completeness, one slice at a time)

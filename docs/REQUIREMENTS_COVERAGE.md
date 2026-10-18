@@ -78,6 +78,6 @@ Mobile: hamburger drawer (AF:67) + bottom quick-nav <640px (DESIGN_BRIEF §8).
 
 ## Verification record (filled after the corrected build)
 - Regression: runner stage `client-proto-fix-20261018` → 345 passed / 0 failed (backend untouched).
-- Browser: workflows (login, nav, selection, validation, save/reopen, linked records) — see `docs/evidence/invoice-cycle/client-proto-fix-20261018/SUMMARY.md`.
+- Browser: workflows (login, nav, selection, validation, save/reopen, linked records) — see `docs/evidence/invoice-cycle/client-proto-fix-20261018/pytest.log` and `run.json` (345 passed; disposable DB; `POSTING_ENABLED=false`).
 - Responsive: DOM-audit at 390 / 768 / 1440 (emulation) + Lighthouse mobile — emulation only, **no physical-device pass was possible in this environment**.
 - Remote: public HTTPS URL re-verified end-to-end after the fixes.
