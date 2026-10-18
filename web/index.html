@@ -5,39 +5,166 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title data-i18n="app_name">نظام الشركة الطبية</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0f172a">
-  <style>
-    :root { color-scheme: dark; }
-    body { margin: 0; font-family: system-ui, "Segoe UI", Tahoma, sans-serif; background: #0f172a; color: #e2e8f0; }
-    header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-bottom: 1px solid #1e293b; }
-    main { padding: 1.5rem; }
-    button { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: .5rem; padding: .5rem .75rem; cursor: pointer; }
-  </style>
+  <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#0b1220">
 </head>
 <body>
-  <header>
-    <strong data-i18n="app_name">نظام الشركة الطبية</strong>
-    <button id="lang" data-i18n="lang_toggle">English</button>
+  <a class="skip-link" href="#main" data-i18n="skip_to_content">Skip to content</a>
+
+  <header class="app-header">
+    <div class="brand">
+      <strong data-i18n="app_name">نظام الشركة الطبية</strong>
+      <span class="eyebrow" data-i18n="invoice_eyebrow">Sales · Draft invoices</span>
+    </div>
+    <div class="header-actions">
+      <span class="who hidden" id="who">
+        <span data-i18n="signed_in_as">Signed in as</span>
+        <span id="who-name" class="num"></span>
+        <span class="role-chip" id="who-role"></span>
+      </span>
+      <button id="logout" class="ghost hidden" data-i18n="logout">Sign out</button>
+      <button id="lang" data-i18n="lang_toggle">English</button>
+    </div>
   </header>
-  <main>
-    <h1 data-i18n="welcome">مرحبًا</h1>
-    <p data-i18n="dashboard">لوحة التحكم</p>
+
+  <main id="main">
+    <!-- ---------- Login ---------- -->
+    <section id="login-view" class="login-wrap" aria-labelledby="login-title">
+      <div class="card">
+        <h1 id="login-title" data-i18n="login_title">Sign in</h1>
+        <p class="muted small" data-i18n="login_hint">Use your company account to open the invoice desk.</p>
+        <div id="login-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <form id="login-form" novalidate>
+          <div class="field" style="margin-bottom: var(--space-3);">
+            <label for="login-username" data-i18n="username">Username</label>
+            <input id="login-username" name="username" autocomplete="username" required>
+          </div>
+          <div class="field" style="margin-bottom: var(--space-4);">
+            <label for="login-password" data-i18n="password">Password</label>
+            <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+          </div>
+          <button type="submit" id="login-submit" class="primary" data-i18n="sign_in">Sign in</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ---------- New invoice ---------- -->
+    <section id="app-view" class="hidden" aria-labelledby="new-invoice-title">
+      <div class="card">
+        <div class="section-head">
+          <h1 id="new-invoice-title" data-i18n="new_invoice">New sales invoice (draft)</h1>
+          <span class="muted small" data-i18n="draft_only_note">Drafts only — posting is disabled.</span>
+        </div>
+        <div id="form-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <form id="invoice-form" novalidate>
+          <div class="grid-3">
+            <div class="field">
+              <label for="invoice-no" data-i18n="invoice_no">Invoice number</label>
+              <input id="invoice-no" name="invoice_no" required maxlength="30">
+            </div>
+            <div class="field">
+              <label for="invoice-date" data-i18n="invoice_date">Invoice date</label>
+              <input id="invoice-date" name="invoice_date" type="date" required>
+            </div>
+            <div class="field">
+              <label for="customer" data-i18n="customer">Customer</label>
+              <select id="customer" name="customer_id" required></select>
+            </div>
+          </div>
+
+          <div class="grid-3" style="margin-top: var(--space-4);">
+            <div class="field">
+              <label for="branch-display" data-i18n="branch">Branch</label>
+              <input id="branch-display" disabled>
+            </div>
+            <div class="field">
+              <label for="warehouse" data-i18n="warehouse">Source warehouse</label>
+              <select id="warehouse" name="warehouse_id" required></select>
+            </div>
+            <div class="field">
+              <label for="notes" data-i18n="notes">Notes</label>
+              <textarea id="notes" name="notes" maxlength="4000"></textarea>
+            </div>
+          </div>
+
+          <div class="section-head" style="margin-top: var(--space-5);">
+            <h2 data-i18n="lines_title">Lines</h2>
+            <button type="button" id="add-line" class="ghost" data-i18n="add_line">Add line</button>
+          </div>
+          <div class="line-head" aria-hidden="true">
+            <span data-i18n="product">Product</span>
+            <span data-i18n="quantity">Quantity</span>
+            <span data-i18n="discount_pct">Discount %</span>
+            <span data-i18n="line_total">Line total</span>
+            <span></span>
+          </div>
+          <div id="lines" class="lines"></div>
+
+          <div class="invoice-tape" aria-live="polite">
+            <h3 data-i18n="totals_title">Estimated totals</h3>
+            <div class="tape-row"><span class="label" data-i18n="total_before_discount">Before discount</span><span class="value num" id="prev-before">0.00</span></div>
+            <div class="tape-row discount"><span class="label" data-i18n="total_discount">Discount</span><span class="value num" id="prev-discount">0.00</span></div>
+            <div class="tape-row"><span class="label" data-i18n="total_net">Net (ex-VAT)</span><span class="value num" id="prev-net">0.00</span></div>
+            <div class="tape-row"><span class="label" data-i18n="vat_amount">VAT</span><span class="value num" id="prev-vat">0.00</span></div>
+            <div class="tape-row grand"><span class="label" data-i18n="grand_total">Grand total</span><span class="value num" id="prev-grand">0.00</span></div>
+          </div>
+
+          <div style="margin-top: var(--space-4);">
+            <button type="submit" id="save-draft" class="primary" data-i18n="save_draft">Save draft</button>
+            <span class="muted small" id="totals-note" data-i18n="server_totals_note">The server recalculates and stores the authoritative totals.</span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ---------- Saved draft ---------- -->
+    <section id="draft-view" class="hidden" aria-labelledby="draft-title">
+      <div class="card">
+        <div class="section-head">
+          <h1 id="draft-title" data-i18n="draft_saved">Draft saved</h1>
+          <button type="button" id="new-draft" class="ghost" data-i18n="new_draft">New draft</button>
+        </div>
+        <dl class="saved-grid">
+          <div><dt data-i18n="invoice_no">Invoice number</dt><dd class="num" id="draft-no">—</dd></div>
+          <div><dt data-i18n="status">Status</dt><dd><span id="draft-status" class="badge draft">Draft</span></dd></div>
+          <div><dt data-i18n="customer">Customer</dt><dd id="draft-customer">—</dd></div>
+          <div><dt data-i18n="warehouse">Source warehouse</dt><dd id="draft-warehouse">—</dd></div>
+        </dl>
+
+        <table class="line-table">
+          <thead>
+            <tr>
+              <th data-i18n="product">Product</th>
+              <th class="num" data-i18n="quantity">Quantity</th>
+              <th class="num" data-i18n="discount_pct">Discount %</th>
+              <th class="num" data-i18n="unit_price">Unit price</th>
+              <th class="num" data-i18n="line_total">Line total</th>
+            </tr>
+          </thead>
+          <tbody id="draft-lines"></tbody>
+        </table>
+
+        <div class="invoice-tape" aria-live="polite">
+          <h3 data-i18n="server_totals_title">Server totals</h3>
+          <div class="tape-row"><span class="label" data-i18n="total_before_discount">Before discount</span><span class="value num" id="draft-before">0.00</span></div>
+          <div class="tape-row discount"><span class="label" data-i18n="total_discount">Discount</span><span class="value num" id="draft-discount">0.00</span></div>
+          <div class="tape-row"><span class="label" data-i18n="total_net">Net (ex-VAT)</span><span class="value num" id="draft-net">0.00</span></div>
+          <div class="tape-row"><span class="label" data-i18n="vat_amount">VAT</span><span class="value num" id="draft-vat">0.00</span></div>
+          <div class="tape-row grand"><span class="label" data-i18n="grand_total">Grand total</span><span class="value num" id="draft-grand">0.00</span></div>
+        </div>
+
+        <div id="draft-error" class="alert hidden" role="alert" data-kind="warn" style="margin-top: var(--space-4);"></div>
+        <div style="margin-top: var(--space-4);">
+          <button type="button" id="post-draft" data-i18n="post_invoice">Post invoice</button>
+          <span class="muted small" data-i18n="posting_disabled_hint">Posting is disabled by the server safety gate (HTTP 409).</span>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <script src="app.js"></script>
   <script>
-    // i18n: fetch the dictionary, flip document dir, paint [data-i18n] nodes.
-    const current = () => (localStorage.getItem("lang") === "en" ? "en" : "ar");
-    async function apply(l) {
-      const dict = await (await fetch(`i18n/${l}.json`)).json();
-      document.documentElement.lang = l;
-      document.documentElement.dir = l === "ar" ? "rtl" : "ltr";
-      for (const el of document.querySelectorAll("[data-i18n]")) {
-        const v = dict[el.dataset.i18n];
-        if (v) el.textContent = v;
-      }
-      localStorage.setItem("lang", l);
-    }
-    document.getElementById("lang").addEventListener("click", () => apply(current() === "ar" ? "en" : "ar"));
-    apply(current());
+    // Keep the PWA installable; app logic lives in app.js.
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
   </script>
 </body>

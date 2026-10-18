@@ -1,8 +1,9 @@
 // Minimal app-shell service worker (P2.7). Cache-first; bump CACHE to invalidate.
-const CACHE = "medsys-shell-v1";
+const CACHE = "medsys-shell-v2";
 const SHELL = [
   "/app/", "/app/index.html", "/app/manifest.webmanifest",
-  "/app/icon.svg", "/app/i18n/ar.json", "/app/i18n/en.json",
+  "/app/icon.svg", "/app/styles.css", "/app/app.js",
+  "/app/i18n/ar.json", "/app/i18n/en.json",
 ];
 
 self.addEventListener("install", (e) =>

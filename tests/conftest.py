@@ -27,6 +27,7 @@ def isolated_financial_database(request):
         "test_invoice_cycle",
         "test_invoice_cycle_controls",
         "test_invoice_cycle_safety",
+        "test_master_api",
     }:
         return
     assert os.environ.get("APP_ENV") == "test", "Use scripts/verify_invoice_cycle.py"

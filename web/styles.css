@@ -1,0 +1,297 @@
+/* ElsebaeyPharma invoice screen.
+   Identity: the company's existing dark-slate shell, sharpened into a clinical
+   palette. The one signature element is the invoice "tape" — the totals footer
+   reads like a printed invoice, VAT broken out, in tabular figures. */
+
+:root {
+  color-scheme: dark;
+  --bg: #0b1220;
+  --surface: #111c2e;
+  --surface-2: #16233a;
+  --rail: #1d2c46;
+  --border: #26374f;
+  --text: #e6edf6;
+  --muted: #9fb0c7;
+  --accent: #2bb3a3;
+  --accent-strong: #34c9b6;
+  --accent-ink: #04201d;
+  --danger: #f0728f;
+  --warn: #e0b055;
+  --ok: #4cc38a;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-base: 0.9375rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: clamp(1.35rem, 1.1rem + 1vw, 1.75rem);
+  --font: system-ui, "Segoe UI", Tahoma, "Noto Naskh Arabic", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text);
+}
+
+h1, h2, h3 { line-height: 1.25; margin: 0; }
+
+:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: -999px;
+  top: var(--space-2);
+  z-index: 10;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+}
+.skip-link:focus { inset-inline-start: var(--space-3); }
+
+/* --- Header ---------------------------------------------------------- */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-3) var(--space-5);
+  background: rgba(11, 18, 32, 0.92);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: baseline; gap: var(--space-3); }
+.brand strong { font-size: var(--fs-lg); letter-spacing: 0.01em; }
+.brand .eyebrow {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.header-actions { display: flex; align-items: center; gap: var(--space-3); }
+.who {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.role-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 var(--space-2);
+  color: var(--text);
+  background: var(--surface-2);
+  font-size: var(--fs-xs);
+}
+
+/* --- Layout ---------------------------------------------------------- */
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4) var(--space-6);
+}
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.small { font-size: var(--fs-sm); }
+.num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+}
+.card + .card { margin-top: var(--space-5); }
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.section-head h2 { font-size: var(--fs-lg); }
+
+/* --- Forms ----------------------------------------------------------- */
+.field { display: flex; flex-direction: column; gap: var(--space-1); }
+.field label { font-size: var(--fs-sm); color: var(--muted); }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+
+input, select, textarea, button { font: inherit; color: inherit; }
+
+input, select, textarea {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+input[aria-invalid="true"], select[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+input:disabled, select:disabled { opacity: 0.6; }
+textarea { min-height: 4.5rem; resize: vertical; }
+
+button {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+}
+button:hover { border-color: var(--accent); }
+button:disabled { opacity: 0.55; cursor: not-allowed; }
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+button.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+button.ghost { background: transparent; }
+button.danger { color: var(--danger); }
+
+/* --- Invoice line editor --------------------------------------------- */
+.lines { display: flex; flex-direction: column; gap: var(--space-3); }
+.line {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) repeat(3, minmax(0, 1fr)) auto;
+  gap: var(--space-3);
+  align-items: end;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.line .computed {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  padding-bottom: var(--space-2);
+  text-align: end;
+}
+.line-head {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) repeat(3, minmax(0, 1fr)) auto;
+  gap: var(--space-3);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 var(--space-3);
+}
+
+/* --- Invoice tape (signature) ---------------------------------------- */
+.invoice-tape {
+  margin-top: var(--space-5);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4) var(--space-5);
+  background:
+    linear-gradient(var(--surface-2), var(--surface-2)) padding-box;
+  max-width: 26rem;
+  margin-inline-start: auto;
+}
+.invoice-tape h3 {
+  font-size: var(--fs-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: var(--space-3);
+}
+.tape-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+}
+.tape-row .label { color: var(--muted); }
+.tape-row.grand {
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+.tape-row.grand .value { color: var(--accent-strong); }
+.tape-row.discount .value { color: var(--warn); }
+
+/* --- Status + feedback ----------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: 999px;
+  padding: 0.1rem var(--space-3);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  border: 1px solid var(--border);
+}
+.badge.draft { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, var(--border)); }
+.badge.posted { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, var(--border)); }
+.badge.voided { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
+
+.alert {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.alert[data-kind="info"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+.alert[data-kind="warn"] {
+  border-color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 12%, var(--surface));
+}
+.alert ul { margin: var(--space-1) 0 0; padding-inline-start: var(--space-5); }
+
+.saved-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3) var(--space-5); }
+.saved-grid dt { color: var(--muted); font-size: var(--fs-sm); }
+.saved-grid dd { margin: 0 0 var(--space-2); }
+
+.line-table { width: 100%; border-collapse: collapse; margin-top: var(--space-3); }
+.line-table th, .line-table td { text-align: start; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); }
+.line-table th { color: var(--muted); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.04em; }
+.line-table td.num, .line-table th.num { text-align: end; }
+
+.login-wrap { max-width: 24rem; margin: 8vh auto 0; }
+
+@media (max-width: 720px) {
+  .grid-2, .grid-3, .saved-grid { grid-template-columns: 1fr; }
+  .line-head { display: none; }
+  .line { grid-template-columns: 1fr 1fr; }
+  .line .field.product { grid-column: 1 / -1; }
+  .invoice-tape { max-width: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
