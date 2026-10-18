@@ -17,6 +17,9 @@ app.include_router(rbac_router)
 from app.sales.router import router as invoice_router
 
 app.include_router(invoice_router)
+from app.sales.target_router import router as targets_router
+
+app.include_router(targets_router)
 from app.inventory.router import router as inventory_router
 
 app.include_router(inventory_router)

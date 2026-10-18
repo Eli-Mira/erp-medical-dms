@@ -91,3 +91,25 @@ class InvoiceListOut(BaseModel):
 
     total: int
     items: list[InvoiceOut]
+
+
+class TargetIn(BaseModel):
+    """Set-or-replace one monthly target; product omitted = rep's whole book."""
+
+    rep_id: UUID
+    product_id: UUID | None = None
+    period_month: date
+    target_quantity: Decimal = Field(ge=0, decimal_places=3, max_digits=12)
+
+
+class TargetOut(BaseModel):
+    """One target row with the actual posted sales for the same scope."""
+
+    id: UUID
+    rep_id: UUID
+    product_id: UUID | None
+    period_month: date
+    target_quantity: Decimal
+    actual_quantity: Decimal | None
+    created_by: UUID
+    created_at: datetime

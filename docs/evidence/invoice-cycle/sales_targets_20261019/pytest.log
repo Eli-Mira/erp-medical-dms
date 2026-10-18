@@ -1,0 +1,51 @@
+........................................................................ [ 19%]
+........................................................................ [ 38%]
+........................................................................ [ 58%]
+........................................................................ [ 77%]
+........................................................................ [ 97%]
+FFFFFF.....                                                              [100%]
+================================== FAILURES ===================================
+______________________ test_owner_upsert_set_and_replace ______________________
+tests\test_sales_targets.py:60: in test_owner_upsert_set_and_replace
+    first = client.post("/targets", headers=headers("owner"), json=payload)
+                                            ^^^^^^^^^^^^^^^^
+E   TypeError: 'dict' object is not callable
+__________________ test_product_and_book_targets_can_coexist __________________
+tests\test_sales_targets.py:77: in test_product_and_book_targets_can_coexist
+    assert client.post("/targets", headers=headers("owner"),
+                                           ^^^^^^^^^^^^^^^^
+E   TypeError: 'dict' object is not callable
+_____________________ test_medical_rep_sees_only_own_rows _____________________
+tests\test_sales_targets.py:94: in test_medical_rep_sees_only_own_rows
+    assert client.post("/targets", headers=headers("owner"),
+                                           ^^^^^^^^^^^^^^^^
+E   TypeError: 'dict' object is not callable
+_______________ test_actuals_from_posted_lines_book_and_product _______________
+tests\test_sales_targets.py:112: in test_actuals_from_posted_lines_book_and_product
+    client.post("/targets", headers=headers("owner"),
+                                    ^^^^^^^^^^^^^^^^
+E   TypeError: 'dict' object is not callable
+___________________________ test_manage_validation ____________________________
+tests\test_sales_targets.py:131: in test_manage_validation
+    assert client.post("/targets", headers=headers("owner"),
+                                           ^^^^^^^^^^^^^^^^
+E   TypeError: 'dict' object is not callable
+______________________________ test_role_gating _______________________________
+tests\test_sales_targets.py:144: in test_role_gating
+    assert client.post("/targets", headers=headers("other"),  # medical_rep
+                                           ^^^^^^^^^^^^^^^^
+E   TypeError: 'dict' object is not callable
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_sales_targets.py::test_owner_upsert_set_and_replace - TypeE...
+FAILED tests/test_sales_targets.py::test_product_and_book_targets_can_coexist
+FAILED tests/test_sales_targets.py::test_medical_rep_sees_only_own_rows - Typ...
+FAILED tests/test_sales_targets.py::test_actuals_from_posted_lines_book_and_product
+FAILED tests/test_sales_targets.py::test_manage_validation - TypeError: 'dict...
+FAILED tests/test_sales_targets.py::test_role_gating - TypeError: 'dict' obje...
+6 failed, 365 passed, 1 warning in 142.18s (0:02:22)
