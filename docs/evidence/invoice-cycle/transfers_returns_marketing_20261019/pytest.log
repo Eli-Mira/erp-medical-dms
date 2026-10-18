@@ -1,0 +1,150 @@
+........................................................................ [ 18%]
+........................................................................ [ 37%]
+........................................................................ [ 56%]
+........................................................................ [ 75%]
+........................................................................ [ 93%]
+...................F...                                                  [100%]
+================================== FAILURES ===================================
+________________ test_transfer_moves_stock_between_warehouses _________________
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.ForeignKeyViolation: insert or update on table "stock_balance" violates foreign key constraint "fk_stock_balance_batch_warehouse"
+E   DETAIL:  Key (batch_id, warehouse_id)=(2d24fb2c-4470-4549-b6c3-fab548e8f064, 04ba882f-cecc-4316-bef2-14dca7adb17a) is not present in table "batch_record".
+
+The above exception was the direct cause of the following exception:
+tests\test_transfers.py:21: in test_transfer_moves_stock_between_warehouses
+    body = client.post("/transfers", headers=headers("owner"), json={
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:555: in post
+    return super().post(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1209: in post
+    return self.request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:454: in request
+    return super().request(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:803: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:985: in send
+    response = self._send_handling_auth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1013: in _send_handling_auth
+    response = self._send_handling_redirects(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1048: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\httpx2\_client.py:1081: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:356: in handle_request
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:353: in handle_request
+    portal.call(self.app, scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\.hermes-runtime\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\applications.py:90: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:660: in __call__
+    await self.middleware_stack(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:680: in app
+    await route.handle(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\routing.py:276: in handle
+    await self.app(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:119: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:105: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:431: in app
+    raw_response = await run_endpoint_function(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\fastapi\routing.py:315: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\concurrency.py:34: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\to_thread.py:65: in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:2706: in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\anyio\_backends\_asyncio.py:1100: in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+app\transfers\router.py:107: in create_transfer
+    inv_service.record_movement(db, actor_id=current["id"], warehouse_id=dst,
+app\inventory\service.py:71: in record_movement
+    balance = _apply_balance(db, warehouse_id, product_id, batch_id, quantity)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\inventory\service.py:19: in _apply_balance
+    inserted = db.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.IntegrityError: (psycopg.errors.ForeignKeyViolation) insert or update on table "stock_balance" violates foreign key constraint "fk_stock_balance_batch_warehouse"
+E   DETAIL:  Key (batch_id, warehouse_id)=(2d24fb2c-4470-4549-b6c3-fab548e8f064, 04ba882f-cecc-4316-bef2-14dca7adb17a) is not present in table "batch_record".
+E   [SQL: 
+E               INSERT INTO inventory.stock_balance
+E                   (warehouse_id, product_id, batch_id, quantity, updated_at)
+E               VALUES (%(w)s, %(p)s, %(b)s, %(delta)s, now())
+E               ON CONFLICT DO NOTHING
+E               RETURNING quantity
+E           ]
+E   [parameters: {'w': '04ba882f-cecc-4316-bef2-14dca7adb17a', 'p': '68020be3-c1dc-463b-8a8f-8d577faa83f6', 'b': '2d24fb2c-4470-4549-b6c3-fab548e8f064', 'delta': Decimal('4')}]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_transfers.py::test_transfer_moves_stock_between_warehouses
+1 failed, 382 passed, 1 warning in 146.28s (0:02:26)

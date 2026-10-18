@@ -30,9 +30,15 @@ from app.finance.payment_router import router as collections_router
 
 app.include_router(collections_router)
 from app.audit.router import router as audit_router
+from app.marketing.router import router as marketing_router
 from app.master.router import router as master_router
+from app.returns.router import router as returns_router
+from app.transfers.router import router as transfers_router
 
 app.include_router(master_router)
+app.include_router(transfers_router)
+app.include_router(returns_router)
+app.include_router(marketing_router)
 app.include_router(audit_router)
 from app.settings.router import router as settings_router
 
