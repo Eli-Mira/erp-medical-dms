@@ -21,10 +21,12 @@ from app.inventory import service
 from app.inventory.schemas import (
     BalanceOut,
     BatchOut,
+    CoverOut,
     MovementIn,
     MovementOut,
     MovementResult,
 )
+from app.settings import service as settings_service
 
 router = APIRouter(prefix="/inventory", tags=["inventory"])
 Db = Annotated[Session, Depends(get_db)]
@@ -99,6 +101,23 @@ def list_batches(db: Db, current: CurrentUser, warehouse_id: UUID | None = None,
             for row in service.list_batches(db, warehouse_id=warehouse_id,
                                             product_id=product_id,
                                             warehouse_ids=warehouse_ids)]
+
+
+@router.get("/cover")
+def cover_report(db: Db, current: CurrentUser, warehouse_id: UUID | None = None,
+                 product_id: UUID | None = None) -> list[CoverOut]:
+    _role(current, READ_ROLES)
+    scope = _scope_warehouses(db, current)
+    if scope is not None and warehouse_id is not None and warehouse_id not in scope:
+        raise HTTPException(404, "Warehouse not found")
+    policy = settings_service.read_policy(db)
+    warehouse_ids = list(scope) if scope is not None else None
+    return [CoverOut.model_validate(row)
+            for row in service.cover_report(
+                db, policy["stock_cover_window_days"],
+                policy["overstock_threshold_days"],
+                warehouse_id=warehouse_id, product_id=product_id,
+                warehouse_ids=warehouse_ids)]
 
 
 @router.get("/movements")

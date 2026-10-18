@@ -31,6 +31,7 @@ def isolated_financial_database(request):
         "test_master_api",
         "test_master_data_b",
         "test_inventory_batches",
+        "test_inventory_cover",
         "test_settings_policy",
     }:
         return

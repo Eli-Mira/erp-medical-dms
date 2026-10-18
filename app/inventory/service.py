@@ -177,6 +177,80 @@ def list_batches(
     return [dict(row) for row in rows]
 
 
+def cover_report(
+    db, window_days, threshold_days, warehouse_id=None, product_id=None,
+    warehouse_ids=None,
+):
+    """Stock-cover / overstock per (warehouse, product) from real ledgers only.
+
+    Cover days = on-hand ÷ (posted sales quantity in the window ÷ window).
+    With no posted sales in the window the status is ``no_sales_history`` —
+    never a fabricated rate.
+    """
+    clauses, params = [], {"window_days": window_days}
+    if warehouse_ids is not None:
+        if warehouse_ids:
+            clauses.append("bal.warehouse_id = ANY(CAST(:warehouse_ids AS uuid[]))")
+            params["warehouse_ids"] = [str(w) for w in warehouse_ids]
+        else:
+            clauses.append("1 = 0")
+    if warehouse_id is not None:
+        clauses.append("bal.warehouse_id = :warehouse_id")
+        params["warehouse_id"] = warehouse_id
+    if product_id is not None:
+        clauses.append("bal.product_id = :product_id")
+        params["product_id"] = product_id
+    where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+    rows = db.execute(
+        text("""
+        WITH bal AS (
+            SELECT warehouse_id, product_id, SUM(quantity) AS on_hand
+            FROM inventory.stock_balance
+            GROUP BY warehouse_id, product_id
+            HAVING SUM(quantity) > 0
+        ),
+        sales_rate AS (
+            SELECT i.warehouse_id AS w, l.product_id AS p,
+                   SUM(l.quantity) AS sold
+            FROM sales.sales_invoice i
+            JOIN sales.sales_invoice_line l ON l.invoice_id = i.id
+            WHERE i.posting_status = 'Posted'
+              AND i.invoice_date >= CURRENT_DATE - CAST(:window_days AS integer)
+              AND i.invoice_date <= CURRENT_DATE
+            GROUP BY 1, 2
+        )
+        SELECT bal.warehouse_id, bal.product_id, bal.on_hand, s.sold
+        FROM bal LEFT JOIN sales_rate s
+            ON s.w = bal.warehouse_id AND s.p = bal.product_id
+        """ + where + " ORDER BY bal.warehouse_id, bal.product_id"),
+        params,
+    ).mappings()
+    report = []
+    for row in rows:
+        on_hand = row["on_hand"]
+        sold = row["sold"]
+        avg_daily = sold / window_days if sold is not None else None
+        cover_days = on_hand / avg_daily if avg_daily else None
+        if sold is None:
+            status = "no_sales_history"
+        elif cover_days > threshold_days:
+            status = "overstock"
+        else:
+            status = "ok"
+        report.append({
+            "warehouse_id": row["warehouse_id"],
+            "product_id": row["product_id"],
+            "on_hand": on_hand,
+            "sold_in_window": sold,
+            "avg_daily_sales": avg_daily,
+            "cover_days": cover_days,
+            "window_days": window_days,
+            "threshold_days": threshold_days,
+            "status": status,
+        })
+    return report
+
+
 def list_balances(
     db, warehouse_id=None, product_id=None, batch_id=None, warehouse_ids=None
 ):

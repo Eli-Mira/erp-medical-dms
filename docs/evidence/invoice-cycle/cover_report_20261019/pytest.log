@@ -1,0 +1,109 @@
+........................................................................ [ 19%]
+.....................................FF................................. [ 39%]
+........................................................................ [ 59%]
+........................................................................ [ 78%]
+........................................................................ [ 98%]
+.....                                                                    [100%]
+================================== FAILURES ===================================
+___________________ test_cover_computes_days_and_status_ok ____________________
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.RaiseException: Terminal invoice lines are immutable
+E   CONTEXT:  PL/pgSQL function sales.guard_terminal_line() line 6 at RAISE
+
+The above exception was the direct cause of the following exception:
+tests\test_inventory_cover.py:85: in test_cover_computes_days_and_status_ok
+    _seed_posted_sale(db, today, ids, product_id=ids["product"],
+tests\test_inventory_cover.py:28: in _seed_posted_sale
+    db.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.ProgrammingError: (psycopg.errors.RaiseException) Terminal invoice lines are immutable
+E   CONTEXT:  PL/pgSQL function sales.guard_terminal_line() line 6 at RAISE
+E   [SQL: INSERT INTO sales.sales_invoice_line
+E               (id, invoice_id, product_id, line_no, quantity, unit_price,
+E                discount_pct, net_price, line_total, vat_rate, vat_amount)
+E               VALUES (gen_random_uuid(), %(invoice)s, %(product)s, 1, %(qty)s, 10.00,
+E                       0, 10.00, %(lt)s, 14.00, 0)]
+E   [parameters: {'invoice': UUID('dacd5aa4-198e-4066-bc0c-e10f86ce887a'), 'product': UUID('d64a7a8b-d07a-41e1-b20a-fdad4191a925'), 'qty': Decimal('30'), 'lt': Decimal('300.00')}]
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+_________________________ test_cover_flags_overstock __________________________
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.RaiseException: Terminal invoice lines are immutable
+E   CONTEXT:  PL/pgSQL function sales.guard_terminal_line() line 6 at RAISE
+
+The above exception was the direct cause of the following exception:
+tests\test_inventory_cover.py:100: in test_cover_flags_overstock
+    _seed_posted_sale(db, today, ids, product_id=ids["product"],
+tests\test_inventory_cover.py:28: in _seed_posted_sale
+    db.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\orm\session.py:2280: in _execute_internal
+    result = conn.execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\psycopg\cursor.py:117: in execute
+    raise ex.with_traceback(None)
+E   sqlalchemy.exc.ProgrammingError: (psycopg.errors.RaiseException) Terminal invoice lines are immutable
+E   CONTEXT:  PL/pgSQL function sales.guard_terminal_line() line 6 at RAISE
+E   [SQL: INSERT INTO sales.sales_invoice_line
+E               (id, invoice_id, product_id, line_no, quantity, unit_price,
+E                discount_pct, net_price, line_total, vat_rate, vat_amount)
+E               VALUES (gen_random_uuid(), %(invoice)s, %(product)s, 1, %(qty)s, 10.00,
+E                       0, 10.00, %(lt)s, 14.00, 0)]
+E   [parameters: {'invoice': UUID('0fa9d88c-8382-4c57-bd45-cf1d27ddbb1f'), 'product': UUID('e450da0f-3873-443a-a977-4f77365489f1'), 'qty': Decimal('1'), 'lt': Decimal('10.00')}]
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_inventory_cover.py::test_cover_computes_days_and_status_ok
+FAILED tests/test_inventory_cover.py::test_cover_flags_overstock - sqlalchemy...
+2 failed, 363 passed, 1 warning in 148.70s (0:02:28)

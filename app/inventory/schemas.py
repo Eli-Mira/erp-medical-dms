@@ -46,6 +46,18 @@ class BalanceOut(BaseModel):
     updated_at: datetime
 
 
+class CoverOut(BaseModel):
+    warehouse_id: UUID
+    product_id: UUID
+    on_hand: Decimal
+    sold_in_window: Decimal | None
+    avg_daily_sales: Decimal | None
+    cover_days: Decimal | None
+    window_days: int
+    threshold_days: int
+    status: str
+
+
 class BatchOut(BaseModel):
     id: UUID
     product_id: UUID
