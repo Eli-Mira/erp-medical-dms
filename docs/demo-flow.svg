@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" font-family="Segoe UI, Tahoma, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2bb3a3"/>
+    </marker>
+    <marker id="arrowW" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9fb0c7"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="900" fill="#0b1220"/>
+  <rect x="0" y="0" width="1200" height="64" fill="#111c2e"/>
+  <rect x="0" y="0" width="1200" height="4" fill="#e0b055"/>
+  <text x="600" y="40" fill="#e6edf6" font-size="24" font-weight="bold" text-anchor="middle">نظام الشركة الطبية — العرض التجريبي</text>
+  <text x="600" y="58" fill="#9fb0c7" font-size="13" text-anchor="middle">Client Prototype · http://127.0.0.1:8018/app/</text>
+
+  <!-- LOGIN -->
+  <rect x="370" y="88" width="460" height="118" rx="12" fill="#16233a" stroke="#26374f"/>
+  <rect x="370" y="88" width="460" height="34" rx="12" fill="#1d2c46"/>
+  <text x="600" y="111" fill="#2bb3a3" font-size="15" font-weight="bold" text-anchor="middle">1 · تسجيل الدخول — Sign in</text>
+  <text x="600" y="144" fill="#e6edf6" font-size="15" text-anchor="middle">Username: <tspan fill="#34c9b6" font-weight="bold">demo_owner</tspan>   Password: <tspan fill="#e0b055" font-weight="bold">Demo-2026</tspan></text>
+  <text x="600" y="168" fill="#9fb0c7" font-size="12" text-anchor="middle">(أيضًا demo_rep لمشاهدة حصر الفرع · demo_finance للمالية)</text>
+  <text x="600" y="192" fill="#e0b055" font-size="12" text-anchor="middle">كل الحسابات وكلمات المرور تجريبية 100% - لا حسابات حقيقية</text>
+
+  <line x1="600" y1="206" x2="600" y2="238" stroke="#2bb3a3" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- DASHBOARD -->
+  <rect x="240" y="242" width="720" height="150" rx="12" fill="#16233a" stroke="#26374f"/>
+  <rect x="240" y="242" width="720" height="34" rx="12" fill="#1d2c46"/>
+  <text x="600" y="265" fill="#2bb3a3" font-size="15" font-weight="bold" text-anchor="middle">2 · لوحة العرض الرئيسية — Dashboard (كل الأرقام من الخادم)</text>
+  <g font-size="14">
+    <rect x="266" y="292" width="160" height="78" rx="8" fill="#0b1220" stroke="#26374f"/>
+    <text x="346" y="320" fill="#9fb0c7" text-anchor="middle" font-size="12">أرصدة العملاء المستحقة</text>
+    <text x="346" y="352" fill="#34c9b6" font-weight="bold" font-size="22" text-anchor="middle">3300.70</text>
+    <rect x="442" y="292" width="160" height="78" rx="8" fill="#0b1220" stroke="#26374f"/>
+    <text x="522" y="320" fill="#9fb0c7" text-anchor="middle" font-size="12">وحدات في المخازن</text>
+    <text x="522" y="352" fill="#34c9b6" font-weight="bold" font-size="22" text-anchor="middle">2690</text>
+    <rect x="618" y="292" width="160" height="78" rx="8" fill="#0b1220" stroke="#26374f"/>
+    <text x="698" y="320" fill="#9fb0c7" text-anchor="middle" font-size="12">الأصناف النشطة</text>
+    <text x="698" y="352" fill="#34c9b6" font-weight="bold" font-size="22" text-anchor="middle">4</text>
+    <rect x="794" y="292" width="160" height="78" rx="8" fill="#0b1220" stroke="#26374f"/>
+    <text x="874" y="320" fill="#9fb0c7" text-anchor="middle" font-size="12">إجمالي التحصيلات</text>
+    <text x="874" y="352" fill="#34c9b6" font-weight="bold" font-size="22" text-anchor="middle">800.00</text>
+  </g>
+
+  <line x1="430" y1="392" x2="310" y2="420" stroke="#2bb3a3" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="770" y1="392" x2="890" y2="420" stroke="#9fb0c7" stroke-width="2" marker-end="url(#arrowW)"/>
+
+  <!-- LEFT: INVOICE DRAFT FLOW -->
+  <rect x="60" y="424" width="530" height="330" rx="12" fill="#111c2e" stroke="#2bb3a3" stroke-width="1.5"/>
+  <rect x="60" y="424" width="530" height="34" rx="12" fill="#1d2c46"/>
+  <text x="325" y="447" fill="#34c9b6" font-size="15" font-weight="bold" text-anchor="middle">3 · مسار الفاتورة — الموظّف يعمل · الفاتورة مبدئية فقط</text>
+  <g font-size="13">
+    <rect x="90" y="474" width="470" height="30" rx="6" fill="#0b1220" stroke="#26374f"/>
+    <text x="112" y="494" fill="#e6edf6">اختيار العميل → يُملأ الفرع تلقائيًا → اختيار المخزن</text>
+    <line x1="325" y1="504" x2="325" y2="518" stroke="#2bb3a3" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="90" y="522" width="470" height="30" rx="6" fill="#0b1220" stroke="#26374f"/>
+    <text x="112" y="542" fill="#e6edf6">بنود البيع: منتج تجريبي × كمية × خصم (تقدير مباشر)</text>
+    <line x1="325" y1="552" x2="325" y2="566" stroke="#2bb3a3" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="90" y="570" width="470" height="40" rx="6" fill="#0b1220" stroke="#34c9b6" stroke-width="1.5"/>
+    <text x="112" y="588" fill="#e6edf6" font-weight="bold">حفظ كمسودة → الخادم يعيد الحساب ويعطي الأرقام النهائية</text>
+    <text x="112" y="604" fill="#9fb0c7" font-size="12">(مثال مُتحقق منه: 62.50 / 6.25 / 49.34 / 6.91 / 56.25)</text>
+    <line x1="325" y1="610" x2="325" y2="624" stroke="#2bb3a3" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="90" y="628" width="470" height="34" rx="6" fill="#0b1220" stroke="#26374f"/>
+    <text x="112" y="650" fill="#4cc38a" font-weight="bold">✓ المسودة لا تخصم من المخزون ولا تغيّر الذمم (مُتحقق منه)</text>
+    <line x1="325" y1="662" x2="325" y2="676" stroke="#9fb0c7" stroke-width="2" marker-end="url(#arrowW)"/>
+    <rect x="90" y="680" width="470" height="52" rx="6" fill="#0b1220" stroke="#e0b055" stroke-width="1.5"/>
+    <text x="112" y="700" fill="#e0b055" font-weight="bold">زر “ترحيل الفاتورة” → الخادم يرفض (HTTP 409) — بوابة الأمان</text>
+    <text x="112" y="720" fill="#e0b055" font-size="12">لا يُحاكى ترحيل ناجح في العرض · POSTING_ENABLED=false</text>
+  </g>
+
+  <!-- RIGHT: READ-ONLY DATA VIEWS -->
+  <rect x="640" y="424" width="500" height="330" rx="12" fill="#111c2e" stroke="#26374f"/>
+  <rect x="640" y="424" width="500" height="34" rx="12" fill="#1d2c46"/>
+  <text x="890" y="447" fill="#9fb0c7" font-size="15" font-weight="bold" text-anchor="middle">4 · شاشات استعراض (قراءة فقط · بيانات تجريبية مُدرجة مسبقًا)</text>
+  <g font-size="13">
+    <rect x="666" y="474" width="448" height="82" rx="8" fill="#0b1220" stroke="#26374f"/>
+    <text x="686" y="498" fill="#e6edf6" font-weight="bold">📦 المخزون</text>
+    <text x="686" y="520" fill="#9fb0c7" font-size="12">6 أرصدة افتتاحية تجريبية في مخزنين — 2690 وحدة إجمالًا</text>
+    <text x="686" y="540" fill="#9fb0c7" font-size="12">حفظ أي مسودة لا يغيّر هذه الأرقام (مُتحقق منه)</text>
+    <rect x="666" y="572" width="448" height="82" rx="8" fill="#0b1220" stroke="#26374f"/>
+    <text x="686" y="596" fill="#e6edf6" font-weight="bold">👥 أرصدة العملاء</text>
+    <text x="686" y="618" fill="#9fb0c7" font-size="12">1910.00 / 750.00 / 640.70 / 0.00 = قيود افتتاحية + فواتير − تحصيلات</text>
+    <text x="686" y="638" fill="#9fb0c7" font-size="12">المسودة لا يغيّر هذا الرقم إطلاقًا</text>
+    <rect x="666" y="670" width="448" height="82" rx="8" fill="#0b1220" stroke="#26374f"/>
+    <text x="686" y="694" fill="#e6edf6" font-weight="bold">🧾 التحصيلات</text>
+    <text x="686" y="716" fill="#9fb0c7" font-size="12">سندان تجريبيان: DEMO-RCPT-001 نقدًا 500.00 · DEMO-RCPT-002 شيك 300.00</text>
+    <text x="686" y="736" fill="#9fb0c7" font-size="12">بوابة الأمان تمنع إنشاء سندات جديدة أثناء العرض</text>
+  </g>
+
+  <!-- FOOTER BADGES -->
+  <rect x="60" y="782" width="1080" height="86" rx="12" fill="#111c2e" stroke="#26374f"/>
+  <g font-size="13" text-anchor="middle">
+    <rect x="80" y="802" width="240" height="46" rx="8" fill="#0b1220" stroke="#2bb3a3"/>
+    <text x="200" y="826" fill="#34c9b6" font-weight="bold">الجودة: Lighthouse (موبايل)</text>
+    <text x="200" y="843" fill="#e6edf6" font-size="12">إمكانية وصول 100 · أفضل ممارسات 100 · SEO 100</text>
+    <rect x="340" y="802" width="240" height="46" rx="8" fill="#0b1220" stroke="#26374f"/>
+    <text x="460" y="826" fill="#e6edf6" font-weight="bold">💻 الكمبيوتر</text>
+    <text x="460" y="843" fill="#9fb0c7" font-size="12">مُختبر بالكامل: Chrome / Edge / Firefox</text>
+    <rect x="600" y="802" width="240" height="46" rx="8" fill="#0b1220" stroke="#26374f"/>
+    <text x="720" y="826" fill="#e6edf6" font-weight="bold">📱 الهاتف / التابلت</text>
+    <text x="720" y="843" fill="#9fb0c7" font-size="12">PWA (إضافة إلى الشاشة الرئيسية) · تخطيط مفحوص</text>
+    <rect x="860" y="802" width="260" height="46" rx="8" fill="#0b1220" stroke="#e0b055"/>
+    <text x="990" y="826" fill="#e0b055" font-weight="bold">⚠️ العرض التجريبي فقط</text>
+    <text x="990" y="843" fill="#9fb0c7" font-size="12">بيانات وهمية بالكامل · لا ترحيل · لا تأثير محاسبي</text>
+  </g>
+
+  <text x="70" y="72" fill="#9fb0c7" font-size="11">الهوية: نفس هوية شاشة الفواتير — أزرق داكن + تركواز · الإنجليزية/العربية بضغطة واحدة (تبديل اتجاه الصفحة)</text>
+  <text x="1130" y="888" fill="#55667f" font-size="10" text-anchor="end">feature/client-prototype · 2026-10-18</text>
+</svg>
