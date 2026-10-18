@@ -11,3 +11,6 @@ def _env_flag(name, default):
 
 
 POSTING_ENABLED = _env_flag("POSTING_ENABLED", False)
+# Presentation only: when on, the PWA may show the demo-account hint. Never
+# gates or relaxes any business rule; purely cosmetic (see app.main /meta).
+DEMO_MODE = _env_flag("DEMO_MODE", False)

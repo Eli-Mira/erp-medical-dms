@@ -284,6 +284,51 @@ button.danger { color: var(--danger); }
 
 .login-wrap { max-width: 24rem; margin: 8vh auto 0; }
 
+/* --- Demo ribbon + section nav (client prototype) --------------------- */
+.demo-banner {
+  background: color-mix(in srgb, var(--warn) 16%, var(--surface));
+  color: var(--warn);
+  border-bottom: 1px solid color-mix(in srgb, var(--warn) 40%, transparent);
+  text-align: center;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+.app-nav {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-4) 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.nav-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: var(--space-2) var(--space-4);
+  font-weight: 600;
+}
+.nav-btn:hover { color: var(--text); border-color: var(--accent); }
+.nav-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.stat { display: flex; flex-direction: column; gap: var(--space-1); }
+.stat-label { color: var(--muted); font-size: var(--fs-sm); }
+.stat-value { font-size: var(--fs-xl); font-weight: 700; }
+
+@media (max-width: 720px) {
+  .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 720px) {
   .grid-2, .grid-3, .saved-grid { grid-template-columns: 1fr; }
   .line-head { display: none; }

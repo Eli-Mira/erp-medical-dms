@@ -19,6 +19,7 @@
     lines: [],
     draft: null,
     seq: 0,
+    invoiceNos: {},
   };
 
   var el = {};
@@ -136,6 +137,21 @@
     if (!product) return "";
     return (product.name_ar || product.name_en || product.sku) + " — " + product.sku;
   }
+  function shortId(id) { return id ? String(id).slice(0, 8) + "…" : "—"; }
+  function fmtQty(n) { return String(Number(n)); }
+  function fmtDate(value) { return value ? String(value).slice(0, 10) : "—"; }
+  function warehouseLabel(id) {
+    for (var i = 0; i < state.warehouses.length; i++) {
+      var warehouse = state.warehouses[i];
+      if (warehouse.id === id) return warehouse.name_ar || warehouse.name_en || warehouse.code;
+    }
+    return shortId(id);
+  }
+  function productLineLabel(id) {
+    var product = productById(id);
+    return product ? productLabel(product) : shortId(id);
+  }
+  function methodLabel(method) { return t("method_" + method, method); }
 
   // Mirrors app/sales/calc.py for the *estimate only*; the server is authoritative.
   function linePreview(line) {
@@ -414,8 +430,13 @@
     });
 
     clearError(el.draftError);
-    el.appView.classList.add("hidden");
+    [
+      el.loginView, el.homeView, el.appView,
+      el.inventoryView, el.balancesView, el.collectionsView,
+    ].forEach(function (node) { node.classList.add("hidden"); });
     el.draftView.classList.remove("hidden");
+    currentSection = "draft-view";
+    setActiveNav("invoice");
   }
 
   function customerName(id) {
@@ -448,6 +469,10 @@
 
   function newDraft() {
     el.invoiceForm.reset();
+    // reset() also clears the boot-filled defaults — restore them, or every
+    // fresh draft would save with an empty date (422 "input is too short").
+    el.invoiceDate.value = todayLocal();
+    el.invoiceNo.value = "INV-" + Date.now().toString().slice(-8);
     state.lines = [];
     el.lines.innerHTML = "";
     el.branchDisplay.value = "";
@@ -460,6 +485,168 @@
     el.invoiceNo.focus();
   }
 
+  // --------------------------------------------------- views & read-only data
+  var currentSection = "login-view";
+
+  function setActiveNav(name) {
+    document.querySelectorAll(".nav-btn").forEach(function (btn) {
+      btn.classList.toggle("active", btn.dataset.view === name);
+    });
+  }
+
+  function showView(name, fresh) {
+    var sectionByName = {
+      login: el.loginView, home: el.homeView, invoice: el.appView,
+      inventory: el.inventoryView, balances: el.balancesView,
+      collections: el.collectionsView,
+    };
+    var section = sectionByName[name];
+    if (!section) return;
+    if (currentSection === name && name !== "home" && name !== "inventory"
+        && name !== "balances" && name !== "collections" && fresh !== true) return;
+    [
+      el.loginView, el.homeView, el.appView, el.draftView,
+      el.inventoryView, el.balancesView, el.collectionsView,
+    ].forEach(function (node) { node.classList.add("hidden"); });
+    section.classList.remove("hidden");
+    currentSection = name;
+    setActiveNav(name);
+    if (name === "home") loadHome();
+    else if (name === "inventory") loadInventory();
+    else if (name === "balances") loadBalances();
+    else if (name === "collections") loadCollections();
+    else if (name === "invoice" && fresh) newDraft();
+  }
+
+  function renderRows(tbody, rows, build) {
+    tbody.innerHTML = "";
+    rows.forEach(function (row) { tbody.appendChild(build(row)); });
+  }
+
+  function badgeNode(text, className) {
+    var span = document.createElement("span");
+    span.className = className;
+    span.textContent = text;
+    return span;
+  }
+
+  function loadHome() {
+    clearError(el.homeError);
+    renderRows(el.homeReceipts, [], function () { return null; });
+    return Promise.all([
+      api("/ar/balances"), api("/collections"), api("/inventory/stock"),
+    ]).then(function (results) {
+      var open = results[0].filter(function (row) { return Number(row.balance) > 0.004; });
+      var receipts = results[1];
+      var stock = results[2];
+      el.statAr.textContent = fmt(open.reduce(function (total, row) {
+        return total + Number(row.balance);
+      }, 0));
+      el.statStock.textContent = fmtQty(stock.reduce(function (total, row) {
+        return total + Number(row.quantity);
+      }, 0));
+      el.statProducts.textContent = String(state.products.length);
+      el.statReceipts.textContent = fmt(receipts.reduce(function (total, row) {
+        return total + Number(row.amount);
+      }, 0));
+      var recent = receipts.slice().sort(function (a, b) {
+        return String(b.receipt_date).localeCompare(String(a.receipt_date));
+      }).slice(0, 5);
+      renderRows(el.homeReceipts, recent, receiptRow(false));
+    }).catch(function (error) { showError(el.homeError, messageFor(error)); });
+  }
+
+  function receiptRow(withColumns) {
+    return function (row) {
+      var tr = document.createElement("tr");
+      var cells = withColumns ? [
+        row.receipt_no, fmtDate(row.receipt_date),
+        state.invoiceNos[row.invoice_id] || shortId(row.invoice_id),
+        customerName(row.customer_id), methodLabel(row.method), fmt(row.amount),
+      ] : [
+        row.receipt_no, fmtDate(row.receipt_date),
+        customerName(row.customer_id), fmt(row.amount),
+      ];
+      cells.forEach(function (value, index) {
+        var td = document.createElement("td");
+        td.textContent = value;
+        if (index === cells.length - 1) td.className = "num";
+        tr.appendChild(td);
+      });
+      if (withColumns) {
+        var statusTd = document.createElement("td");
+        statusTd.appendChild(badgeNode(
+          t("badge_active", row.status), row.status === "Active" ? "badge posted" : "badge draft"
+        ));
+        tr.appendChild(statusTd);
+      }
+      return tr;
+    };
+  }
+
+  function loadInventory() {
+    clearError(el.inventoryError);
+    return api("/inventory/stock").then(function (rows) {
+      renderRows(el.stockRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        [
+          warehouseLabel(row.warehouse_id), productLineLabel(row.product_id),
+          fmtQty(row.quantity), fmtDate(row.updated_at),
+        ].forEach(function (value, index) {
+          var td = document.createElement("td");
+          td.textContent = value;
+          if (index >= 2) td.className = "num";
+          tr.appendChild(td);
+        });
+        return tr;
+      });
+    }).catch(function (error) { showError(el.inventoryError, messageFor(error)); });
+  }
+
+  function loadBalances() {
+    clearError(el.balancesError);
+    return api("/ar/balances").then(function (rows) {
+      renderRows(el.balanceRows, rows.slice().sort(function (a, b) {
+        return Number(b.balance) - Number(a.balance);
+      }), function (row) {
+        var tr = document.createElement("tr");
+        var nameTd = document.createElement("td");
+        nameTd.textContent = customerName(row.customer_id);
+        var balanceTd = document.createElement("td");
+        balanceTd.className = "num";
+        balanceTd.textContent = fmt(row.balance);
+        if (Number(row.balance) <= 0.004) {
+          nameTd.appendChild(badgeNode(t("badge_settled", "settled"), "badge posted"));
+        }
+        tr.appendChild(nameTd);
+        tr.appendChild(balanceTd);
+        return tr;
+      });
+    }).catch(function (error) { showError(el.balancesError, messageFor(error)); });
+  }
+
+  function loadCollections() {
+    clearError(el.collectionsError);
+    return api("/collections").then(function (rows) {
+      rows = rows.slice().sort(function (a, b) {
+        return String(b.receipt_date).localeCompare(String(a.receipt_date));
+      });
+      var ids = [];
+      var seen = {};
+      rows.forEach(function (row) {
+        if (!seen[row.invoice_id]) { seen[row.invoice_id] = true; ids.push(row.invoice_id); }
+      });
+      return Promise.all(ids.map(function (id) {
+        if (state.invoiceNos[id]) return null;
+        return api("/invoices/" + id).then(function (invoice) {
+          state.invoiceNos[id] = invoice.invoice_no;
+        }).catch(function () { state.invoiceNos[id] = shortId(id); });
+      })).then(function () {
+        renderRows(el.receiptRows, rows, receiptRow(true));
+      });
+    }).catch(function (error) { showError(el.collectionsError, messageFor(error)); });
+  }
+
   // --------------------------------------------------------------- auth
   async function boot() {
     el.me = await api("/auth/me");
@@ -468,12 +655,15 @@
     el.whoRole.textContent = el.me.role;
     el.who.classList.remove("hidden");
     el.logout.classList.remove("hidden");
-    el.loginView.classList.add("hidden");
-    el.appView.classList.remove("hidden");
+    el.nav.classList.remove("hidden");
+    el.demoBanner.classList.remove("hidden");
     el.invoiceDate.value = todayLocal();
     el.invoiceNo.value = "INV-" + Date.now().toString().slice(-8);
     await loadMaster();
-    newDraft();
+    try { await loadWarehouses(null); } catch (_e) {
+      // Non-global roles scope warehouses per branch; labels fall back to ids.
+    }
+    showView("home");
     if (el.me.role === "read_only_auditor") {
       el.saveDraft.disabled = true;
       el.addLine.disabled = true;
@@ -508,9 +698,9 @@
     localStorage.removeItem("token");
     el.who.classList.add("hidden");
     el.logout.classList.add("hidden");
-    el.draftView.classList.add("hidden");
-    el.appView.classList.add("hidden");
-    el.loginView.classList.remove("hidden");
+    el.nav.classList.add("hidden");
+    el.demoBanner.classList.add("hidden");
+    showView("login");
   }
 
   // --------------------------------------------------------------- init
@@ -518,6 +708,25 @@
     el.loginView = $("login-view");
     el.appView = $("app-view");
     el.draftView = $("draft-view");
+    el.homeView = $("home-view");
+    el.inventoryView = $("inventory-view");
+    el.balancesView = $("balances-view");
+    el.collectionsView = $("collections-view");
+    el.demoBanner = $("demo-banner");
+    el.loginDemo = $("login-demo");
+    el.nav = $("nav");
+    el.homeError = $("home-error");
+    el.inventoryError = $("inventory-error");
+    el.balancesError = $("balances-error");
+    el.collectionsError = $("collections-error");
+    el.statAr = $("stat-ar");
+    el.statStock = $("stat-stock");
+    el.statProducts = $("stat-products");
+    el.statReceipts = $("stat-receipts");
+    el.homeReceipts = $("home-receipts");
+    el.stockRows = $("stock-rows");
+    el.balanceRows = $("balance-rows");
+    el.receiptRows = $("receipt-rows");
     el.loginForm = $("login-form");
     el.loginUsername = $("login-username");
     el.loginPassword = $("login-password");
@@ -555,7 +764,6 @@
     el.draftGrand = $("draft-grand");
     el.draftError = $("draft-error");
     el.postDraft = $("post-draft");
-    el.newDraft = $("new-draft");
     el.lang = $("lang");
   }
 
@@ -565,7 +773,15 @@
     el.invoiceForm.addEventListener("submit", saveDraft);
     el.addLine.addEventListener("click", function () { addLine(); recalcPreview(); });
     el.postDraft.addEventListener("click", postDraft);
-    el.newDraft.addEventListener("click", newDraft);
+    document.querySelectorAll(".nav-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () { showView(btn.dataset.view); });
+    });
+    document.querySelectorAll("[data-goto]").forEach(function (btn) {
+      btn.addEventListener("click", function () { showView(btn.dataset.goto, true); });
+    });
+    document.querySelectorAll("[data-refresh]").forEach(function (btn) {
+      btn.addEventListener("click", function () { showView(btn.dataset.refresh, true); });
+    });
     el.customer.addEventListener("change", async function () {
       var customer = customerById(el.customer.value);
       el.branchDisplay.value = customer ? branchLabel(customer.branch_id) : "";
@@ -582,6 +798,12 @@
   async function init() {
     cacheElements();
     await loadI18n(localStorage.getItem("lang") || "ar");
+    try {
+      var meta = await api("/meta");
+      if (meta && meta.demo_mode && currentSection === "login-view") {
+        el.loginDemo.classList.remove("hidden");
+      }
+    } catch (_e) { /* /meta unavailable: the hint simply stays hidden */ }
     wire();
     addLine();
     recalcPreview();

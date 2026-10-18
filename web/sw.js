@@ -1,5 +1,5 @@
 // Minimal app-shell service worker (P2.7). Cache-first; bump CACHE to invalidate.
-const CACHE = "medsys-shell-v2";
+const CACHE = "medsys-shell-v3";
 const SHELL = [
   "/app/", "/app/index.html", "/app/manifest.webmanifest",
   "/app/icon.svg", "/app/styles.css", "/app/app.js",

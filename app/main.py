@@ -32,7 +32,20 @@ app.include_router(master_router)
 
 from fastapi.staticfiles import StaticFiles
 
+from app.config import DEMO_MODE
+
 app.mount("/app", StaticFiles(directory="web", html=True), name="pwa")
+
+
+@app.get("/meta")
+def meta() -> dict:
+    """Presentation flags for the PWA shell.
+
+    ``demo_mode`` only lets the login screen show the demo-account hint. It
+    carries no business state and never relaxes authorization or the
+    ``POSTING_ENABLED`` safety gate.
+    """
+    return {"demo_mode": DEMO_MODE}
 
 
 @app.get("/health")

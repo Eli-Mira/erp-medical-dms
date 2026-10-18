@@ -11,6 +11,10 @@
 <body>
   <a class="skip-link" href="#main" data-i18n="skip_to_content">Skip to content</a>
 
+  <div id="demo-banner" class="demo-banner hidden" role="note" data-i18n="demo_banner">
+    عرض تجريبي — كل البيانات المُعروضة وهمية بالكامل
+  </div>
+
   <header class="app-header">
     <div class="brand">
       <strong data-i18n="app_name">نظام الشركة الطبية</strong>
@@ -27,6 +31,14 @@
     </div>
   </header>
 
+  <nav id="nav" class="app-nav hidden" aria-label="Feature switcher">
+    <button type="button" class="nav-btn" data-view="home" data-i18n="nav_home">الرئيسية</button>
+    <button type="button" class="nav-btn" data-view="invoice" data-i18n="nav_invoice">فاتورة جديدة</button>
+    <button type="button" class="nav-btn" data-view="inventory" data-i18n="nav_inventory">المخزون</button>
+    <button type="button" class="nav-btn" data-view="balances" data-i18n="nav_balances">أرصدة العملاء</button>
+    <button type="button" class="nav-btn" data-view="collections" data-i18n="nav_collections">التحصيلات</button>
+  </nav>
+
   <main id="main">
     <!-- ---------- Login ---------- -->
     <section id="login-view" class="login-wrap" aria-labelledby="login-title">
@@ -34,6 +46,7 @@
         <h1 id="login-title" data-i18n="login_title">Sign in</h1>
         <p class="muted small" data-i18n="login_hint">Use your company account to open the invoice desk.</p>
         <div id="login-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div id="login-demo" class="alert hidden" data-kind="info" data-i18n="demo_hint"></div>
         <form id="login-form" novalidate>
           <div class="field" style="margin-bottom: var(--space-3);">
             <label for="login-username" data-i18n="username">Username</label>
@@ -45,6 +58,62 @@
           </div>
           <button type="submit" id="login-submit" class="primary" data-i18n="sign_in">Sign in</button>
         </form>
+      </div>
+    </section>
+
+    <!-- ---------- Home / dashboard ---------- -->
+    <section id="home-view" class="hidden" aria-labelledby="home-title">
+      <div class="section-head">
+        <h1 id="home-title" data-i18n="home_title">لوحة العرض</h1>
+        <span class="muted small" data-i18n="demo_note_numbers">كل الأرقام واردة من الخادم، والبيانات تجريبية.</span>
+      </div>
+      <div id="home-error" class="alert hidden" role="alert" data-kind="error"></div>
+      <div class="stat-grid">
+        <div class="card stat">
+          <span class="stat-label" data-i18n="stat_open_ar">أرصدة العملاء المستحقة</span>
+          <span class="stat-value num" id="stat-ar">—</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label" data-i18n="stat_stock_units">وحدات في المخازن</span>
+          <span class="stat-value num" id="stat-stock">—</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label" data-i18n="stat_products">الأصناف النشطة</span>
+          <span class="stat-value num" id="stat-products">—</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label" data-i18n="stat_collected">إجمالي التحصيلات</span>
+          <span class="stat-value num" id="stat-receipts">—</span>
+        </div>
+      </div>
+      <div class="card" style="margin-top: var(--space-5);">
+        <div class="section-head">
+          <h2 data-i18n="home_recent_receipts">أحدث سندات القبض</h2>
+          <button type="button" class="ghost" data-goto="collections" data-i18n="nav_collections">التحصيلات</button>
+        </div>
+        <table class="line-table">
+          <thead>
+            <tr>
+              <th data-i18n="receipt_no">سند القبض</th>
+              <th data-i18n="receipt_date">التاريخ</th>
+              <th data-i18n="customer">العميل</th>
+              <th class="num" data-i18n="amount">المبلغ</th>
+            </tr>
+          </thead>
+          <tbody id="home-receipts"></tbody>
+        </table>
+        <p class="muted small" style="margin-top: var(--space-3);" data-i18n="demo_note_ledger">
+          سندات القبض هذه معطيات افتتاحية تجريبية مُدرجة مباشرة، لا ناتج عمل النظام.
+        </p>
+      </div>
+      <div class="card" style="margin-top: var(--space-5);">
+        <div class="section-head">
+          <h2 data-i18n="home_start_title">ابدأ من هنا</h2>
+        </div>
+        <p class="muted small" data-i18n="home_start_hint">
+          أنشئ فاتورة مبدئية من الأصناف والمخازن التجريبية؛ يحسب الخادم إجمالياتها النهائية.
+        </p>
+        <button type="button" class="primary" data-goto="invoice" data-i18n="home_start_action">فاتورة بيع جديدة</button>
       </div>
     </section>
 
@@ -113,6 +182,9 @@
             <button type="submit" id="save-draft" class="primary" data-i18n="save_draft">Save draft</button>
             <span class="muted small" id="totals-note" data-i18n="server_totals_note">The server recalculates and stores the authoritative totals.</span>
           </div>
+          <p class="muted small" style="margin-top: var(--space-3);" data-i18n="draft_scope_note">
+            الحفظ كمُسودة لا يخصم من المخزون ولا يؤثر على الذمم؛ تُقيَّد الأثر عند ترحيل الفاتورة فقط.
+          </p>
         </form>
       </div>
     </section>
@@ -122,7 +194,9 @@
       <div class="card">
         <div class="section-head">
           <h1 id="draft-title" data-i18n="draft_saved">Draft saved</h1>
-          <button type="button" id="new-draft" class="ghost" data-i18n="new_draft">New draft</button>
+          <span>
+            <button type="button" class="ghost" data-goto="invoice" data-i18n="new_draft">New draft</button>
+          </span>
         </div>
         <dl class="saved-grid">
           <div><dt data-i18n="invoice_no">Invoice number</dt><dd class="num" id="draft-no">—</dd></div>
@@ -153,11 +227,91 @@
           <div class="tape-row grand"><span class="label" data-i18n="grand_total">Grand total</span><span class="value num" id="draft-grand">0.00</span></div>
         </div>
 
+        <p class="muted small" style="margin: var(--space-4) 0 0;" data-i18n="draft_scope_note">
+          الحفظ كمُسودة لا يخصم من المخزون ولا يؤثر على الذمم.
+        </p>
+
         <div id="draft-error" class="alert hidden" role="alert" data-kind="warn" style="margin-top: var(--space-4);"></div>
         <div style="margin-top: var(--space-4);">
           <button type="button" id="post-draft" data-i18n="post_invoice">Post invoice</button>
           <span class="muted small" data-i18n="posting_disabled_hint">Posting is disabled by the server safety gate (HTTP 409).</span>
         </div>
+      </div>
+    </section>
+
+    <!-- ---------- Inventory (read-only) ---------- -->
+    <section id="inventory-view" class="hidden" aria-labelledby="inventory-title">
+      <div class="card">
+        <div class="section-head">
+          <h1 id="inventory-title" data-i18n="inventory_title">المخزون</h1>
+          <button type="button" class="ghost" data-refresh="inventory" data-i18n="refresh">تحديث</button>
+        </div>
+        <div id="inventory-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <table class="line-table">
+          <thead>
+            <tr>
+              <th data-i18n="warehouse">المخزن</th>
+              <th data-i18n="product">الصنف</th>
+              <th class="num" data-i18n="quantity">الكمية</th>
+              <th class="num" data-i18n="updated_at">آخر تحديث</th>
+            </tr>
+          </thead>
+          <tbody id="stock-rows"></tbody>
+        </table>
+        <p class="muted small" style="margin-top: var(--space-3);" data-i18n="demo_note_stock">
+          أرصدة الافتتاح التجريبية أساسها حركات إدخال تجريبية مُدرجة مباشرة في قاعدة البيانات العرض.
+        </p>
+      </div>
+    </section>
+
+    <!-- ---------- Customer balances (read-only) ---------- -->
+    <section id="balances-view" class="hidden" aria-labelledby="balances-title">
+      <div class="card">
+        <div class="section-head">
+          <h1 id="balances-title" data-i18n="balances_title">أرصدة العملاء</h1>
+          <button type="button" class="ghost" data-refresh="balances" data-i18n="refresh">تحديث</button>
+        </div>
+        <div id="balances-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <table class="line-table">
+          <thead>
+            <tr>
+              <th data-i18n="customer">العميل</th>
+              <th class="num" data-i18n="balance">الرصيد</th>
+            </tr>
+          </thead>
+          <tbody id="balance-rows"></tbody>
+        </table>
+        <p class="muted small" style="margin-top: var(--space-3);" data-i18n="balances_note">
+          الرصيد = مجموع القيود (فواتير مُرحّلة + أرصدة افتتاحية − سندات القبض)؛ القيود نفسها تجريبية.
+        </p>
+      </div>
+    </section>
+
+    <!-- ---------- Collections (read-only) ---------- -->
+    <section id="collections-view" class="hidden" aria-labelledby="collections-title">
+      <div class="card">
+        <div class="section-head">
+          <h1 id="collections-title" data-i18n="collections_title">التحصيلات</h1>
+          <button type="button" class="ghost" data-refresh="collections" data-i18n="refresh">تحديث</button>
+        </div>
+        <div id="collections-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <table class="line-table">
+          <thead>
+            <tr>
+              <th data-i18n="receipt_no">سند القبض</th>
+              <th data-i18n="receipt_date">التاريخ</th>
+              <th data-i18n="invoice_no">الفاتورة</th>
+              <th data-i18n="customer">العميل</th>
+              <th data-i18n="method">الطريقة</th>
+              <th class="num" data-i18n="amount">المبلغ</th>
+              <th data-i18n="status">الحالة</th>
+            </tr>
+          </thead>
+          <tbody id="receipt-rows"></tbody>
+        </table>
+        <p class="muted small" style="margin-top: var(--space-3);" data-i18n="demo_note_receipts">
+          سندات القبض مدرجة كمعطيات افتتاحية تجريبية في قاعدة البيانات؛ الترحيل مُعطّل فلن يُنشئ النظام سندات جديدة.
+        </p>
       </div>
     </section>
   </main>
