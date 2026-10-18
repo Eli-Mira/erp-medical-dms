@@ -1118,6 +1118,8 @@
     el.draftLines.innerHTML = "";
     (draft.lines || []).forEach(function (line) {
       var tr = document.createElement("tr");
+      // Mark zero-quantity lines so the print stylesheet can hide them (2B.4).
+      if (Number(line.quantity) === 0) tr.className = "zero-qty";
       var name = productById(line.product_id);
       var cells = [
         { label: t("product"), text: productLabel(name) || line.product_id },
@@ -2038,7 +2040,7 @@
     el.draftGrand = $("draft-grand");
     el.draftError = $("draft-error");
     el.postDraft = $("post-draft");
-
+    el.printInvoice = $("print-invoice");
     el.visitCustomer = $("visit-customer");
     el.visitProduct = $("visit-product");
     el.visitPrev = $("visit-prev");
@@ -2061,6 +2063,7 @@
     el.invoiceForm.addEventListener("submit", saveDraft);
     el.addLine.addEventListener("click", function () { addLine(); recalcPreview(); });
     el.postDraft.addEventListener("click", postDraft);
+    el.printInvoice.addEventListener("click", function () { window.print(); });
 
     el.menuToggle.addEventListener("click", function () { setDrawer(!drawerOpen); });
     el.scrim.addEventListener("click", function () { setDrawer(false); });

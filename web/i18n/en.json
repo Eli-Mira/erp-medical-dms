@@ -135,6 +135,7 @@
   "server_totals_note": "The server recalculates totals and stores them as the authoritative record.",
   "server_totals_title": "Server totals",
   "post_invoice": "Post invoice",
+  "print_invoice": "Print / Save PDF",
   "new_draft": "New draft",
   "posting_disabled_hint": "Posting is disabled by the safety gate (HTTP 409) — this demo never fakes a successful post.",
   "draft_saved": "Saved draft",

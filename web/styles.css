@@ -741,4 +741,6 @@ dialog.palette::backdrop { background: rgba(15, 23, 42, 0.45); }
   body { background: #fff; }
   .card { border: 1px solid #cbd5e1; box-shadow: none; }
   .table-wrap { max-height: none; overflow: visible; }
+  #draft-lines tr.zero-qty { display: none !important; }
 }
+#draft-lines tr.zero-qty { opacity: .55; }

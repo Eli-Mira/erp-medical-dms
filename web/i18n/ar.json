@@ -135,6 +135,7 @@
   "server_totals_note": "يعيد الخادم حساب الإجماليات ويخزّنها كمرجع نهائي.",
   "server_totals_title": "إجماليات الخادم",
   "post_invoice": "ترحيل الفاتورة",
+  "print_invoice": "طباعة / حفظ PDF",
   "new_draft": "مسودة جديدة",
   "posting_disabled_hint": "الترحيل معطّل بوابة الأمان (HTTP 409) — لن يُحاكى ترحيل ناجح في هذا العرض.",
   "draft_saved": "المسودة المحفوظة",
