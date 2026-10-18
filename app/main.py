@@ -29,9 +29,11 @@ app.include_router(ar_router)
 from app.finance.payment_router import router as collections_router
 
 app.include_router(collections_router)
+from app.audit.router import router as audit_router
 from app.master.router import router as master_router
 
 app.include_router(master_router)
+app.include_router(audit_router)
 from app.settings.router import router as settings_router
 
 app.include_router(settings_router)

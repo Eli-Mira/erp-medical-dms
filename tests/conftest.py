@@ -30,6 +30,7 @@ def isolated_financial_database(request):
         "test_invoice_list",
         "test_master_api",
         "test_master_data_b",
+        "test_audit_read",
         "test_inventory_batches",
         "test_inventory_cover",
         "test_sales_targets",
