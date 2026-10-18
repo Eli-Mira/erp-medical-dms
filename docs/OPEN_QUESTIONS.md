@@ -77,3 +77,21 @@ Method: openpyxl read of `الميزانية العمومية 2026.xlsx::الع�
   the module view-only and owner-only (`web/app.js` `PROTON.privateaccounts`, `data-roles="owner"`).
 - **Status:** RESOLVED 2026-10-18 — answered by `C:/Desktop/Answers.txt` (2026-10-16, Eli): **same PostgreSQL database, separate protected module/security boundary** — separate permissions, restricted queries, audit logs, ideally separate schema/tables; no second database. Recorded as **D40** in `docs/DECISION_LOG.md`. No design finalized before this was answered, as required above.
 - Related note: audit/analytics read endpoints and the private-accounts model are both untouched by this decision.
+
+---
+
+## Phase-4 discovery-gated items (no V2 §2B spec, needs Eli approval)
+
+V2 §2B (the client-demo contract) does not define these features, and the
+workbooks do not prove their rules. Per D29 / D13 / Answers.txt, they stay
+out of scope until discovery confirms real use. Logged here instead of
+inventing rules.
+
+| # | Item | Why deferred | Status |
+|---|---|---|---|
+| P4-1 | Cash / bank accounts + receipts beyond existing AR collections | No confirmed spec or workbook evidence (PRD §E-05 mentions minimal COA only) | OPEN — needs Eli approval |
+| P4-2 | Expenses recording | No expense ledger or rules evidenced in the 7 workbooks | OPEN — needs Eli approval |
+| P4-3 | P&L / Balance Sheet reporting | V2 item 30 mentions P&L+BS reporting only; no formula/account mapping evidenced | OPEN — needs Eli approval |
+| P4-4 | Payroll | Answers.txt: lightweight salary records/payments only; no attendance/leave/tax rules evidenced | OPEN — needs Eli approval |
+| P4-5 | Purchase orders / GRN | Answers.txt: progressive; no PO/GRN workflow evidenced beyond suppliers master | OPEN — needs Eli approval |
+| P4-6 | R-35 live click-through evidence (print + invoice list + targets + batches + cover + audit screens) | Requires a real browser; none available in this environment | OPEN — needs human verification |
