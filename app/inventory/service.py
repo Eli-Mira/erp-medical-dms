@@ -142,6 +142,41 @@ def _filters(
     return (" WHERE " + " AND ".join(clauses)) if clauses else "", params
 
 
+def list_batches(
+    db, warehouse_id=None, product_id=None, warehouse_ids=None
+):
+    """Batch/expiry snapshots: every batch with its on-hand quantity, FEFO order.
+
+    LEFT JOIN keeps batches without any balance row (quantity 0) visible.
+    """
+    clauses, params = [], {}
+    if warehouse_ids is not None:
+        if warehouse_ids:
+            clauses.append("b.warehouse_id = ANY(CAST(:warehouse_ids AS uuid[]))")
+            params["warehouse_ids"] = [str(w) for w in warehouse_ids]
+        else:
+            clauses.append("1 = 0")
+    if warehouse_id is not None:
+        clauses.append("b.warehouse_id = :warehouse_id"); params["warehouse_id"] = warehouse_id
+    if product_id is not None:
+        clauses.append("b.product_id = :product_id"); params["product_id"] = product_id
+    clause = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+    rows = db.execute(
+        text(
+            "SELECT b.id, b.product_id, b.warehouse_id, b.batch_no, "
+            "b.manufacture_date, b.expiry_date, COALESCE(sb.quantity, 0) AS quantity "
+            "FROM inventory.batch_record b "
+            "LEFT JOIN inventory.stock_balance sb "
+            "ON sb.batch_id = b.id AND sb.warehouse_id = b.warehouse_id "
+            "AND sb.product_id = b.product_id"
+            + clause +
+            " ORDER BY b.expiry_date, b.batch_no"
+        ),
+        params,
+    ).mappings()
+    return [dict(row) for row in rows]
+
+
 def list_balances(
     db, warehouse_id=None, product_id=None, batch_id=None, warehouse_ids=None
 ):

@@ -1,5 +1,5 @@
 """Validated stock-movement input and exact-decimal ledger/balance snapshots."""
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Literal
 from uuid import UUID
@@ -44,6 +44,16 @@ class BalanceOut(BaseModel):
     batch_id: UUID | None
     quantity: Decimal
     updated_at: datetime
+
+
+class BatchOut(BaseModel):
+    id: UUID
+    product_id: UUID
+    warehouse_id: UUID
+    batch_no: str
+    manufacture_date: date | None
+    expiry_date: date
+    quantity: Decimal
 
 
 class MovementOut(BaseModel):

@@ -18,7 +18,13 @@ from app.auth.repo import log_audit
 from app.auth.router import get_current_user
 from app.db import get_db
 from app.inventory import service
-from app.inventory.schemas import BalanceOut, MovementIn, MovementOut, MovementResult
+from app.inventory.schemas import (
+    BalanceOut,
+    BatchOut,
+    MovementIn,
+    MovementOut,
+    MovementResult,
+)
 
 router = APIRouter(prefix="/inventory", tags=["inventory"])
 Db = Annotated[Session, Depends(get_db)]
@@ -79,6 +85,20 @@ def list_stock(db: Db, current: CurrentUser, warehouse_id: UUID | None = None,
             for row in service.list_balances(db, warehouse_id=warehouse_id,
                                              product_id=product_id, batch_id=batch_id,
                                              warehouse_ids=warehouse_ids)]
+
+
+@router.get("/batches")
+def list_batches(db: Db, current: CurrentUser, warehouse_id: UUID | None = None,
+                 product_id: UUID | None = None) -> list[BatchOut]:
+    _role(current, READ_ROLES)
+    scope = _scope_warehouses(db, current)
+    if scope is not None and warehouse_id is not None and warehouse_id not in scope:
+        raise HTTPException(404, "Warehouse not found")
+    warehouse_ids = list(scope) if scope is not None else None
+    return [BatchOut.model_validate(row)
+            for row in service.list_batches(db, warehouse_id=warehouse_id,
+                                            product_id=product_id,
+                                            warehouse_ids=warehouse_ids)]
 
 
 @router.get("/movements")

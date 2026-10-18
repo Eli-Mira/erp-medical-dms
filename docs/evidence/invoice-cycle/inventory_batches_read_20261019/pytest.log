@@ -1,0 +1,22 @@
+........................................................................ [ 20%]
+...............................F........................................ [ 40%]
+........................................................................ [ 60%]
+........................................................................ [ 81%]
+...................................................................      [100%]
+================================== FAILURES ===================================
+_______________ test_owner_batches_fefo_order_and_zero_balance ________________
+tests\test_inventory_batches.py:40: in test_owner_batches_fefo_order_and_zero_balance
+    assert str(by_no["TEST"]["quantity"]) == "10"
+E   AssertionError: assert '10.000' == '10'
+E     
+E     - 10
+E     + 10.000
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_inventory_batches.py::test_owner_batches_fefo_order_and_zero_balance
+1 failed, 354 passed, 1 warning in 165.81s (0:02:45)

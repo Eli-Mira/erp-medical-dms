@@ -67,6 +67,7 @@ def stock_env():
 def test_inventory_routes_require_authentication():
     with TestClient(app) as client:
         assert client.get("/inventory/stock").status_code == 401
+        assert client.get("/inventory/batches").status_code == 401
         assert client.get("/inventory/movements").status_code == 401
         assert client.post("/inventory/movements", json={}).status_code == 401
 
