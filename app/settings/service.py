@@ -10,21 +10,24 @@ THRESHOLD_KEY = "overstock_threshold_days"
 DEFAULT_WINDOW_DAYS = 30
 DEFAULT_THRESHOLD_DAYS = 180
 
+def _as_int(value, fallback):
+    """DB rows are our validated writes; fall back for manual DB edits."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return fallback
+
+
 def read_policy(db):
     rows = db.execute(
         text("SELECT key, value FROM platform.platform_setting WHERE key IN (:w, :t)"),
         {"w": WINDOW_KEY, "t": THRESHOLD_KEY},
     ).mappings().all()
     values = {row["key"]: row["value"] for row in rows}
-    try:
-        window = int(values.get(WINDOW_KEY, DEFAULT_WINDOW_DAYS))
-    except (TypeError, ValueError):
-        window = DEFAULT_WINDOW_DAYS
-    try:
-        threshold = int(values.get(THRESHOLD_KEY, DEFAULT_THRESHOLD_DAYS))
-    except (TypeError, ValueError):
-        threshold = DEFAULT_THRESHOLD_DAYS
-    return {"stock_cover_window_days": window, "overstock_threshold_days": threshold}
+    return {
+        "stock_cover_window_days": _as_int(values.get(WINDOW_KEY), DEFAULT_WINDOW_DAYS),
+        "overstock_threshold_days": _as_int(values.get(THRESHOLD_KEY), DEFAULT_THRESHOLD_DAYS),
+    }
 
 def write_policy(db, actor_id: UUID, window: int, threshold: int):
     db.execute(

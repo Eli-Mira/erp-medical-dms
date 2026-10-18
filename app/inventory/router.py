@@ -67,6 +67,14 @@ def _scope_warehouses(db, user):
     return warehouses
 
 
+def _read_scope(db, user, warehouse_id):
+    """Common read preamble: warehouse filter must stay inside the user's scope."""
+    scope = _scope_warehouses(db, user)
+    if scope is not None and warehouse_id is not None and warehouse_id not in scope:
+        raise HTTPException(404, "Warehouse not found")
+    return list(scope) if scope is not None else None
+
+
 def _host(request):
     host = request.client.host if request.client else None
     try:
@@ -79,10 +87,7 @@ def _host(request):
 def list_stock(db: Db, current: CurrentUser, warehouse_id: UUID | None = None,
                product_id: UUID | None = None, batch_id: UUID | None = None) -> list[BalanceOut]:
     _role(current, READ_ROLES)
-    scope = _scope_warehouses(db, current)
-    if scope is not None and warehouse_id is not None and warehouse_id not in scope:
-        raise HTTPException(404, "Warehouse not found")
-    warehouse_ids = list(scope) if scope is not None else None
+    warehouse_ids = _read_scope(db, current, warehouse_id)
     return [BalanceOut.model_validate(row)
             for row in service.list_balances(db, warehouse_id=warehouse_id,
                                              product_id=product_id, batch_id=batch_id,
@@ -93,10 +98,7 @@ def list_stock(db: Db, current: CurrentUser, warehouse_id: UUID | None = None,
 def list_batches(db: Db, current: CurrentUser, warehouse_id: UUID | None = None,
                  product_id: UUID | None = None) -> list[BatchOut]:
     _role(current, READ_ROLES)
-    scope = _scope_warehouses(db, current)
-    if scope is not None and warehouse_id is not None and warehouse_id not in scope:
-        raise HTTPException(404, "Warehouse not found")
-    warehouse_ids = list(scope) if scope is not None else None
+    warehouse_ids = _read_scope(db, current, warehouse_id)
     return [BatchOut.model_validate(row)
             for row in service.list_batches(db, warehouse_id=warehouse_id,
                                             product_id=product_id,
@@ -107,11 +109,8 @@ def list_batches(db: Db, current: CurrentUser, warehouse_id: UUID | None = None,
 def cover_report(db: Db, current: CurrentUser, warehouse_id: UUID | None = None,
                  product_id: UUID | None = None) -> list[CoverOut]:
     _role(current, READ_ROLES)
-    scope = _scope_warehouses(db, current)
-    if scope is not None and warehouse_id is not None and warehouse_id not in scope:
-        raise HTTPException(404, "Warehouse not found")
+    warehouse_ids = _read_scope(db, current, warehouse_id)
     policy = settings_service.read_policy(db)
-    warehouse_ids = list(scope) if scope is not None else None
     return [CoverOut.model_validate(row)
             for row in service.cover_report(
                 db, policy["stock_cover_window_days"],
@@ -126,15 +125,12 @@ def list_movements(db: Db, current: CurrentUser, warehouse_id: UUID | None = Non
                    movement_type: str | None = None, date_from: datetime | None = None,
                    date_to: datetime | None = None) -> list[MovementOut]:
     _role(current, READ_ROLES)
-    scope = _scope_warehouses(db, current)
-    warehouse_ids = list(scope) if scope is not None else None
-    if scope is not None and warehouse_id is not None and warehouse_id not in scope:
-        raise HTTPException(404, "Warehouse not found")
+    warehouse_ids = _read_scope(db, current, warehouse_id)
     rows = service.list_movements(db, warehouse_id=warehouse_id, product_id=product_id,
                                   batch_id=batch_id, movement_type=movement_type,
                                   date_from=date_from, date_to=date_to,
                                   warehouse_ids=warehouse_ids,
-                                  scoped_user_id=current["id"] if scope is not None else None)
+                                  scoped_user_id=current["id"] if warehouse_ids is not None else None)
     return [MovementOut.model_validate(row) for row in rows]
 
 
