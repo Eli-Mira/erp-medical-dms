@@ -2108,6 +2108,11 @@
   // =========================================================================
   // COMMAND PALETTE (Ctrl+K) — searches nav + real customers/products.
   // =========================================================================
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && el.palette && el.palette.open) {
+      el.palette.close();
+    }
+  });
   var paletteItems = [];
   function paletteNavigate(target) {
     el.palette.close();
