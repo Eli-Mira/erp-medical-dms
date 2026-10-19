@@ -53,7 +53,7 @@
 
 ### 2.2 Frontend
 
-**Proposal: React + TypeScript + Vite + Material-UI (MUI)**
+**Approved stack (D37, superseded proposal retained below for history): existing vanilla JavaScript PWA (HTML/CSS/JS) + FastAPI backend. No framework migration is authorized (D46).**
 
 | Criteria | Rationale |
 |---|---|
@@ -73,7 +73,7 @@
 | Angular | Strong typing; batteries included | Overweight for MVP; steeper learning curve |
 | Vanilla JS + HTMX | Minimal JS; fast dev | No PWA service worker without extra work; harder to scale to complex dashboards |
 
-**Recommendation:** React + TypeScript + Vite + MUI unless Eli prefers Vue.
+**Recommendation (superseded by D37/D46):** keep the existing vanilla JS PWA. Framework changes require explicit owner approval (D46).
 
 ### 2.3 ORM & Migrations
 
@@ -127,7 +127,7 @@
 ```
 ┌─────────────────────────────────────────────────────┐
 │  Desktop Browser / Installed PWA / Mobile Browser   │
-│        (React + TypeScript + Vite + MUI)            │
+│        (vanilla JS PWA — HTML/CSS/JS, RTL Arabic)    │
 └──────────────────────────┬──────────────────────────┘
                            │ HTTPS (remote) / HTTP (local)
                            ▼
@@ -515,7 +515,7 @@ Per `MEDICAL_COMPANY_SYSTEM_MASTER_SPEC_V2.md` §2C:
 | Concern | Approach |
 |---|---|
 | **Languages** | Arabic (default, RTL) + English (toggle) |
-| **Framework** | `django-rest-framework`-style approach using JSON translation files (`messages/ar.json`, `messages/en.json`) — or lightweight `babel` + `.po` files |
+| **Framework** | JSON translation files served by FastAPI (`web/i18n/ar.json`, `web/i18n/en.json`) — already implemented in the vanilla PWA; no Django/DRF dependency |
 | **Number formatting** | Arabic-Indic numerals (٠١٢٣٤٥٦٧٨٩) in Arabic UI; Western numerals in English UI |
 | **Date formatting** | Hijri/Gregorian toggle (TBD — confirm if Hijri is needed with Eli) |
 | **Currency display** | `EGP` symbol; Arabic: `ج.م` |

@@ -10,11 +10,11 @@ Instructions for AI coding agents (OpenCode, Claude Code, Codex, Hermes). Read t
 - **Decision record:** `docs/DECISION_LOG.md` (check before contradicting an earlier decision)
 - **Module map / flow:** `docs/MODULE_MAP.md`, `docs/APP_FLOW.md`, `docs/Excel feature mappings` (locate actual paths; do not assume absent)
 - **Current status:** `docs/PROGRESS_CHECKLIST.md`, `docs/evidence/invoice-cycle/CURRENT_STATUS.md`, `docs/AGENT_HANDOFF.md`
-- **Stack (D37, latest explicit owner decision):** FastAPI + PostgreSQL + psycopg3 + existing vanilla JS/PWA. Do **not** rewrite the frontend in React unless complexity justifies it (D37). Architecture or framework replacement requires an explicit request.
+- **Stack (D37/D46, latest explicit owner decision):** FastAPI + PostgreSQL + psycopg3 + existing vanilla JS/PWA. Do **not** rewrite the frontend in React. Framework changes require explicit owner approval (D37, D46).
 
 ## Architecture discrepancy (flagged, not resolved here)
 
-`docs/TECHNICAL_REQUIREMENTS.md` still proposes a Django REST Framework-style i18n approach and a React + TypeScript + Vite + MUI frontend, and `docs/UQ_PROPOSED_ANSWERS.md` records UQ-11 as "approved" for that stack. These conflict with D37 and the stack above, which mandate FastAPI + vanilla JS/PWA. **Do not migrate frameworks during this task.** Reconcile those documents against D37 before any framework work; treat D37 as authoritative until Eli changes it.
+`docs/TECHNICAL_REQUIREMENTS.md` §2.2 and `docs/UQ_PROPOSED_ANSWERS.md` (UQ-11) retain the historical React + Vite + MUI and Django REST Framework-style i18n proposal and its recorded approval. These are **superseded by D46 (2026-10-19)**; the approved stack is FastAPI + PostgreSQL + psycopg3 + existing vanilla JS/PWA. Architecture sections were reconciled to label the proposal as superseded; historical text is preserved. **Do not migrate frameworks.** Framework changes require explicit owner approval (D46).
 
 ## Mission and scope
 
