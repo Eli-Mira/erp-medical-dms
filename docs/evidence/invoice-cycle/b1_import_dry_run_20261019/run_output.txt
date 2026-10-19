@@ -1,0 +1,57 @@
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_platform, Initial platform schema (Phase 2 foundation).
+INFO  [alembic.runtime.migration] Running upgrade 0001_platform -> 0002_audit_log, Initial audit + reference schema (P2.6 audit, P2.9 reason codes).
+INFO  [alembic.runtime.migration] Running upgrade 0002_audit_log -> 0003_invoice, Invoice module schema (Vertical Slice 1).
+INFO  [alembic.runtime.migration] Running upgrade 0003_invoice -> 0004_invoice_drafts, Draft invoice safety, territory scope and minimal warehouse/batch references.
+INFO  [alembic.runtime.migration] Running upgrade 0004_invoice_drafts -> 0005_inventory_stock, Inventory stock ledger + balances (Module D, first slice).
+INFO  [alembic.runtime.migration] Running upgrade 0005_inventory_stock -> 0006_inventory_ar_gate, Minimal territory/warehouse mapping + posting-status gates (AR/Inventory slice).
+INFO  [alembic.runtime.migration] Running upgrade 0006_inventory_ar_gate -> 0007_ar_ledger, Finance schema: customer receivables ledger (Module E, AR half).
+INFO  [alembic.runtime.migration] Running upgrade 0007_ar_ledger -> 0008_branch_warehouse, Branch -> warehouse fulfillment compatibility (not an inventory access grant).
+INFO  [alembic.runtime.migration] Running upgrade 0008_branch_warehouse -> 0009_sales_source_warehouse, Sales source warehouse: decouple invoice branch from source-warehouse owner branch.
+INFO  [alembic.runtime.migration] Running upgrade 0009_sales_source_warehouse -> 0010_invoice_collections, Invoice collections: payment receipts, reversal support, and related constraints.
+INFO  [alembic.runtime.migration] Running upgrade 0010_invoice_collections -> 0011_master_data_b, B Master Data slice: supplier, minimal chart of accounts, doctor/KOL master.
+INFO  [alembic.runtime.migration] Running upgrade 0011_master_data_b -> 0012_sales_targets, Sales-target model: per-rep monthly targets in units (V2 §2B.13).
+INFO  [alembic.runtime.migration] Running upgrade 0012_sales_targets -> 0013_sales_returns, Sales returns: explicit return transactions (V2 §2B.12).
+INFO  [alembic.runtime.migration] Running upgrade 0013_sales_returns -> 0014_marketing_spend, Marketing spend + objective/KPI tracking (V2 §2B.16–2B.18).
+{
+  "accepted": {
+    "branches": 5,
+    "products": 12
+  },
+  "rejected": {
+    "branches": 0,
+    "products": 3
+  },
+  "duplicates": {
+    "branches": 0,
+    "products": 0
+  },
+  "db_writes": "disposable DB created, loaded, verified, dropped",
+  "db_name": "dms_cycle_test_b1import",
+  "medical_dms_touched": false,
+  "medical_demo_touched": false,
+  "source_file_writes": "NONE",
+  "inserted": {
+    "branches": 5,
+    "products": 12
+  },
+  "rejected_product_rows": [
+    "\u0627\u0644\u0645\u0628\u0644\u063a",
+    "\u0627\u0644\u0627\u062c\u0645\u0627\u0644\u0649",
+    "#REF!"
+  ],
+  "unresolved_not_inserted": {
+    "warehouses": "291 candidate sheets; company vs customer-held stock location unconfirmed",
+    "customers": 46,
+    "territories": "no explicit territory column; inferred from sheet refs only",
+    "products_branch_specific": 2
+  },
+  "unresolved_questions": [
+    "Q1: Customer->branch/territory key (workbook name vs sheet prefix vs manual)?",
+    "Q2: Which of the 291 sheets are company source warehouses vs customer-held stock?",
+    "Q3: Are the 5 branch-specific product names the same SKU sold in all branches or branch-exclusive?",
+    "Q4: Territory = branch, or separate dimension?"
+  ]
+}
+private exception list written to: C:\Desktop\Huge system\private\b1_exceptions.txt

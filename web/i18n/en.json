@@ -274,5 +274,15 @@
   "source_warehouse": "Source",
   "reason": "Reason",
   "activity_type": "Activity type",
-  "export_csv": "Export CSV"
+  "export_csv": "Export CSV",
+  "private_title": "Private accounts",
+  "private_desc": "Isolated internal ledger (D40): separate schema, owner-only access, independent audit — it never touches company AR or stock.",
+  "private_add": "Add entry",
+  "private_account": "Account",
+  "private_debit": "Debit (out)",
+  "private_credit": "Credit (in)",
+  "private_rule": "Leave one side at zero; an entry with both values at zero is rejected.",
+  "private_save": "Save entry",
+  "private_saved": "Entry saved and audited.",
+  "private_totals": "Total"
 }

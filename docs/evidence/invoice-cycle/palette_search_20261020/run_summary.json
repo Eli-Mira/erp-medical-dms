@@ -1,0 +1,19 @@
+{
+  "check": "P2.10 global search — usable UI workflow (not API-only)",
+  "date": "2026-10-20",
+  "tool": "Playwright chromium headless, viewport emulation",
+  "desktop": {
+    "viewport": "1440x900",
+    "search_queries": ["q=DEMO-C03"],
+    "result": "customer DEMO-C03 rendered in palette",
+    "console_errors": 0
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "device_emulation": "viewport emulation only, not a physical device",
+    "search_queries": ["q=DEMO-C03"],
+    "result": "customer DEMO-C03 rendered in palette",
+    "console_errors": 0
+  },
+  "behaviour": "Typing in the palette calls GET /search?q=...; matches are not limited to already-loaded rows."
+}

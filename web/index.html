@@ -6,6 +6,7 @@
   <meta name="description" content="نظام الشركة الطبية — عرض تجريبي (بيانات وهمية): فواتير، مخزون، أرصدة، تحصيلات وأدلة رئيسية. Arabic RTL PWA client demo.">
   <title data-i18n="app_name">نظام الشركة الطبية</title>
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <meta name="theme-color" content="#0F2942">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -149,7 +150,7 @@
         <span class="glyph" aria-hidden="true">👥</span><span data-i18n="nav_payroll">الرواتب</span><span class="proto-dot">نموذج</span>
       </button>
       <button type="button" class="nav-item sub" data-view="privateaccounts" data-roles="owner">
-        <span class="glyph" aria-hidden="true">🔐</span><span data-i18n="nav_privateaccounts">الحسابات الخاصة</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">🔐</span><span data-i18n="nav_privateaccounts">الحسابات الخاصة</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
       </button>
       <button type="button" class="nav-item sub" data-view="audit" data-roles="owner,finance,read_only_auditor">
         <span class="glyph" aria-hidden="true">📜</span><span data-i18n="nav_audit">سجل التدقيق</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
@@ -551,6 +552,70 @@
               </tr>
             </thead>
             <tbody id="receipt-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Private accounts (real, D40, owner only) ---------- -->
+      <section id="private-view" class="hidden" aria-labelledby="private-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="private-title" data-i18n="private_title">الحسابات الخاصة</h1>
+            <p class="desc" data-i18n="private_desc">دفتر داخلي معزول (D40): مخطط منفصل، صلاحية المالك فقط، وتدقيق مستقل — لا يلامس ذمم الشركة أو المخزون.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="privateaccounts" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="private-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="card">
+          <h2 data-i18n="private_add">إضافة حركة</h2>
+          <form id="private-form" novalidate>
+            <div class="grid-3">
+              <div class="field">
+                <label for="private-label" data-i18n="private_account">الحساب</label>
+                <input id="private-label" required maxlength="120" list="private-account-list">
+                <datalist id="private-account-list"></datalist>
+              </div>
+              <div class="field">
+                <label for="private-date" data-i18n="date">التاريخ</label>
+                <input id="private-date" type="date" required>
+              </div>
+              <div class="field">
+                <label for="private-debit" data-i18n="private_debit">مدين (خارج)</label>
+                <input id="private-debit" type="number" min="0" step="0.01" inputmode="decimal">
+              </div>
+            </div>
+            <div class="grid-3" style="margin-top: var(--space-4);">
+              <div class="field">
+                <label for="private-credit" data-i18n="private_credit">دائن (داخل)</label>
+                <input id="private-credit" type="number" min="0" step="0.01" inputmode="decimal">
+              </div>
+              <div class="field" style="grid-column: span 2;">
+                <label for="private-note" data-i18n="notes">ملاحظات</label>
+                <input id="private-note" maxlength="240">
+              </div>
+            </div>
+            <p class="muted" data-i18n="private_rule">اترك أحد الحقلين صفرًا؛ لا تُسجَّل حركة بقيمتين صفر.</p>
+            <p id="private-notice" class="notice hidden" role="status"></p>
+            <button type="submit" id="private-save" class="default" data-i18n="private_save">حفظ الحركة</button>
+          </form>
+        </div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th data-i18n="date">التاريخ</th>
+              <th data-i18n="private_account">الحساب</th>
+              <th class="num" data-i18n="private_debit">مدين (خارج)</th>
+              <th class="num" data-i18n="private_credit">دائن (داخل)</th>
+              <th data-i18n="notes">ملاحظات</th>
+            </tr></thead>
+            <tbody id="private-rows"></tbody>
+            <tfoot><tr>
+              <td colspan="2" data-i18n="private_totals">الإجمالي</td>
+              <td class="num" id="private-debit-total"></td>
+              <td class="num" id="private-credit-total"></td>
+              <td></td>
+            </tr></tfoot>
           </table>
         </div>
       </section>

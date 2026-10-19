@@ -4,9 +4,29 @@ Current scope: service scaffold + health probe. Auth/RBAC, audit logging,
 settings, posting states and PWA shell are added progressively in Phase 2.
 """
 
+import os
+
 from fastapi import FastAPI
+from fastapi.middleware.gzip import GZipMiddleware
 
 app = FastAPI(title="Medical Company System", version="0.1.0")
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
+_CACHEABLE = {".js", ".css", ".svg", ".png", ".webp", ".woff2"}
+_PAGES = {"", ".html"}
+
+
+@app.middleware("http")
+async def static_cache_headers(request, call_next):
+    """Hash-free static assets get a short public cache; the shell stays fresh."""
+    response = await call_next(request)
+    if request.url.path.startswith("/app/"):
+        ext = os.path.splitext(request.url.path)[1].lower()
+        if ext in _CACHEABLE:
+            response.headers["Cache-Control"] = "public, max-age=3600"
+        elif ext in _PAGES:
+            response.headers["Cache-Control"] = "no-cache"
+    return response
 
 from app.auth.router import router as auth_router
 

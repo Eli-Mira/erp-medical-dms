@@ -1,0 +1,22 @@
+{
+  "check": "R-35 click-through (remaining REAL screens)",
+  "date": "2026-10-20",
+  "tool": "Playwright chromium headless (installed), viewport emulation",
+  "routes_exercised": ["targets", "batches", "cover", "audit", "transfers", "returns", "marketing"],
+  "desktop": {
+    "viewport": "1440x900",
+    "device_emulation": false,
+    "console_errors": 0,
+    "overflow": [".skip-link (intentional off-canvas skip link)"],
+    "screenshots": 10
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "device_emulation": "viewport emulation only, not a physical device",
+    "console_errors": 0,
+    "overflow": [".skip-link (intentional off-canvas skip link)"],
+    "screenshots": 9
+  },
+  "print": "print media emulated per viewport, see *_print_emulated.png",
+  "notes": "Each route opens from the sidebar; on mobile the drawer toggle is used first."
+}

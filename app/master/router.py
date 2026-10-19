@@ -34,6 +34,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.router import get_current_user
 from app.db import get_db
+from app.text_search import like_pattern
 from app.master.schemas import (
     AccountOut,
     BranchOut,
@@ -100,15 +101,6 @@ def _limit(value: int) -> int:
     return min(value, LIMIT_MAX)
 
 
-def _like(q: str) -> str:
-    """Build a literal substring pattern for ILIKE.
-
-    User input must never act as a LIKE metacharacter: an unescaped ``%`` or
-    ``_`` would silently widen the search, and a stray backslash would be eaten
-    as the escape character. Postgres uses backslash as the default LIKE escape.
-    """
-    escaped = q.replace("\\", r"\\").replace("%", r"\%").replace("_", r"\_")
-    return f"%{escaped}%"
 
 
 def _territories(db, user):
@@ -241,7 +233,7 @@ def list_products(
     params: dict = {"limit": limit}
     if q:
         clauses.append("(name_ar ILIKE :q OR name_en ILIKE :q OR sku ILIKE :q)")
-        params["q"] = _like(q)
+        params["q"] = like_pattern(q)
     rows = db.execute(
         text(
             "SELECT id, sku, name_ar, name_en, base_price, vat_rate "
@@ -266,7 +258,7 @@ def list_suppliers(
     params: dict = {"limit": _limit(limit)}
     if q:
         clauses.append("(name_ar ILIKE :q OR name_en ILIKE :q OR code ILIKE :q)")
-        params["q"] = _like(q)
+        params["q"] = like_pattern(q)
     rows = db.execute(
         text(
             "SELECT id, code, name_ar, name_en, contact_phone, address, is_active "
@@ -329,7 +321,7 @@ def list_doctors(
             "(name_ar ILIKE :q OR name_en ILIKE :q OR code ILIKE :q "
             "OR specialty ILIKE :q)"
         )
-        params["q"] = _like(q)
+        params["q"] = like_pattern(q)
     rows = db.execute(
         text(
             "SELECT id, code, name_ar, name_en, specialty, branch_id, "

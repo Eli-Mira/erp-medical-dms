@@ -274,5 +274,15 @@
   "source_warehouse": "المصدر",
   "reason": "السبب",
   "activity_type": "نوع النشاط",
-  "export_csv": "تصدير CSV"
+  "export_csv": "تصدير CSV",
+  "private_title": "الحسابات الخاصة",
+  "private_desc": "دفتر داخلي معزول (D40): مخطط منفصل، صلاحية المالك فقط، وتدقيق مستقل — لا يلامس ذمم الشركة أو المخزون.",
+  "private_add": "إضافة حركة",
+  "private_account": "الحساب",
+  "private_debit": "مدين (خارج)",
+  "private_credit": "دائن (داخل)",
+  "private_rule": "اترك أحد الحقلين صفرًا؛ لا تُسجَّل حركة بقيمتين صفر.",
+  "private_save": "حفظ الحركة",
+  "private_saved": "تم حفظ الحركة وتدقيقها.",
+  "private_totals": "الإجمالي"
 }

@@ -285,6 +285,7 @@
     visits: "visits-view", targets: "targets-view", batches: "batches-view",
     cover: "cover-view", audit: "audit-view", transfers: "transfers-view",
     returns: "returns-view", marketing: "marketing-view",
+    privateaccounts: "private-view",
   };
 
   var ROLE_OK = {
@@ -413,6 +414,7 @@
       else if (name === "marketing") loadMarketing();
       else if (name === "balances") loadBalances();
       else if (name === "collections") loadCollections();
+      else if (name === "privateaccounts") loadPrivate();
       else if (name === "customers") loadCustomers();
       else if (name === "products") loadProducts();
       else if (name === "warehouses") loadWarehousesView();
@@ -1893,6 +1895,72 @@
     }
   }
 
+  // D40 private accounts: owner-only ledger in the isolated `private` schema.
+  // Totals are factual sums; no opening-balance or sign convention is assumed.
+  async function loadPrivate() {
+    clearError(el.privateError);
+    var rows;
+    try {
+      rows = await api("/private-accounts?limit=200");
+    } catch (error) {
+      showError(el.privateError, messageFor(error));
+      return;
+    }
+    var debit = 0;
+    var credit = 0;
+    var labels = {
+      date: t("date"), account: t("private_account"),
+      debit: t("private_debit"), credit: t("private_credit"), note: t("notes"),
+    };
+    rows.forEach(function (r) {
+      debit += Number(r.debit || 0);
+      credit += Number(r.credit || 0);
+    });
+    renderRows(el.privateRows, rows, function (row) {
+      var tr = document.createElement("tr");
+      tr.appendChild(cell(labels.date, String(row.entry_date), false, true));
+      tr.appendChild(cell(labels.account, row.account_label));
+      tr.appendChild(cell(labels.debit, fmt(row.debit), true));
+      tr.appendChild(cell(labels.credit, fmt(row.credit), true));
+      tr.appendChild(cell(labels.note, row.note || "—"));
+      return tr;
+    });
+    if (!rows.length) emptyRow(el.privateRows, 5, "empty_rows");
+    el.privateDebitTotal.textContent = fmt(debit);
+    el.privateCreditTotal.textContent = fmt(credit);
+    var seen = {};
+    el.privateAccountList.innerHTML = "";
+    rows.forEach(function (r) {
+      if (seen[r.account_label]) return;
+      seen[r.account_label] = true;
+      var option = document.createElement("option");
+      option.value = r.account_label;
+      el.privateAccountList.appendChild(option);
+    });
+  }
+
+  async function savePrivateEntry(event) {
+    event.preventDefault();
+    clearError(el.privateError);
+    clearError(el.privateNotice);
+    var body = {
+      account_label: el.privateLabel.value.trim(),
+      entry_date: el.privateDate.value,
+      debit: el.privateDebit.value || "0",
+      credit: el.privateCredit.value || "0",
+      note: el.privateNote.value.trim() || null,
+    };
+    try {
+      await api("/private-accounts", { method: "POST", body: body });
+    } catch (error) {
+      showError(el.privateError, messageFor(error));
+      return;
+    }
+    el.privateForm.reset();
+    showNotice(el.privateNotice, t("private_saved"), "success");
+    await loadPrivate();
+  }
+
   function loadCustomers() {
     clearError(el.customersError);
     var labels = { c: t("code"), n: t("customer"), b: t("branch"), t: t("territory") };
@@ -2120,9 +2188,26 @@
     }
   });
   var paletteItems = [];
+  var paletteRemote = null;   // server-side matches for the current query
+  var paletteSeq = 0;
   function paletteNavigate(target) {
     el.palette.close();
     showView(target.view);
+  }
+  // P2.10: query the server so matches are not limited to the rows already
+  // loaded into state (the palette used to search only the current page).
+  function paletteSearch(q) {
+    var seq = ++paletteSeq;
+    if (!q) { paletteRemote = null; renderPalette(""); return; }
+    api("/search?q=" + encodeURIComponent(q)).then(function (data) {
+      if (seq !== paletteSeq) return;
+      paletteRemote = { query: q, customers: data.customers || [], products: data.products || [] };
+      renderPalette(q);
+    }).catch(function () {
+      if (seq !== paletteSeq) return;
+      paletteRemote = null;
+      renderPalette(q);
+    });
   }
   function renderPalette(query) {
     var list = $("palette-list");
@@ -2139,18 +2224,35 @@
           hay: (label + " " + (labelSpan ? dict[labelSpan.dataset.i18n] : "")).toLowerCase(),
         });
       });
-      state.customers.forEach(function (c) {
-        paletteItems.push({
-          kind: t("customer"), label: c.name_ar || c.name_en || c.code, sub: c.code,
-          view: "customers", hay: ((c.name_ar || "") + (c.name_en || "") + c.code).toLowerCase(),
+      var remoteFresh = paletteRemote && paletteRemote.query === query.trim();
+      if (!remoteFresh) {
+        state.customers.forEach(function (c) {
+          paletteItems.push({
+            kind: t("customer"), label: c.name_ar || c.name_en || c.code, sub: c.code,
+            view: "customers", hay: ((c.name_ar || "") + (c.name_en || "") + c.code).toLowerCase(),
+          });
         });
-      });
-      state.products.forEach(function (p) {
-        paletteItems.push({
-          kind: t("product"), label: p.name_ar || p.name_en || p.sku, sub: p.sku,
-          view: "products", hay: ((p.name_ar || "") + (p.name_en || "") + p.sku).toLowerCase(),
+        state.products.forEach(function (p) {
+          paletteItems.push({
+            kind: t("product"), label: p.name_ar || p.name_en || p.sku, sub: p.sku,
+            view: "products", hay: ((p.name_ar || "") + (p.name_en || "") + p.sku).toLowerCase(),
+          });
         });
-      });
+      }
+      if (remoteFresh) {
+        paletteRemote.customers.forEach(function (c) {
+          paletteItems.push({
+            kind: t("customer"), label: c.name_ar || c.name_en || c.code, sub: c.code,
+            view: "customers", hay: ((c.name_ar || "") + (c.name_en || "") + c.code).toLowerCase(),
+          });
+        });
+        paletteRemote.products.forEach(function (p) {
+          paletteItems.push({
+            kind: t("product"), label: p.name_ar || p.name_en || p.sku, sub: p.sku,
+            view: "products", hay: ((p.name_ar || "") + (p.name_en || "") + p.sku).toLowerCase(),
+          });
+        });
+      }
     }
     var results = paletteItems.filter(function (item) { return !q || item.hay.indexOf(q) >= 0; }).slice(0, 12);
     results.forEach(function (item, index) {
@@ -2169,6 +2271,7 @@
   function openPalette() {
     if (!state.user) return;
     el.paletteInput.value = "";
+    paletteRemote = null;
     renderPalette("");
     el.palette.showModal();
     el.paletteInput.focus();
@@ -2326,6 +2429,18 @@
     el.inventoryError = $("inventory-error");
     el.balancesError = $("balances-error");
     el.collectionsError = $("collections-error");
+    el.privateError = $("private-error");
+    el.privateNotice = $("private-notice");
+    el.privateRows = $("private-rows");
+    el.privateDebitTotal = $("private-debit-total");
+    el.privateCreditTotal = $("private-credit-total");
+    el.privateForm = $("private-form");
+    el.privateLabel = $("private-label");
+    el.privateDate = $("private-date");
+    el.privateDebit = $("private-debit");
+    el.privateCredit = $("private-credit");
+    el.privateNote = $("private-note");
+    el.privateAccountList = $("private-account-list");
     el.statAr = $("stat-ar");
     el.statArSub = $("stat-ar-sub");
     el.statStock = $("stat-stock");
@@ -2482,7 +2597,8 @@
         if (sel) sel.click();
       }
     });
-    el.paletteInput.addEventListener("input", function () { renderPalette(el.paletteInput.value); });
+    el.paletteInput.addEventListener("input", function () { paletteSearch(el.paletteInput.value.trim()); });
+    el.privateForm.addEventListener("submit", savePrivateEntry);
     $("open-palette").addEventListener("click", openPalette);
 
     el.visitPrev.addEventListener("input", updateVisitCalc);
