@@ -1,0 +1,29 @@
+{
+  "db_writes": "disposable DB created, loaded, verified, dropped",
+  "db_name": "dms_cycle_test_b1import",
+  "medical_dms_touched": false,
+  "medical_demo_touched": false,
+  "source_file_writes": "NONE",
+  "accepted": {
+    "branches": 5,
+    "products": 15
+  },
+  "inserted": {
+    "branches": 5,
+    "products": 15
+  },
+  "rejected": 0,
+  "duplicates": 0,
+  "unresolved_not_inserted": {
+    "warehouses": "291 candidate sheets; company vs customer-held stock location unconfirmed",
+    "customers": 46,
+    "territories": "no explicit territory column; inferred from sheet refs only",
+    "products_branch_specific": 5
+  },
+  "unresolved_questions": [
+    "Q1: Customer->branch/territory key (workbook name vs sheet prefix vs manual)?",
+    "Q2: Which of the 291 sheets are company source warehouses vs customer-held stock?",
+    "Q3: Are the 5 branch-specific product names the same SKU sold in all branches or branch-exclusive?",
+    "Q4: Territory = branch, or separate dimension?"
+  ]
+}
