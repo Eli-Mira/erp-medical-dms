@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.auth.repo import log_audit
@@ -65,7 +66,7 @@ def create_reason_code(payload: dict, request: Request, db: Db, current: Current
                     VALUES (gen_random_uuid(), :code, :ar, :en, :cat) RETURNING id"""),
             {"code": code, "ar": name_ar, "en": name_en, "cat": category},
         ).scalar()
-    except Exception:  # noqa: BLE001
+    except IntegrityError:
         db.rollback()
         raise HTTPException(409, "reason code already exists or invalid")
     log_audit(db, current["id"], "created", "reason_code", rid, None,
