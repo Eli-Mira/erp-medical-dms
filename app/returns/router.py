@@ -99,6 +99,8 @@ def create_return(payload: dict, request: Request, db: Db, current: CurrentUser)
 @router.get("")
 def list_returns(db: Db, current: CurrentUser, customer_id: UUID | None = None,
                  product_id: UUID | None = None, limit: int = 50, offset: int = 0):
+    if limit < 1 or limit > 200: raise HTTPException(422, 'limit 1..200')
+    if offset < 0: raise HTTPException(422, 'offset >= 0')
     _role(current, MANAGE_ROLES | {"read_only_auditor", "district_manager"})
     conditions, params = [], {"limit": limit, "offset": offset}
     if customer_id is not None:

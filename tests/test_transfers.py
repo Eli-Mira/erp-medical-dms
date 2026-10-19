@@ -1,5 +1,7 @@
 """Warehouse transfers: two linked movements, no sales side-effects."""
 
+from uuid import uuid4
+
 from sqlalchemy import text
 
 pytest_plugins = ["test_invoice_api"]
@@ -7,7 +9,7 @@ pytest_plugins = ["test_invoice_api"]
 
 def test_transfer_moves_stock_between_warehouses(invoice_env):
     client, db, ids, _payload, headers = invoice_env
-    ids["dest_warehouse"] = __import__("uuid").uuid4()
+    ids["dest_warehouse"] = uuid4()
     db.execute(text("INSERT INTO master_data.master_warehouse(id,branch_id,code,name_ar) "
                     "VALUES (:id,:b,:c,'Dest wh')"),
                {"id": ids["dest_warehouse"], "b": ids["branch"],
@@ -37,7 +39,7 @@ def test_transfer_moves_stock_between_warehouses(invoice_env):
 
 def test_transfer_insufficient_stock(invoice_env):
     client, db, ids, _payload, headers = invoice_env
-    ids["dest_warehouse"] = __import__("uuid").uuid4()
+    ids["dest_warehouse"] = uuid4()
     db.execute(text("INSERT INTO master_data.master_warehouse(id,branch_id,code,name_ar) "
                     "VALUES (:id,:b,:c,'Dest wh')"),
                {"id": ids["dest_warehouse"], "b": ids["branch"],

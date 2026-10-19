@@ -91,6 +91,8 @@ def create_spend(payload: dict, request: Request, db: Db, current: CurrentUser):
 @router.get("/spend")
 def list_spend(db: Db, current: CurrentUser, kol_id: UUID | None = None,
                territory_id: UUID | None = None, limit: int = 50, offset: int = 0):
+    if limit < 1 or limit > 200: raise HTTPException(422, 'limit 1..200')
+    if offset < 0: raise HTTPException(422, 'offset >= 0')
     _role(current, READ_ROLES)
     conditions, params = [], {"limit": limit, "offset": offset}
     if kol_id is not None:
@@ -160,6 +162,8 @@ def create_objective(payload: dict, request: Request, db: Db, current: CurrentUs
 @router.get("/objectives")
 def list_objectives(db: Db, current: CurrentUser, kol_id: UUID | None = None,
                     product_id: UUID | None = None, limit: int = 50, offset: int = 0):
+    if limit < 1 or limit > 200: raise HTTPException(422, 'limit 1..200')
+    if offset < 0: raise HTTPException(422, 'offset >= 0')
     _role(current, READ_ROLES)
     conditions, params = [], {"limit": limit, "offset": offset}
     if kol_id is not None:

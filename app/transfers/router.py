@@ -141,6 +141,8 @@ def create_transfer(payload: dict, request: Request, db: Db, current: CurrentUse
 
 @router.get("")
 def list_transfers(db: Db, current: CurrentUser, limit: int = 50, offset: int = 0):
+    if limit < 1 or limit > 200: raise HTTPException(422, 'limit 1..200')
+    if offset < 0: raise HTTPException(422, 'offset >= 0')
     _role(current, MANAGE_ROLES | {"sales_manager", "district_manager",
                                    "read_only_auditor"})
     scope = _scope(db, current)
@@ -148,7 +150,7 @@ def list_transfers(db: Db, current: CurrentUser, limit: int = 50, offset: int = 
     if scope is not None:
         conditions.append("m.warehouse_id = ANY(:whs)")
         params["whs"] = [str(w) for w in scope]
-    where = (" WHERE " + " AND ".join(conditions)) if conditions else ""
+    where = (" AND " + " AND ".join(conditions)) if conditions else ""
     # One row per transfer reference: the transfer_out movement carries the
     # negative quantity; pair it with the matching transfer_in for completeness.
     rows = db.execute(
