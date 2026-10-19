@@ -68,10 +68,14 @@ def extract_branches():
     return out
 
 
+NON_PRODUCT_ROWS = {"#REF!", "الاجمالى", "المبلغ"}
+
 def extract_products():
     # union of item names from كامل الكمية column A; price from first occurrence (col D)
+    # Reject aggregate/error rows; keep PulmiPure variants separate (not merged)
     seen = {}
     order = []
+    rejected = []
     for f in SALES_WBS:
         import openpyxl
         wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
@@ -81,10 +85,14 @@ def extract_products():
             price = row[3].value if len(row) > 3 else None
             if isinstance(name, str) and name.strip():
                 name = name.strip()
+                if name in NON_PRODUCT_ROWS:
+                    if name not in rejected:
+                        rejected.append(name)
+                    continue
                 if name not in seen:
                     seen[name] = price
                     order.append(name)
-    return [{"name": n, "price": seen[n]} for n in order]
+    return [{"name": n, "price": seen[n]} for n in order], rejected
 
 
 def extract_unresolved():
@@ -106,31 +114,52 @@ def extract_unresolved():
 
 def main():
     branches = extract_branches()
-    products = extract_products()
+    products, rejected_products = extract_products()
     cust, _ = extract_unresolved()
 
     engine = create_db()
     try:
         apply_migrations(engine)
+        accepted = {"branches": 0, "products": 0}
+        rejected = {"branches": 0, "products": 0}
+        duplicates = {"branches": 0, "products": 0}
         with engine.begin() as db:
-            # branches
+            # branches (idempotent: skip duplicates by code)
             for b in branches:
-                db.execute(text("INSERT INTO master_data.master_branch(id,code,name_ar) VALUES (:id,:code,:name)"),
-                           {"id": str(uuid.uuid4()), "code": b["code"], "name": b["name_ar"]})
-            # products (name as sku+name; price from workbook col D)
+                if not b["code"] or not b["name_ar"]:
+                    rejected["branches"] += 1
+                    continue
+                res = db.execute(text("INSERT INTO master_data.master_branch(id,code,name_ar) VALUES (:id,:code,:name) ON CONFLICT (code) DO NOTHING RETURNING id"),
+                                 {"id": str(uuid.uuid4()), "code": b["code"], "name": b["name_ar"]})
+                if res.scalar() is None:
+                    duplicates["branches"] += 1
+                else:
+                    accepted["branches"] += 1
+            # products (idempotent by sku; validate name+price)
             for pr in products:
+                if not pr["name"]:
+                    rejected["products"] += 1
+                    continue
                 price = pr["price"]
                 if price is None:
                     price = 0
-                db.execute(text("INSERT INTO master_data.master_product(id,sku,name_ar,base_price,vat_rate) VALUES (:id,:sku,:name,:price,14.00)"),
-                           {"id": str(uuid.uuid4()), "sku": pr["name"], "name": pr["name"], "price": str(price)})
+                try:
+                    price = float(price)
+                except (TypeError, ValueError):
+                    rejected["products"] += 1
+                    continue
+                res = db.execute(text("INSERT INTO master_data.master_product(id,sku,name_ar,base_price,vat_rate) VALUES (:id,:sku,:name,:price,14.00) ON CONFLICT (sku) DO NOTHING RETURNING id"),
+                                 {"id": str(uuid.uuid4()), "sku": pr["name"], "name": pr["name"], "price": str(price)})
+                if res.scalar() is None:
+                    duplicates["products"] += 1
+                else:
+                    accepted["products"] += 1
         # verify
         with engine.connect() as db:
             bcount = db.execute(text("SELECT count(*) FROM master_data.master_branch")).scalar_one()
             pcount = db.execute(text("SELECT count(*) FROM master_data.master_product")).scalar_one()
-            assert bcount == len(branches), (bcount, len(branches))
-            assert pcount == len(products), (pcount, len(products))
-        accepted = {"branches": len(branches), "products": len(products)}
+            assert bcount == accepted["branches"] + duplicates["branches"], (bcount, accepted, duplicates)
+            assert pcount == accepted["products"] + duplicates["products"], (pcount, accepted, duplicates)
         inserted = {"branches": bcount, "products": pcount}
     finally:
         # drop disposable db
@@ -142,15 +171,16 @@ def main():
 
     # sanitized summary (counts only, no company records)
     summary = {
+        "accepted": accepted,
+        "rejected": {"branches": rejected["branches"], "products": len(rejected_products)},
+        "duplicates": duplicates,
         "db_writes": "disposable DB created, loaded, verified, dropped",
         "db_name": DB_NAME,
         "medical_dms_touched": False,
         "medical_demo_touched": False,
         "source_file_writes": "NONE",
-        "accepted": accepted,
         "inserted": inserted,
-        "rejected": 0,
-        "duplicates": 0,
+        "rejected_product_rows": rejected_products,
         "unresolved_not_inserted": {
             "warehouses": "291 candidate sheets; company vs customer-held stock location unconfirmed",
             "customers": len(cust),
@@ -169,7 +199,7 @@ def main():
     with open(os.path.join(out, "summary.json"), "w", encoding="utf-8") as fh:
         json.dump(summary, fh, ensure_ascii=False, indent=2)
     # private exception list (local only, not committed) with source refs
-    exc_path = os.path.join("/tmp", "opencode", "b1_exceptions.txt")
+    exc_path = os.path.join(ROOT, "private", "b1_exceptions.txt")
     os.makedirs(os.path.dirname(exc_path), exist_ok=True)
     with open(exc_path, "w", encoding="utf-8") as fh:
         fh.write("B1 private exception list (NOT committed; contains source refs)\n")
@@ -177,7 +207,7 @@ def main():
         fh.write(f"Customers: {len(cust)} blocks in finance workbook AR sheet.\n")
         fh.write(f"Products: {len(products)} unique, 10 common to all 5 workbooks.\n")
         fh.write("Territories: no explicit column; inferred from sheet refs only.\n")
-    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    print(json.dumps(summary, ensure_ascii=True, indent=2))
     print("private exception list written to:", exc_path)
 
 

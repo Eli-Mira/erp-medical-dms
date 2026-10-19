@@ -1,24 +1,35 @@
 {
+  "accepted": {
+    "branches": 5,
+    "products": 12
+  },
+  "rejected": {
+    "branches": 0,
+    "products": 3
+  },
+  "duplicates": {
+    "branches": 0,
+    "products": 0
+  },
   "db_writes": "disposable DB created, loaded, verified, dropped",
   "db_name": "dms_cycle_test_b1import",
   "medical_dms_touched": false,
   "medical_demo_touched": false,
   "source_file_writes": "NONE",
-  "accepted": {
-    "branches": 5,
-    "products": 15
-  },
   "inserted": {
     "branches": 5,
-    "products": 15
+    "products": 12
   },
-  "rejected": 0,
-  "duplicates": 0,
+  "rejected_product_rows": [
+    "المبلغ",
+    "الاجمالى",
+    "#REF!"
+  ],
   "unresolved_not_inserted": {
     "warehouses": "291 candidate sheets; company vs customer-held stock location unconfirmed",
     "customers": 46,
     "territories": "no explicit territory column; inferred from sheet refs only",
-    "products_branch_specific": 5
+    "products_branch_specific": 2
   },
   "unresolved_questions": [
     "Q1: Customer->branch/territory key (workbook name vs sheet prefix vs manual)?",
