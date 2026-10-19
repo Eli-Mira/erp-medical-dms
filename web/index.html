@@ -143,6 +143,15 @@
       <button type="button" class="nav-item sub" data-view="audit" data-roles="owner,finance,read_only_auditor">
         <span class="glyph" aria-hidden="true">📜</span><span data-i18n="nav_audit">سجل التدقيق</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
       </button>
+      <button type="button" class="nav-item sub" data-view="transfers" data-roles="owner,finance,warehouse_staff">
+        <span class="glyph" aria-hidden="true">🔁</span><span data-i18n="nav_transfers">التحويلات</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="returns" data-roles="owner,finance,warehouse_staff,sales_manager">
+        <span class="glyph" aria-hidden="true">↩️</span><span data-i18n="nav_returns">المرتجعات</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="marketing" data-roles="owner,finance,sales_manager,medical_rep,read_only_auditor">
+        <span class="glyph" aria-hidden="true">📣</span><span data-i18n="nav_marketing">التسويق</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
+      </button>
       <button type="button" class="nav-item sub" data-view="cover" data-roles="owner,finance,sales_manager">
         <span class="glyph" aria-hidden="true">🗓️</span><span data-i18n="nav_cover">غطاء المخزون</span><span class="proto-dot">نموذج</span>
       </button>
@@ -828,6 +837,79 @@
               <th data-i18n="entity_type">الكيان</th>
             </tr></thead>
             <tbody id="audit-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Transfers (real) ---------- -->
+      <section id="transfers-view" class="hidden" aria-labelledby="transfers-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="transfers-title" data-i18n="transfers_title">التحويلات</h1>
+            <p class="desc" data-i18n="transfers_desc">تحويلات المخزون بين المستودعات (بيانات فعلية).</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="transfers" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="transfers-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th data-i18n="date">التاريخ</th>
+              <th data-i18n="source_warehouse">المصدر</th>
+              <th data-i18n="product">المنتج</th>
+              <th class="num" data-i18n="quantity">الكمية</th>
+            </tr></thead>
+            <tbody id="transfer-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Returns (real) ---------- -->
+      <section id="returns-view" class="hidden" aria-labelledby="returns-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="returns-title" data-i18n="returns_title">المرتجعات</h1>
+            <p class="desc" data-i18n="returns_desc">مرتجعات العملاء (بيانات فعلية).</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="returns" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="returns-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th data-i18n="date">التاريخ</th>
+              <th data-i18n="customer">العميل</th>
+              <th data-i18n="product">المنتج</th>
+              <th class="num" data-i18n="quantity">الكمية</th>
+              <th data-i18n="reason">السبب</th>
+            </tr></thead>
+            <tbody id="return-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Marketing (real) ---------- -->
+      <section id="marketing-view" class="hidden" aria-labelledby="marketing-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="marketing-title" data-i18n="marketing_title">التسويق</h1>
+            <p class="desc" data-i18n="marketing_desc">المصروفات التسويقية والأهداف (بيانات فعلية).</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="marketing" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="marketing-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th data-i18n="date">التاريخ</th>
+              <th data-i18n="activity_type">نوع النشاط</th>
+              <th class="num" data-i18n="amount">المبلغ</th>
+              <th data-i18n="notes">ملاحظات</th>
+            </tr></thead>
+            <tbody id="marketing-rows"></tbody>
           </table>
         </div>
       </section>

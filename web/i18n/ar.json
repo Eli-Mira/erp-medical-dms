@@ -263,5 +263,15 @@
   "actor": "المنفذ",
   "action": "العملية",
   "entity_type": "الكيان",
-  "date": "التاريخ"
+  "date": "التاريخ",
+  "nav_marketing": "التسويق",
+  "transfers_title": "التحويلات",
+  "transfers_desc": "تحويلات المخزون بين المستودعات (بيانات فعلية).",
+  "returns_title": "المرتجعات",
+  "returns_desc": "مرتجعات العملاء (بيانات فعلية).",
+  "marketing_title": "التسويق",
+  "marketing_desc": "المصروفات التسويقية والأهداف (بيانات فعلية).",
+  "source_warehouse": "المصدر",
+  "reason": "السبب",
+  "activity_type": "نوع النشاط"
 }

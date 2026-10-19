@@ -283,7 +283,8 @@
     customers: "customers-view", products: "products-view", warehouses: "warehouses-view",
     suppliers: "suppliers-view", accounts: "accounts-view", doctors: "doctors-view",
     visits: "visits-view", targets: "targets-view", batches: "batches-view",
-    cover: "cover-view", audit: "audit-view",
+    cover: "cover-view", audit: "audit-view", transfers: "transfers-view",
+    returns: "returns-view", marketing: "marketing-view",
   };
 
   var ROLE_OK = {
@@ -401,6 +402,9 @@
       else if (name === "batches") loadBatches();
       else if (name === "cover") loadCover();
       else if (name === "audit") loadAudit();
+      else if (name === "transfers") loadTransfers();
+      else if (name === "returns") loadReturns();
+      else if (name === "marketing") loadMarketing();
       else if (name === "balances") loadBalances();
       else if (name === "collections") loadCollections();
       else if (name === "customers") loadCustomers();
@@ -1679,6 +1683,70 @@
     }).catch(function (error) { showError(el.auditError, messageFor(error)); });
   }
 
+  function loadTransfers() {
+    clearError(el.transfersError);
+    el.transferRows.innerHTML = "";
+    var loading = document.createElement("tr");
+    var tdLoad = document.createElement("td");
+    tdLoad.colSpan = 4; tdLoad.className = "muted"; tdLoad.textContent = "…";
+    loading.appendChild(tdLoad);
+    el.transferRows.appendChild(loading);
+    return api("/transfers").then(function (rows) {
+      if (!rows.length) { emptyRow(el.transferRows, 4, "empty_rows"); return; }
+      renderRows(el.transferRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell("date", fmtDate(row.created_at)));
+        tr.appendChild(cell("src", warehouseLabel(row.source_warehouse_id)));
+        tr.appendChild(cell("product", productLineLabel(row.product_id)));
+        tr.appendChild(cell("qty", fmtQty(row.quantity), true));
+        return tr;
+      });
+    }).catch(function (error) { showError(el.transfersError, messageFor(error)); });
+  }
+
+  function loadReturns() {
+    clearError(el.returnsError);
+    el.returnRows.innerHTML = "";
+    var loading = document.createElement("tr");
+    var tdLoad = document.createElement("td");
+    tdLoad.colSpan = 5; tdLoad.className = "muted"; tdLoad.textContent = "…";
+    loading.appendChild(tdLoad);
+    el.returnRows.appendChild(loading);
+    return api("/returns").then(function (rows) {
+      if (!rows.length) { emptyRow(el.returnRows, 5, "empty_rows"); return; }
+      renderRows(el.returnRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell("date", fmtDate(row.return_date)));
+        tr.appendChild(cell("customer", customerName(row.customer_id)));
+        tr.appendChild(cell("product", productLineLabel(row.product_id)));
+        tr.appendChild(cell("qty", fmtQty(row.quantity), true));
+        tr.appendChild(cell("reason", row.reason || "—"));
+        return tr;
+      });
+    }).catch(function (error) { showError(el.returnsError, messageFor(error)); });
+  }
+
+  function loadMarketing() {
+    clearError(el.marketingError);
+    el.marketingRows.innerHTML = "";
+    var loading = document.createElement("tr");
+    var tdLoad = document.createElement("td");
+    tdLoad.colSpan = 4; tdLoad.className = "muted"; tdLoad.textContent = "…";
+    loading.appendChild(tdLoad);
+    el.marketingRows.appendChild(loading);
+    return api("/marketing/spend").then(function (rows) {
+      if (!rows.length) { emptyRow(el.marketingRows, 4, "empty_rows"); return; }
+      renderRows(el.marketingRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell("date", fmtDate(row.spend_date)));
+        tr.appendChild(cell("activity", row.activity_type));
+        tr.appendChild(cell("amount", fmt(row.amount), true));
+        tr.appendChild(cell("notes", row.notes || "—"));
+        return tr;
+      });
+    }).catch(function (error) { showError(el.marketingError, messageFor(error)); });
+  }
+
   async function loadBalances() {
     clearError(el.balancesError);
     try {
@@ -2185,6 +2253,9 @@
     el.batchesView = $("batches-view");
     el.coverView = $("cover-view");
     el.auditView = $("audit-view");
+    el.transfersView = $("transfers-view");
+    el.returnsView = $("returns-view");
+    el.marketingView = $("marketing-view");
     el.moduleView = $("module-view");
     el.targetsError = $("targets-error");
     el.targetRows = $("target-rows");
@@ -2194,6 +2265,12 @@
     el.coverRows = $("cover-rows");
     el.auditError = $("audit-error");
     el.auditRows = $("audit-rows");
+    el.transfersError = $("transfers-error");
+    el.transferRows = $("transfer-rows");
+    el.returnsError = $("returns-error");
+    el.returnRows = $("return-rows");
+    el.marketingError = $("marketing-error");
+    el.marketingRows = $("marketing-rows");
     el.moduleDesc = $("module-desc");
     el.moduleContent = $("module-content");
 

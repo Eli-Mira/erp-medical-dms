@@ -263,5 +263,15 @@
   "actor": "Actor",
   "action": "Action",
   "entity_type": "Entity",
-  "date": "Date"
+  "date": "Date",
+  "nav_marketing": "Marketing",
+  "transfers_title": "Transfers",
+  "transfers_desc": "Warehouse transfers (live data).",
+  "returns_title": "Returns",
+  "returns_desc": "Customer returns (live data).",
+  "marketing_title": "Marketing",
+  "marketing_desc": "Marketing spend and objectives (live data).",
+  "source_warehouse": "Source",
+  "reason": "Reason",
+  "activity_type": "Activity type"
 }
