@@ -328,6 +328,12 @@
   function applyRoleGating() {
     var role = state.user ? state.user.role : null;
     document.querySelectorAll("[data-roles]").forEach(function (node) {
+      // Hide screens that are still labelled prototypes (empty PROTO views)
+      // so everyday users never land on an empty placeholder.
+      if (node.dataset.view && !REAL_VIEWS[node.dataset.view]) {
+        node.classList.add("hidden");
+        return;
+      }
       var allowed = node.dataset.roles === "*" ? ["*"] : node.dataset.roles.split(",");
       var ok = allowed.indexOf("*") >= 0 || (role && allowed.indexOf(role) >= 0);
       if (node.classList.contains("bnav-btn")) {
