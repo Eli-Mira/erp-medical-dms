@@ -1,0 +1,22 @@
+........................................................................ [ 18%]
+........................................................................ [ 37%]
+........................................................................ [ 55%]
+........................................................................ [ 74%]
+................................................F....................... [ 93%]
+..........................                                               [100%]
+================================== FAILURES ===================================
+_________ test_branch_scoped_user_cannot_see_other_warehouse_batches __________
+tests\test_permission_isolation.py:48: in test_branch_scoped_user_cannot_see_other_warehouse_batches
+    assert resp.status_code == 200, resp.text
+E   AssertionError: {"detail":"Inventory access denied"}
+E   assert 403 == 200
+E    +  where 403 = <Response [403 Forbidden]>.status_code
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_permission_isolation.py::test_branch_scoped_user_cannot_see_other_warehouse_batches
+1 failed, 385 passed, 1 warning in 146.18s (0:02:26)

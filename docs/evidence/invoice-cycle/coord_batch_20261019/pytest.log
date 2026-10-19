@@ -1,0 +1,23 @@
+........................................................................ [ 18%]
+........................................................................ [ 37%]
+......................................F................................. [ 55%]
+........................................................................ [ 74%]
+........................................................................ [ 93%]
+..........................                                               [100%]
+================================== FAILURES ===================================
+______________ test_full_cycle_invoice_post_collect_void_reverse ______________
+tests\test_invoice_cycle.py:299: in test_full_cycle_invoice_post_collect_void_reverse
+    assert (
+E   AssertionError: assert ('return' == 'sale'
+E     
+E     - sale
+E     + return)
+============================== warnings summary ===============================
+..\..\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\emadg\AppData\Local\hermes\hermes-agent\venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_invoice_cycle.py::test_full_cycle_invoice_post_collect_void_reverse
+1 failed, 385 passed, 1 warning in 140.96s (0:02:20)

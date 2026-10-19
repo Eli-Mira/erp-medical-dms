@@ -291,7 +291,7 @@ def test_full_cycle_invoice_post_collect_void_reverse(cycle_env):
         movements = db.execute(
             text(
                 "SELECT movement_type, quantity FROM inventory.stock_movement WHERE source_id=:i "
-                "ORDER BY created_at"
+                "ORDER BY created_at, id"
             ),
             {"i": UUID(posted["id"])},
         ).fetchall()
