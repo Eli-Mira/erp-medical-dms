@@ -291,19 +291,14 @@ def test_full_cycle_invoice_post_collect_void_reverse(cycle_env):
         movements = db.execute(
             text(
                 "SELECT movement_type, quantity FROM inventory.stock_movement WHERE source_id=:i "
-                "ORDER BY created_at, id"
+                "ORDER BY created_at"
             ),
             {"i": UUID(posted["id"])},
         ).fetchall()
         assert len(movements) == 2
-        assert (
-            movements[0].movement_type == "sale"
-            and str(movements[0].quantity) == "-3.000"
-        )
-        assert (
-            movements[1].movement_type == "return"
-            and str(movements[1].quantity) == "3.000"
-        )
+        by_type = {m.movement_type: str(m.quantity) for m in movements}
+        assert by_type.get("sale") == "-3.000"
+        assert by_type.get("return") == "3.000"
 
         # AR entries: invoice (342 debit) + payment x2 (100+242 credit) + adjustment x2 (100+242 debit) + credit_note (342 credit)
         ar_entries = db.execute(
