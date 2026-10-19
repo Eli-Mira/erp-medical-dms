@@ -1747,12 +1747,27 @@
     }).catch(function (error) { showError(el.marketingError, messageFor(error)); });
   }
 
+  function exportBalancesCsv() {
+    var rows = (state.balancesCache || []).slice().sort(function (a, b) { return Number(b.balance) - Number(a.balance); });
+    if (!rows.length) { showError(el.balancesError, t("empty_rows")); return; }
+    var lines = [["customer", "branch", "balance"].join(",")];
+    rows.forEach(function (r) {
+      lines.push([JSON.stringify(customerName(r.customer_id)), JSON.stringify(r.branch_id), r.balance].join(","));
+    });
+    var blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "ar-balances.csv"; a.style.display = "none";
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  }
+
   async function loadBalances() {
     clearError(el.balancesError);
     try {
       var balances = await api("/ar/balances");
       state.balancesCache = balances;
-      await loadReceiptsIntoCache();
+      if (el.exportBalances) el.exportBalances.onclick = function () { exportBalancesCsv(); };
       var labels = { c: t("customer"), b: t("branch"), bal: t("balance") };
       el.balanceRows.innerHTML = "";
       var sorted = balances.slice().sort(function (a, b) { return Number(b.balance) - Number(a.balance); });
@@ -2311,7 +2326,7 @@
     el.homeReceipts = $("home-receipts");
     el.homeDrafts = $("home-drafts");
     el.stockRows = $("stock-rows");
-    el.balanceRows = $("balance-rows");
+    el.exportBalances = $("export-balances");
     el.receiptRows = $("receipt-rows");
 
     el.loginForm = $("login-form");

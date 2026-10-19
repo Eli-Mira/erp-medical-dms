@@ -273,5 +273,6 @@
   "marketing_desc": "المصروفات التسويقية والأهداف (بيانات فعلية).",
   "source_warehouse": "المصدر",
   "reason": "السبب",
-  "activity_type": "نوع النشاط"
+  "activity_type": "نوع النشاط",
+  "export_csv": "تصدير CSV"
 }

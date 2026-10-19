@@ -273,5 +273,6 @@
   "marketing_desc": "Marketing spend and objectives (live data).",
   "source_warehouse": "Source",
   "reason": "Reason",
-  "activity_type": "Activity type"
+  "activity_type": "Activity type",
+  "export_csv": "Export CSV"
 }
