@@ -34,7 +34,6 @@ from sqlalchemy.orm import Session
 
 from app.auth.router import get_current_user
 from app.db import get_db
-from app.text_search import like_pattern
 from app.master.schemas import (
     AccountOut,
     BranchOut,
@@ -44,6 +43,7 @@ from app.master.schemas import (
     SupplierOut,
     WarehouseOut,
 )
+from app.text_search import like_pattern
 
 router = APIRouter(prefix="/master", tags=["master-data"])
 Db = Annotated[Session, Depends(get_db)]

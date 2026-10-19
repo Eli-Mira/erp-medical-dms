@@ -1,7 +1,5 @@
 """Global search: customers + products by name/code, with master visibility rules."""
 
-import pytest
-
 pytest_plugins = ["test_invoice_api"]
 
 
