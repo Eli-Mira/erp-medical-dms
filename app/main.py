@@ -32,10 +32,16 @@ app.include_router(collections_router)
 from app.audit.router import router as audit_router
 from app.marketing.router import router as marketing_router
 from app.master.router import router as master_router
+from app.private_accounts.router import router as private_accounts_router
+from app.reason_codes.router import router as reason_codes_router
 from app.returns.router import router as returns_router
+from app.search.router import router as search_router
 from app.transfers.router import router as transfers_router
 
 app.include_router(master_router)
+app.include_router(private_accounts_router)
+app.include_router(reason_codes_router)
+app.include_router(search_router)
 app.include_router(transfers_router)
 app.include_router(returns_router)
 app.include_router(marketing_router)
