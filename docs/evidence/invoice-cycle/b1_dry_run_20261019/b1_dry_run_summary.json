@@ -1,0 +1,47 @@
+{
+  "source_workbooks": [
+    "مبيعات 6 اكتوبر 2026.xlsx",
+    "مبيعات الدقهليه 2026.xlsx",
+    "مبيعات الشرقية 2026.xlsx",
+    "مبيعات الغربية  2026.xlsx",
+    "مبيعات الفيوم 2026.xlsx",
+    "الميزانية العمومية 2026.xlsx"
+  ],
+  "source_counts": {
+    "branches (sales workbooks)": 5,
+    "warehouse_sheet_candidates (all sales wbs, includes customer-held stock)": 291,
+    "warehouse_sheet_unique_names": 193,
+    "warehouse_sheet_duplicate_names": 81,
+    "products (union across workbooks)": 15,
+    "products (common to all 5 workbooks)": 10,
+    "customers (AR customer blocks)": 46,
+    "territory_branch_refs_in_AR_header": 0
+  },
+  "per_workbook_warehouses": {
+    "مبيعات 6 اكتوبر 2026.xlsx": 93,
+    "مبيعات الدقهليه 2026.xlsx": 56,
+    "مبيعات الشرقية 2026.xlsx": 16,
+    "مبيعات الغربية  2026.xlsx": 50,
+    "مبيعات الفيوم 2026.xlsx": 76
+  },
+  "per_workbook_products": {
+    "مبيعات 6 اكتوبر 2026.xlsx": 11,
+    "مبيعات الدقهليه 2026.xlsx": 14,
+    "مبيعات الشرقية 2026.xlsx": 14,
+    "مبيعات الغربية  2026.xlsx": 14,
+    "مبيعات الفيوم 2026.xlsx": 12
+  },
+  "unresolved_mappings": [
+    "Customer -> branch/territory: AR sheet customer blocks reference warehouse sheets; mapping not explicit. Needs owner confirmation of key.",
+    "Warehouse sheet vs customer-held stock location: 291 candidate sheets include both company warehouses and customer/pharmacy stock locations. Distinction not unambiguous from sheet names alone.",
+    "Product identity across workbooks: 10 common names + 5 workbook-specific. Whether these are the same SKU or branch-specific items is unverified.",
+    "Territory assignment: no explicit territory column found in AR header; inferred from sheet references only.",
+    "UOM: discovery-gated (UQ-6); no conversion applied."
+  ],
+  "duplicates": {
+    "warehouse_sheet_name_duplicates": 81
+  },
+  "rejected_records": [],
+  "db_writes": "NONE (dry run; no DB created or modified)",
+  "source_file_writes": "NONE"
+}
