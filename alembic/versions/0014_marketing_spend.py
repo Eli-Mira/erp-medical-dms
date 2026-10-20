@@ -52,6 +52,19 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    from sqlalchemy import text
+
+    used = op.get_bind().execute(
+        text(
+            "SELECT EXISTS(SELECT 1 FROM marketing.marketing_spend) "
+            "OR EXISTS(SELECT 1 FROM marketing.marketing_spend_product) "
+            "OR EXISTS(SELECT 1 FROM marketing.marketing_objective)"
+        )
+    ).scalar_one()
+    if used:
+        raise RuntimeError(
+            "Cannot downgrade: marketing spend records must be preserved"
+        )
     op.execute("""
         DROP TABLE marketing.marketing_objective;
         DROP TABLE marketing.marketing_spend_product;

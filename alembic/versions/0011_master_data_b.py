@@ -76,11 +76,23 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    from sqlalchemy import text
+
+    used = op.get_bind().execute(
+        text(
+            "SELECT EXISTS(SELECT 1 FROM master_data.master_supplier) "
+            "OR EXISTS(SELECT 1 FROM finance.coa_account) "
+            "OR EXISTS(SELECT 1 FROM marketing.marketing_kol)"
+        )
+    ).scalar_one()
+    if used:
+        raise RuntimeError(
+            "Cannot downgrade: master-data B records must be preserved"
+        )
     # Only the tables this migration created are dropped. The empty ``marketing``
     # schema is left in place: ``CREATE SCHEMA IF NOT EXISTS`` makes re-upgrade
     # idempotent, and dropping a schema this migration does not own could destroy
-    # objects created out-of-band (a future migration that adds marketing tables
-    # would also fail its own downgrade here).
+    # objects created out-of-band.
     op.execute(
         """
         DROP TABLE marketing.marketing_kol;

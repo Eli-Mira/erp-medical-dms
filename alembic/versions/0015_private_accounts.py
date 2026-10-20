@@ -33,4 +33,15 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("DROP TABLE private.account_entry; DROP SCHEMA IF EXISTS private;")
+    from sqlalchemy import text
+
+    used = op.get_bind().execute(
+        text("SELECT EXISTS(SELECT 1 FROM private.account_entry)")
+    ).scalar_one()
+    if used:
+        raise RuntimeError(
+            "Cannot downgrade: private account records must be preserved"
+        )
+    # Drop only the table this migration owns; leave the schema in place so
+    # out-of-band objects are not destroyed (mirrors 0011).
+    op.execute("DROP TABLE private.account_entry;")

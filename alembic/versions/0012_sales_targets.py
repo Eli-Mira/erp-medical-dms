@@ -37,6 +37,15 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    from sqlalchemy import text
+
+    used = op.get_bind().execute(
+        text("SELECT EXISTS(SELECT 1 FROM sales.sales_target)")
+    ).scalar_one()
+    if used:
+        raise RuntimeError(
+            "Cannot downgrade: sales target records must be preserved"
+        )
     op.execute("""
         DROP TABLE sales.sales_target;
     """)
