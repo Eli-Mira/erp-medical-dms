@@ -1,4 +1,56 @@
-# Spec coverage matrix — verified 2026-10-18
+# Spec coverage matrix — current checkpoint 2026-10-21
+
+## Execution-directive V2 checkpoint (supersedes stale status summaries below)
+
+Inspection was resumed directly after the interrupted audit. Its retained trace (`deleg_cf6fc431/task-0.log`) ends with an explicit parent-requested interruption and no final artifact/verdict, not a diagnosed repository failure. Existing source, decisions and saved evidence were reused; no project restart, business-rule expansion or framework migration was undertaken.
+
+Scope of VERIFIED here: the named local API/control and real PostgreSQL tests, not whole-product acceptance, fresh browser/device verification or production authorization. The first resumed full suite (`finite_full_final_20261021`) passed 429 cases with default posting OFF and its disposable database removed; exact final-source checkpoint evidence is recorded in the progress log after review. Older REAL/PROTO tables below are historical and must not be used as a current completion count.
+
+| V2 # | Confirmed capability | Current classification | Concrete source / limit |
+|---|---|---|---|
+| 1 | Territory distinct from source warehouse | VERIFIED | `app/sales/router.py`, `tests/test_invoice_routing.py`; local API controls only |
+| 2 | Approved warehouse-routing rules | VERIFIED | Same routing controls; fulfillment routes do not grant warehouse access |
+| 3 | Warehouse transfers | PARTIAL | `app/transfers/router.py`, `tests/test_transfers.py`; live stock movements exist; destination-batch metadata conflict handling needs a targeted check |
+| 4 | Zero-quantity print exclusion | UNVERIFIED | Existing PWA print implementation and prior browser evidence retained; no new print/browser pass in this checkpoint |
+| 5 | Server-authoritative per-line VAT | VERIFIED | `app/sales/calc.py`, invoice/cycle tests; production rounding/tax-exception policy remains a separate gate |
+| 6 | Batch tracking | VERIFIED | Inventory ledger/service and invoice batch validation; local synthetic tests |
+| 7 | Expiry tracking and warnings | PARTIAL | `GET /inventory/batches` and invoice expiry checks exist; no new warning/print/device acceptance |
+| 8 | Separate sell-in tracking | VERIFIED | Posted invoice quantities/stock/AR lifecycle in isolated tests; production posting remains OFF |
+| 9 | Persisted sell-through tracking | MISSING | No backend sell-through storage/router found in `app/`; browser-only visit prototype is not persistence |
+| 10 | Customer stock-visit workflow | PARTIAL | Existing PWA prototype; persisted, authorized backend workflow missing |
+| 11 | Automatic sell-through calculation | PARTIAL | Existing prototype formula; server persistence/reconciliation remains missing |
+| 12 | Explicit returns | PARTIAL | `app/returns/router.py`, `tests/test_returns.py`; non-finite rejection now covered; full return-accounting policy is not invented here |
+| 13 | Sales targets | VERIFIED | `app/sales/target_router.py`, `target_repo.py`, `tests/test_sales_targets.py`; existing approved monthly/unit scope |
+| 14 | Stock cover | VERIFIED | `app/inventory/service.py::cover_report`, `tests/test_inventory_cover.py`; ledger-only computation |
+| 15 | Overstock alerts | VERIFIED | Same cover report plus approved inventory-policy settings; no invented sales history |
+| 16 | Doctor/KOL spend | PARTIAL | `app/marketing/router.py`, `tests/test_marketing.py`; spend API exists, not whole marketing acceptance |
+| 17 | Product-linked spend | PARTIAL | Same API and `marketing_spend_product` join; no inferred product links |
+| 18 | Objectives/results/KPIs | PARTIAL | `marketing_objective` API and tests exist; consolidated performance reporting remains incomplete |
+
+| Cross-cutting capability | Classification | Evidence / remaining gate |
+|---|---|---|
+| Platform/auth/RBAC/audit/settings/search | PARTIAL | Actual routers and regression tests exist; no full-system security/release approval |
+| Master data | PARTIAL | Real lookup APIs; complete approved CRUD/import/reconciliation not delivered |
+| Finance/AR/collections | PARTIAL | Tested local atomic lifecycle; cash/BS/P&L/import depth and approved production policies remain open |
+| Private/owner accounts | PARTIAL | `app/private_accounts/router.py`, owner-only tests; previous "missing backend" statements are stale |
+| Durable production automation / OCR / Telegram | MISSING | No production job/receipt-ingestion subsystem accepted; do not use development agents as the job engine |
+| WhatsApp business integration | BLOCKED | Separate feasibility/owner-approval gate; no real-chat access authorized |
+| Hermes → OpenCode scoped coding proof | BLOCKED | Native v2.1.0 and three live text responses verified earlier. Isolated `.opencode/agents/lain-poc.md` was not discovered; bounded standalone diagnostic rejected its flag. No unsafe unrestricted coding fallback was launched |
+| Project graph | UNVERIFIED | Existing `graphify-out/` retained unchanged; not rebuilt or counted as current evidence |
+| Quarantined DB recovery / production posting | BLOCKED | `medical_dms` untouched; posting remains OFF |
+| Publication/deployment/release | BLOCKED | No remote/push/merge/deployment; confidential-history cleanup, UAT, backup/restore and explicit release approval still required |
+
+### Risk-ranked ready/backlog order
+
+1. **Scoped source checkpoint committed:** non-finite numbers rejected by the four existing raw-dict quantity/money APIs; 20 exact 422/no-write regressions and full 429-case final-source suite passed. Commit `7b7bd64db4588bd6fc2dd7c7e10f6d72f2341c9f`; independent current-code judgment retained with explicit reviewer-method noncompliance in `FINITE_REVIEW_INTAKE.json`, not a whole-release or unqualified process approval.
+2. **Next ready investigation:** prove that a transfer cannot silently merge conflicting source/destination batch expiry/manufacture metadata. Preserve all inventory/business rules; reject conflicts rather than silently overwriting batches.
+3. **Core workflow:** persisted visit/sell-through and reconciliation/import slices require their complete approved data/period contracts before implementation. Do not infer accounting periods or duplicate sources.
+4. **Harness:** resolve installed-version agent discovery/permission semantics before claiming scoped automatic coding. Continue independently authorized ERP work meanwhile.
+5. **Approval-gated:** protected dependency changes for PDF/OCR/jobs, private-data ingestion, unresolved financial policy, quarantined-DB recovery, publication and deployment. Research references are not dependency or licensing approval.
+
+---
+
+## Historical coverage record (2026-10-18 onward)
 
 **Purpose:** an honest, evidence-backed matrix of the ENTIRE spec (`MEDICAL_COMPANY_SYSTEM_MASTER_SPEC.md` V1
 + `MEDICAL_COMPANY_SYSTEM_MASTER_SPEC_V2.md`) against this system, merged with the owner's own missing-coverage

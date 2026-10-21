@@ -1,0 +1,8 @@
+name: autonomous-development
+version: 0.1.0
+description: "Opt-in scoped development with native durable queue and verified local checkpoints."
+author: "Eli and Lain"
+provides_tools:
+  - autonomous_development
+provides_hooks:
+  - pre_tool_call

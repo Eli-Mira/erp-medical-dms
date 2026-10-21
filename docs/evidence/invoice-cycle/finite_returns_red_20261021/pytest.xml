@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="4" time="0.443" timestamp="2026-10-21T01:52:22.729715+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_returns" name="test_return_rejects_nonfinite_quantity_without_writes[NaN]" time="0.111"><failure message="AssertionError: Internal Server Error&#10;assert 500 == 422&#10; +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code">tests\test_returns.py:58: in test_return_rejects_nonfinite_quantity_without_writes
+    assert response.status_code == 422, response.text
+E   AssertionError: Internal Server Error
+E   assert 500 == 422
+E    +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code</failure></testcase><testcase classname="tests.test_returns" name="test_return_rejects_nonfinite_quantity_without_writes[sNaN]" time="0.031"><failure message="AssertionError: Internal Server Error&#10;assert 500 == 422&#10; +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code">tests\test_returns.py:58: in test_return_rejects_nonfinite_quantity_without_writes
+    assert response.status_code == 422, response.text
+E   AssertionError: Internal Server Error
+E   assert 500 == 422
+E    +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code</failure></testcase><testcase classname="tests.test_returns" name="test_return_rejects_nonfinite_quantity_without_writes[Infinity]" time="0.035"><failure message="AssertionError: Internal Server Error&#10;assert 500 == 422&#10; +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code">tests\test_returns.py:58: in test_return_rejects_nonfinite_quantity_without_writes
+    assert response.status_code == 422, response.text
+E   AssertionError: Internal Server Error
+E   assert 500 == 422
+E    +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code</failure></testcase><testcase classname="tests.test_returns" name="test_return_rejects_nonfinite_quantity_without_writes[-Infinity]" time="0.041" /></testsuite></testsuites>

@@ -1,0 +1,2052 @@
+{
+  "database": "dms_cycle_test_28b4023c4410482aa254f6a287192a73",
+  "created": true,
+  "removed": true,
+  "configuration": {
+    "APP_ENV": "test",
+    "POSTING_ENABLED": "false"
+  },
+  "before": {
+    ".env.dev": "b4ae1a085a3b43d186e65a4c318049ece0ca055d4fa63a62ab1702094c66f1ae",
+    "alembic/env.py": "b139283a03120937d3a9a788d32450873abcd0331772e77d247f51a8e6fb7526",
+    "alembic/README": "31595cf53626af9ed16e15c44fa43183209cc163fbc3ebcb904b22ac436a8884",
+    "alembic/script.py.mako": "d38920781b4d31ae1c0a71bc09f41c2ade8feab9e5a087e3f30cb4bbf0c1c9d3",
+    "alembic/versions/0001_platform.py": "c8876221a0380f442e3651859a8b0e386052c9a2ed00e8b37d639de12d9e3117",
+    "alembic/versions/0002_audit_log.py": "b11880ce8b4d5fc926b6894322c9f13a1693886318083c2586e567618cb495e7",
+    "alembic/versions/0003_invoice.py": "a6fe81825b40954b6077c02194b466c0c3d1b2641a56e0bd68d43dbba211ffd4",
+    "alembic/versions/0004_invoice_drafts.py": "b8011385c67e990cdc5703be01dfb6303b22414a788bae1a5295ab4df6df184f",
+    "alembic/versions/0005_inventory_stock.py": "8a8161615dc3d2d63438e2bd9ce49bdb413e9f6040e1611a1fcfd2ba729647ed",
+    "alembic/versions/0006_inventory_ar_gate.py": "ea7b2e089df5f5265818350cd7a57723785e90ba0bb2263dd19db50c97e6230a",
+    "alembic/versions/0007_ar_ledger.py": "99bd47857461ce16132fe6c6e2017249c0f42d87477f47d4b5e097fbdf8e5b73",
+    "alembic/versions/0008_branch_warehouse.py": "17d822acbfb5042c145b3fe2b71b42b3bb297ba84ea15247cde71afb45eda891",
+    "alembic/versions/0009_sales_source_warehouse.py": "9ce1f2450c9c906d66b087977d8b91b74444f91a57281894cfdfaef95fe898e8",
+    "alembic/versions/0010_invoice_collections.py": "91d5695e2611c07ec3cc8a1168df658cfc37dd90bb68ce4447adca2ce3507051",
+    "alembic/versions/0011_master_data_b.py": "cda55cbdb6f75a8fcf08504b93db8e4015cc91671bdb0ac30625830aaf9a49cd",
+    "alembic/versions/0012_sales_targets.py": "c82306a7ac9f949319eb662dbdcd7c2adbaa57f0be7ec57c7a192d31a158ddbe",
+    "alembic/versions/0013_sales_returns.py": "a0111207321eaec8d59382c12f21a291db87bd0add31935b3f81c732e3cc2b87",
+    "alembic/versions/0014_marketing_spend.py": "738ff6862e146b605ef9816f42797caac8545d55a2bdc4a98d63f13493bf4df7",
+    "alembic/versions/0015_private_accounts.py": "0f478e52f224ffc51ca3b56f211c7dc76754d6883616533294a9a7ead0f7cfc5",
+    "app/__init__.py": "1657c00578ec06ae9206bf81baba96f9426c6dfbca94ccc1db9fcecfaf7973ad",
+    "app/alembic_targeting.py": "d52427156221f9736fae31d6103afa19c3881111f566f9ff47ec960c2498e949",
+    "app/audit/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/audit/router.py": "070701fcff346a8add95413b382a8c1068ebb745bc8aa93f5d945eba71d4d1e7",
+    "app/auth/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/auth/rbac.py": "8a8640f395b9c5fc4ee07f0187a7af61ab4b9a3b94a683b7fde935fc36901403",
+    "app/auth/repo.py": "092c9853237709de31d330d63c95063949fb5d3ef319c70c7fdcd48770d0000f",
+    "app/auth/router.py": "d7dbe8017252256eaa197ed1585782ee47a247de3e29ca7391f36e41708c5f67",
+    "app/auth/security.py": "72a029a09b9cc583f20d70e34cc148b53b39a02565578f306177f35a5ec30574",
+    "app/browser_cleanup.py": "6a87c33284ebb5af3ebe07b0e8f3f84ee05b67753779b8f9bd2f0ee851d98427",
+    "app/config.py": "ac6cdbdab41e195b5298cd3e0a46f5a40d2b84ea46641af7b061cbd8613e1c37",
+    "app/db.py": "854cd21a826380ab725cb4fa618a15db60bc1f8bafd7fbfc965e84cd48f40c1e",
+    "app/finance/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/finance/ar.py": "96ed2b97020ea01ca9553f5d228a30dcc4272f3d5f77b9692aac0f9cc8fc30ad",
+    "app/finance/payment_router.py": "f0a661fa139200690907349535533f1a1ef80c441f1e814a5f82d15de36cc3e2",
+    "app/finance/payments.py": "c2b68d33390e32ed12c4d075913a3c58d3c9477054db7987b848690a5952efb3",
+    "app/finance/router.py": "2d731e5bf4dd873318b380fe5cf58dea99a4319498f9f81d405bac612a5d2145",
+    "app/finance/schemas.py": "b2c34b53c5ab4c9d2375fd5827ac464dc24b4e7a84175f83de21c23a449fb52d",
+    "app/inventory/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/inventory/router.py": "46d1f409a31e701359d4ca59baa28a8a5d0315b43e4847d34475170d26605506",
+    "app/inventory/schemas.py": "8018e4cf852dc26fc48b34b1bdb2c8a91d9da2e99f5d90299309158d617bd680",
+    "app/inventory/service.py": "e59485952aec89e4665b2e830982226f6ede4ef0c11b5830d3d486c9abc604c7",
+    "app/main.py": "397e233b9fd72aa15988dd53544bd168ffa977039d7e8d1fa03dfe0dd00270b5",
+    "app/marketing/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/marketing/router.py": "bf2d9efd35b99e5ba97b34624477bb77dc9a82e378ff99f99850821dfc14fe60",
+    "app/master/__init__.py": "f403a751be5c49c39dc25472455e148d3c5f5a47e2185c1e14c717699aca0822",
+    "app/master/router.py": "55b4023dfa1c2172cd1da590cea17ba393380c1c9eb9c529abc7633c9b08bb27",
+    "app/master/schemas.py": "2300995cbdd0525fe8cc238fc2f43c04d99280c518ff79a5e02457e3e97829a8",
+    "app/private_accounts/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/private_accounts/router.py": "9cfb8f671c7e76f4ceaa0755611ee43f8f325cb37cb3691b6ed83fe88828a7e8",
+    "app/reason_codes/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/reason_codes/router.py": "d8baebc168749ed85a7e5eaa0d4f62a834fe57fb25bb4d8a8ebfa524bb3c4103",
+    "app/returns/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/returns/router.py": "f45a16b9337dc0c0cff0851950067b318da19485dd5e56d19d705f5daffed2e7",
+    "app/sales/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/sales/calc.py": "d30623b1e77ab38ea8651ec81cb13c5074b9e6d621148b6d83a296cdfc2ea16b",
+    "app/sales/repo.py": "04c65aaeedb798f86551d399b4c4faa29fc78d66822edeb519e47560d34c1f26",
+    "app/sales/router.py": "40b5c7c1dd5fe0a28e83171e9579402532bdcc7f47bd79dbd5a998dafbb3e0e4",
+    "app/sales/schemas.py": "45040e4484bd8b6a52e3953a10b5a35cc76fac14f051d99d0ae92312f356aa40",
+    "app/sales/service.py": "4c63795fa59ba22c44974aa4590e79753e7d2e580beb7437b36cbd2c7fd0ac67",
+    "app/sales/target_repo.py": "570b1660b82e823961de67b82c5111694227d8821d641a30ba3934447b427a31",
+    "app/sales/target_router.py": "f127d5106a0b1cb13739454f7cb4c638c8765a97e11c550e58f994133c05b98f",
+    "app/search/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/search/router.py": "d2f8ebd832b98ada0987559dd45d55e1579450b8d7081e9e30e7ae5c87ae8497",
+    "app/settings/__init__.py": "aa065e7d3c059290fc53cb30ce6ed280265be98732f2ca17c1043a24959bcd24",
+    "app/settings/router.py": "97158ee76df9bd46c3b3de0cf8b5447b218d68d704a210687ecf5037e53d5dc4",
+    "app/settings/schemas.py": "bed1d4374b811b8a4de0a51af2f24dcd5da8cc53e9fdffc131415df610a3f40c",
+    "app/settings/service.py": "da203f8c5f4f433324c94c017578190aae32207efc8155675859ea2585756d42",
+    "app/text_search.py": "719dbcd2ebd5f2b9e84e0e5b92488357cebb5c5950b7c43c011e93fc57c42ce9",
+    "app/transfers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/transfers/router.py": "ad17c18a052939c19b0b2c1a9823f89070356ee4100ba8fbcf0c14505827fafd",
+    "docker-compose.yml": "96712294390bd12be484a69e605dccc3d474ba077eaa4a228ba421f43b23833e",
+    "Dockerfile": "f23cbc4bbc58f90fff4d47a669f726ca7c0bc4506d44dd2b8b52b95657d0e10f",
+    "requirements.txt": "3f11fc24159b9f2867d01d70faae5c988584aa72e1ba2b53015593ed1bd2da63",
+    "scripts/b1_import_dry_run.py": "9437384cdd1039ffa9783b8b43a32291463f462c2e031efc73cc00dfdb7ce335",
+    "scripts/browser_test.py": "28815d1d223e3142d52f815f589946f066d85aa9cc40f2408ee6ef99eb236d38",
+    "scripts/import_dry_run.py": "c5f28d85390fb00d6962d0cd7c0c7bd4f4ac37b93793ea377298847cc6661b57",
+    "scripts/make_demo.py": "25d4850138ead5eeea8ddfe4eccdde6c5c34d3a9d14637a9711822ab454948bf",
+    "scripts/model-router.js": "db47f2c312b505661496ef3a1e4a96aac1ccae7b262070d29fc774c4a4121db6",
+    "scripts/MODEL_ROUTING.md": "9a9dfbff97ae5850cb36ec8d871637e18ced2ce17fd7e5fd13fb4d9d2f3dadb5",
+    "scripts/palette_search_test.py": "91e4897a49bc60c0d78d73755ae3b4a8dda2c1e5a40523cc6443db1bfcb8b6a2",
+    "scripts/private_accounts_ui_test.py": "938bbe5b51a5c06c44f9f364a24fe5a4c62e779cd83fb4a3cf6a400a0ac059bb",
+    "scripts/r35_remaining_20261020.py": "87d41d1c326c752dfe3af4420b64bd8c8d2db03e84bbef1009a82c975fce18c8",
+    "scripts/rehearse_recovery.py": "eb3a9c787780dc015affb74df756761c1dbc3ddc6176d01120086d9e8aa4c279",
+    "scripts/run_demo.py": "cb6c328bc17278c3b545011ec6dfa80c7d5f704d66e3f718b6198860efd6f836",
+    "scripts/start_demo.ps1": "f3e4c1f21cef928db8ebf64807d3ae190657acaa59c3530ad8fa6ca073f34854",
+    "scripts/ui_workflow_test.py": "143af0fc915b60323cc820d3439994d71de971106af01edff85783e6fa2ef451",
+    "scripts/verify_invoice_cycle.py": "b6cf7c038bace7364fbba6cb14bca12e3476034bf554c6726b3621356a6bbf72",
+    "tests/conftest.py": "e8fe79c690659aff3b8d91aa02f5af6d67651abfaf3fcef47c6d0e163fcd3865",
+    "tests/test_alembic_targeting.py": "7db7a477f38bf1077e6e5fb96a639e69cff50ad86fa3d17182bcfead0f714f04",
+    "tests/test_ar_ledger.py": "2c3b4d4b53ecfe4c771d3523d58dd0d7a673d0c228f572fd7d5de71a761eb50a",
+    "tests/test_audit_read.py": "4a200e40c4fc0068c2a62addd7a4a7045d3da6955ac19c4ea8a1b8720d9de182",
+    "tests/test_auth.py": "db02f92d03bb3db3f850a7e89e1943174f6091778c2eda8f747dfa50e92fdc9c",
+    "tests/test_browser_cleanup.py": "5a32568e62648e64892ab22214cdb84ff7edda80ae73670a6f794df38db03e35",
+    "tests/test_collections.py": "d8c17365e6b2f45b1814bd5ed449a2a4ef41897fcfcc0244cc8bea68cd3fd4f0",
+    "tests/test_inventory_api.py": "07c3b03f0439dc3bc3cb6c1206542dd733c1136edff833695b0cabce2227facf",
+    "tests/test_inventory_authorization.py": "938e111fedbe072136b99dc23089c733372749503c6f4b7612bb46a6b0b57212",
+    "tests/test_inventory_batches.py": "bab622298f9078ea64eee45f12a2b945916696e4919d133276421dabf32eceb4",
+    "tests/test_inventory_cover.py": "c69b052281746bae8d4e85ef958025e4a48dcc2dd37c21059084b0a43c0f8ab4",
+    "tests/test_invoice_api.py": "33002b975d586e9acc2c3f281c0b4733e0f1732d49fc4ac8d0134f5caa7ee13d",
+    "tests/test_invoice_boundaries.py": "1afba1fbe7f1c9f758af6d3029c9f51d19777df6f18743ae3b8bc156518ef93e",
+    "tests/test_invoice_calc.py": "fdc2ab013c26bc4d817a95674fedeeaa6ccd7a5c6b7965bcd73eb15f011d50e4",
+    "tests/test_invoice_cycle.py": "8c1fe927bdcc9c33837ef9ef5156b5c294df7b5dbf060eb634af6f446c456705",
+    "tests/test_invoice_cycle_controls.py": "7186f88321b87fbe1d894497ba61b4553ba94bec1e3e2e15ba0297b181a7d5a8",
+    "tests/test_invoice_cycle_safety.py": "b69a3caddfda0961113171039e34af358be02ed059ac07e4834ed93fcf1fdafa",
+    "tests/test_invoice_excel.py": "cc88f2f303f330c79d54a29c3669ec1e39cf2b28973eeae0e8501ac454d03eaa",
+    "tests/test_invoice_list.py": "140829f2d4e03f9dd25782b8ef15d92790f21a0c8a4cc4c777d1dd47f76e2ecc",
+    "tests/test_invoice_reversal.py": "312e7542a571d0cebd16b07a0037b8768612533e1458ec1532b84d8bcd3cf96c",
+    "tests/test_invoice_routing.py": "e316fb5d53f3c688112c48eac0db7ec620d6d11b0d89f56049874bf1aa751fe0",
+    "tests/test_invoice_schema.py": "9a7724619e689fc7f88a02a70a0805b444c2c595648f661813bee25b54fcf056",
+    "tests/test_marketing.py": "7ff6cb667955066b0e66db61e5f6ecbb5278f2d76e68b962bdd3c7aa6878dc78",
+    "tests/test_master_api.py": "aa6846dcb411e2761c2f7adf4a0df855955d58a9491fca0a597093ca16955978",
+    "tests/test_master_data_b.py": "89dece9ddd8b47e9134bb25354475bfe457dc16ec8f82866156e60d9fde8a63b",
+    "tests/test_permission_isolation.py": "cd2a55bff7ec399ed3980ab3a665f8cd78bb1a6bddacb19d8f3924e75280f7e5",
+    "tests/test_posting.py": "f3a64da4029780829c44c24fe4b2114caf7d5354e2b8dcf0ac891064f0e82904",
+    "tests/test_posting_flag.py": "ad877c642b6d356dff12f1ad62ef6186fab90dc3fc88e214335f38a65e371ec6",
+    "tests/test_private_accounts.py": "42a9403e2d6fcafe16a53343a006971ce1e3929cbaae90b4880cc1fa9fea8e80",
+    "tests/test_pwa.py": "1ac20f06c2c362ea423ed0a32eb5856414f8da4c6c2c85ff54977a98f4103391",
+    "tests/test_pwa_invoice_ui.py": "ca6bc7bedc4e2a7169e9f96469274fe648120422fd481deb30da47cf42956fc3",
+    "tests/test_reason_codes.py": "07808e5f140e27a4c6ca88472c868fa77479538c0342991ed1416555e79f10bc",
+    "tests/test_reconciliation.py": "1cde2b9390250d5a3b4f2b636663cab80fec149e8884cb2aacc5c9c8c3ad6bf1",
+    "tests/test_returns.py": "7e579feed1e4d5e795da9e8396a25137ff6a56f694997e9f2ddb9604edba83bb",
+    "tests/test_sales_targets.py": "84c213369399065415586ff3c57fd68dbd301ae16afa1d89c47094a7b1124c4a",
+    "tests/test_search.py": "7d896edb53d8da7863c559afb3f150d5db787d5302c791dc7916447514c72367",
+    "tests/test_settings_policy.py": "a61b05f4cc1f1f92dd5ddbefeceab03023c3d351d3a75095bf7e27ca204a3e12",
+    "tests/test_transfers.py": "3aa03eb780cef05352fba6cb154acb6b6a16c2f28348ccf9b731c1ef2a475c92",
+    "web/app.js": "b8cb594c294f4c484bb8dab1d456b14ed6aa330b02ed4eb64b9d4bef2f0ec5ac",
+    "web/i18n/ar.json": "3b6cd55c12de0076abc723426cf9740ffe1fb4f2368b3456858ac068a6e23699",
+    "web/i18n/en.json": "0e8bd8a447edf7d3b4439b89edc2186ea1868e495faafb6eb5679bf3dd638186",
+    "web/icon.svg": "25783d608eee82b166e979975b5e980e45ebf3d6d1378bbb1b4cc88b38b67895",
+    "web/index.html": "487ebd4655291cd2ce0d70c5fe1312616648af1b1d55df1968d8d2fe439fea76",
+    "web/manifest.webmanifest": "96815a7cca3725b76c1a23dce51b36a443999ea330da86508deff6b221f7c13d",
+    "web/styles.css": "f208916de02d446ff9d247a48092927ba79c437125294db414f77c6060a520be",
+    "web/sw.js": "1bfd3889f52987081a348ebbcb479ab43b568d1e946a10d55df8d54682489083",
+    "\u0627\u0644\u0645\u064a\u0632\u0627\u0646\u064a\u0629 \u0627\u0644\u0639\u0645\u0648\u0645\u064a\u0629 2026.xlsx": "d4a64fb777ceaa0e4f1398cdf057e3548e1771baac36daa930cc93623f48b884",
+    "\u062d\u0633\u0627\u0628\u0627\u062a \u062e\u0627\u0635\u0647.xlsx": "37dac95c617ed6c69e2bd89eb944fd4681ff7d4a2945814ec9c8b7c985f19c37",
+    "\u0645\u0628\u064a\u0639\u0627\u062a 6 \u0627\u0643\u062a\u0648\u0628\u0631 2026.xlsx": "abf2b8163d33cae49d1a86572c593041faf59a166322cf5c8cf9b3f67b64cb7f",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u062f\u0642\u0647\u0644\u064a\u0647 2026.xlsx": "497f382926f18d5688346c2cf2b4d74fd9f2def379f143550385ca04d16277ca",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u0634\u0631\u0642\u064a\u0629 2026.xlsx": "06a0fbf918215b1aefed4735085ceceeedcc487256aa2dd5e4e2fad4aa8b735d",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u063a\u0631\u0628\u064a\u0629  2026.xlsx": "57a14aaa84a401025d7e605a2c24a5ade4452dce49f1da021668a6886ea2945c",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u0641\u064a\u0648\u0645 2026.xlsx": "9824a300452c85030cbe17fa14964bcef11ecddf40bad962aff29055b5f94b08"
+  },
+  "steps": [
+    {
+      "action": "fresh-upgrade",
+      "revision": "0015_private_accounts"
+    },
+    {
+      "action": "down-one-up-head",
+      "revision": "0015_private_accounts"
+    }
+  ],
+  "versions": {
+    "fastapi": "0.156.2",
+    "sqlalchemy": "2.1.5",
+    "psycopg": "3.3.6",
+    "alembic": "1.20.0",
+    "pytest": "9.1.1"
+  },
+  "postgresql_version": "16.15",
+  "argv": [
+    "C:\\Users\\emadg\\Desktop\\Huge system\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "tests/",
+    "-q",
+    "--tb=short",
+    "--junitxml=C:\\Desktop\\Huge system\\docs\\evidence\\invoice-cycle\\finite_full_final_20261021\\pytest.xml"
+  ],
+  "cwd": "C:\\Desktop\\Huge system",
+  "exit_code": 0,
+  "cases": [
+    {
+      "id": "tests.test_alembic_targeting::test_missing_configuration_is_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_alembic_targeting::test_medical_dms_is_refused_before_connecting",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_alembic_targeting::test_explicit_disposable_target_wins",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_alembic_targeting::test_conflicting_explicit_urls_are_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_alembic_targeting::test_target_db_name_conflicts_with_explicit_url",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_alembic_targeting::test_target_db_name_derives_from_configuration",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_alembic_targeting::test_medical_demo_is_allowed",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_alembic_targeting::test_connected_database_mismatch_is_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_alembic_targeting::test_connected_database_matches_real_disposable_database",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_ar_routes_require_authentication",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_opening_debit_and_payment_credit_change_balance",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_balance_is_debits_minus_credits",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_invoice_entry_type_reserved_for_posting",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_entry_requires_a_side_and_adjustment_requires_reason",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_unknown_customer_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_write_roles_can_record_entries[owner]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_write_roles_can_record_entries[finance]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_other_roles_cannot_record_entries[sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_other_roles_cannot_record_entries[district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_other_roles_cannot_record_entries[read_only_auditor]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_other_roles_cannot_record_entries[warehouse_staff]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_other_roles_cannot_record_entries[medical_rep]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_other_roles_cannot_record_entries[admin]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_other_roles_cannot_record_entries[user]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_read_roles_can_view_balances[owner]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_read_roles_can_view_balances[finance]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_read_roles_can_view_balances[sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_read_roles_can_view_balances[district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_read_roles_can_view_balances[read_only_auditor]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_non_ar_roles_cannot_view_balances[warehouse_staff]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_non_ar_roles_cannot_view_balances[medical_rep]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_non_ar_roles_cannot_view_balances[admin]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_branch_scoped_manager_sees_only_assigned_branch",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_ar_ledger::test_manager_without_branch_assignment_sees_nothing",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_audit_read::test_audit_filters_and_pagination",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_audit_read::test_audit_access",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_auth::test_login_me_logout_happy_path",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_auth::test_login_bad_password_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_auth::test_login_unknown_user_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_auth::test_logout_without_token_does_not_crash",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_auth::test_owner_boundary_user_forbidden",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_auth::test_owner_boundary_owner_allowed",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_browser_cleanup::test_cleanup_terminates_only_tracked_owned_process",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_browser_cleanup::test_cleanup_skips_pid_reuse",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_collections::test_create_receipt_partial_payment",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_collections::test_create_receipt_final_payment",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_collections::test_overpayment_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_collections::test_partial_then_final_sum_rejects_overpayment",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_collections::test_receipt_number_unique_per_branch",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_collections::test_receipt_requires_posted_invoice",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_collections::test_void_receipt_appends_ar_adjustment",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_collections::test_duplicate_void_receipt_returns_409",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_collections::test_list_receipts_scoped",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_collections::test_invalid_amount_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_collections::test_invalid_method_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_inventory_routes_require_authentication",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_opening_stock_records_movement_and_balance",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_movements_accumulate_balance",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_insufficient_stock_rejected_and_nothing_written",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_overdraw_after_stock_exists_is_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_negative_balance_blocked_at_database",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_batched_and_unbatched_stock_are_separate",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_stock_is_separated_by_warehouse",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_adjustment_requires_active_reason_code",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_batch_must_match_product_and_warehouse",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_inactive_product_or_warehouse_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_reserved_movement_types_rejected[sale]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_reserved_movement_types_rejected[return]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_reserved_movement_types_rejected[transfer_in]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_reserved_movement_types_rejected[transfer_out]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_reserved_movement_types_rejected[receipt]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_invalid_quantities_rejected[opening-0]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_invalid_quantities_rejected[opening--1]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_invalid_quantities_rejected[opening-1.0001]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_invalid_quantities_rejected[opening-NaN]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_invalid_quantities_rejected[adjustment-0]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_invalid_quantities_rejected[adjustment-1.0001]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_write_roles_can_record_movements[owner]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_write_roles_can_record_movements[finance]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_write_roles_can_record_movements[warehouse_staff]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_other_roles_cannot_record_movements[sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_other_roles_cannot_record_movements[district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_other_roles_cannot_record_movements[medical_rep]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_other_roles_cannot_record_movements[admin]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_other_roles_cannot_record_movements[read_only_auditor]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_other_roles_cannot_record_movements[user]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_read_roles_can_view_stock[owner]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_read_roles_can_view_stock[finance]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_read_roles_can_view_stock[warehouse_staff]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_read_roles_can_view_stock[read_only_auditor]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_branch_scoped_roles_without_assignment_are_denied[sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_branch_scoped_roles_without_assignment_are_denied[district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_branch_scoped_roles_without_assignment_are_denied[medical_rep]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_owner_label_without_owner_flag_cannot_elevate_access",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_audit_failure_rolls_back_movement_and_balance",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_api::test_ledger_filters_by_product_and_type",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_assigned_branch_resolves_real_warehouse_ids[sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_assigned_branch_resolves_real_warehouse_ids[district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_branch_read_grant_does_not_grant_manual_stock_writes[opening-sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_branch_read_grant_does_not_grant_manual_stock_writes[opening-district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_branch_read_grant_does_not_grant_manual_stock_writes[adjustment-sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_branch_read_grant_does_not_grant_manual_stock_writes[adjustment-district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_shared_warehouse_movements_do_not_leak_other_territories[sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_shared_warehouse_movements_do_not_leak_other_territories[district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_fulfillment_routes_and_territory_do_not_grant_shared_stock[Sharqia-sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_fulfillment_routes_and_territory_do_not_grant_shared_stock[Sharqia-district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_fulfillment_routes_and_territory_do_not_grant_shared_stock[Gharbia-sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_fulfillment_routes_and_territory_do_not_grant_shared_stock[Gharbia-district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_foreign_warehouse_cannot_be_queried_or_leak_through_filters[sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_foreign_warehouse_cannot_be_queried_or_leak_through_filters[district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_branch_assignment_is_not_a_role_or_active_user_bypass[sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_branch_assignment_is_not_a_role_or_active_user_bypass[district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_branch_assignment_is_not_a_role_or_active_user_bypass[medical_rep]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_branch_assignment_is_not_a_role_or_active_user_bypass[admin]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_branch_assignment_is_not_a_role_or_active_user_bypass[user]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_authorization::test_branch_uuid_collision_cannot_grant_foreign_warehouse",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_batches::test_owner_batches_fefo_order_and_zero_balance",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_batches::test_owner_batches_filter_by_warehouse",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_batches::test_branch_scoped_caller_sees_only_granted_branch_batches",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_batches::test_caller_without_branch_grants_is_denied",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_cover::test_cover_without_sales_history_is_honest",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_cover::test_cover_uses_configured_policy",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_cover::test_cover_computes_days_and_status_ok",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_cover::test_cover_flags_overstock",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_inventory_cover::test_cover_unauthenticated_denied",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invoice_routes_require_authentication",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_create_and_read_draft_snapshot_with_audit",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_update_draft_increments_version_and_audits_old_and_new",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_void_draft_preserves_lines_and_audits_reason",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_assigned_business_roles_can_create_and_edit_own_drafts[finance]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_assigned_business_roles_can_create_and_edit_own_drafts[sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_assigned_business_roles_can_create_and_edit_own_drafts[district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_assigned_business_roles_can_create_and_edit_own_drafts[medical_rep]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_non_business_roles_cannot_create_or_edit_invoices[admin]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_non_business_roles_cannot_create_or_edit_invoices[warehouse_staff]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_non_business_roles_cannot_create_or_edit_invoices[read_only_auditor]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_non_business_roles_cannot_create_or_edit_invoices[user]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_non_business_roles_cannot_create_or_edit_invoices[unknown]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_other_territory_and_unassigned_users_are_denied[finance]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_other_territory_and_unassigned_users_are_denied[sales_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_other_territory_and_unassigned_users_are_denied[district_manager]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_other_territory_and_unassigned_users_are_denied[medical_rep]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_medical_rep_cannot_read_or_edit_another_users_draft",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_revoked_session_user_is_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[quantity-0]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[quantity--1]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[quantity-1.0001]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[quantity-NaN]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[quantity-Infinity]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[quantity-True]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[discount_pct--1]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[discount_pct-100.01]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[unit_price--1]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[unit_price-1.001]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[unit_price-10000000000]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[vat_rate-0]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[line_total-1]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_line_fields_rejected[net_price-1]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_header_fields_rejected[invoice_no-   ]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_header_fields_rejected[lines-value1]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_header_fields_rejected[posting_status-Posted]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_header_fields_rejected[grand_total-0.01]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_header_fields_rejected[created_by-00000000-0000-0000-0000-000000000001]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_header_fields_rejected[customer_id-bad-uuid]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_invalid_or_server_owned_header_fields_rejected[invoice_date-not-a-date]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_duplicate_number_returns_conflict_without_partial_lines_or_audits",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_unknown_references_rejected[customer_id]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_unknown_references_rejected[warehouse_id]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_unknown_references_rejected[product_id]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_unknown_references_rejected[batch_id]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_wrong_product_batch_and_expired_batch_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_product_vat_is_snapshotted_and_rates_are_not_client_controlled",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_posting_blocked_by_api_and_database_with_no_success_audit",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_audit_failure_rolls_back_entire_invoice",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_api::test_void_requires_active_reason_and_medical_rep_cannot_void",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_boundaries::test_price_override_requires_finance_or_owner",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_boundaries::test_sales_manager_can_void_assigned_territory_draft",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_boundaries::test_owner_label_without_owner_flag_cannot_elevate_access",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_boundaries::test_inactive_reference_rejected[customer]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_boundaries::test_inactive_reference_rejected[product]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_boundaries::test_inactive_reference_rejected[warehouse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_boundaries::test_cross_branch_reference_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_boundaries::test_invoice_total_overflow_rejected_before_persistence",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_boundaries::test_update_audit_failure_preserves_original_header_lines_and_version",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_boundaries::test_duplicate_number_on_update_keeps_original_invoice",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_calc::test_net_price_matches_excel_formula",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_calc::test_vat_extracted_from_inclusive_amount",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_calc::test_line_calc",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_calc::test_invoice_totals_sum_lines_consistently",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_calc::test_line_total_is_vat_inclusive",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_calc::test_rounding_half_up",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_calc::test_invariant_under_per_unit_net_rounding",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_calc::test_invariant_with_non_round_discounts",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle::test_full_cycle_invoice_post_collect_void_reverse",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle::test_sequential_collection_rejects_overpayment",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle::test_flag_off_blocks_posting",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_controls::test_posted_invoice_rejects_raw_snapshot_mutation",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_controls::test_posting_revalidates_source_grant",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_controls::test_reversal_links_exact_original_entries",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_controls::test_collection_list_respects_territory_revocation",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_controls::test_receipt_void_links_the_original_payment",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mixed_vat_discount_batch_cycle_persists_originals",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_late_failure_rolls_back_entire_transaction[ar-post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_late_failure_rolls_back_entire_transaction[ar-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_late_failure_rolls_back_entire_transaction[ar-collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_late_failure_rolls_back_entire_transaction[ar-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_late_failure_rolls_back_entire_transaction[audit-post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_late_failure_rolls_back_entire_transaction[audit-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_late_failure_rolls_back_entire_transaction[audit-collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_late_failure_rolls_back_entire_transaction[audit-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_later_line_insufficient_stock_undoes_earlier_deduction",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[owner-post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[owner-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[owner-collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[owner-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[finance-post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[finance-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[finance-collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[finance-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[sales_manager-post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[sales_manager-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[sales_manager-collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[sales_manager-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[district_manager-post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[district_manager-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[district_manager-collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[district_manager-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[medical_rep-post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[medical_rep-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[medical_rep-collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[medical_rep-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[read_only_auditor-post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[read_only_auditor-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[read_only_auditor-collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[read_only_auditor-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[warehouse_staff-post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[warehouse_staff-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[warehouse_staff-collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[warehouse_staff-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[admin-post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[admin-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[admin-collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_mutation_role_matrix[admin-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_permission_revocation_and_disabled_accounts[territory-post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_permission_revocation_and_disabled_accounts[territory-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_permission_revocation_and_disabled_accounts[territory-collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_permission_revocation_and_disabled_accounts[territory-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_permission_revocation_and_disabled_accounts[inactive-post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_permission_revocation_and_disabled_accounts[inactive-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_permission_revocation_and_disabled_accounts[inactive-collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_permission_revocation_and_disabled_accounts[inactive-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_permission_revocation_and_disabled_accounts[owner_flag-post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_permission_revocation_and_disabled_accounts[owner_flag-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_permission_revocation_and_disabled_accounts[owner_flag-collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_permission_revocation_and_disabled_accounts[owner_flag-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[amount-NaN]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[amount-Infinity]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[amount--1]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[amount-0]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[amount-1.001]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[method-crypto]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[receipt_no- ]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[customer_id-ad7fcfa0-3cd2-4411-bc2b-3f7a44a11fac]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[branch_id-d80af76f-14c8-44ef-b02b-9f2a20d40a69]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[created_by-a0c4790c-8a49-49f0-ac3e-cb8af85ba890]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[status-Voided]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_receipt_rejects_malformed_or_forged_fields[invoice_version-True]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_gate_off_blocks_every_real_mutation[post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_gate_off_blocks_every_real_mutation[reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_gate_off_blocks_every_real_mutation[collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_gate_off_blocks_every_real_mutation[void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_raw_financial_history_is_immutable[UPDATE sales.sales_invoice_line SET quantity=99 WHERE invoice_id=:i]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_raw_financial_history_is_immutable[DELETE FROM sales.sales_invoice_line WHERE invoice_id=:i]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_raw_financial_history_is_immutable[DELETE FROM sales.sales_invoice WHERE id=:i]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_raw_financial_history_is_immutable[UPDATE inventory.stock_movement SET quantity=99 WHERE source_id=:i]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_raw_financial_history_is_immutable[DELETE FROM inventory.stock_movement WHERE source_id=:i]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_raw_financial_history_is_immutable[UPDATE finance.ar_entry SET debit=999 WHERE invoice_id=:i]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_raw_financial_history_is_immutable[DELETE FROM finance.ar_entry WHERE invoice_id=:i]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_raw_financial_history_is_immutable[UPDATE finance.payment_receipt SET amount=1 WHERE invoice_id=:i]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_raw_financial_history_is_immutable[DELETE FROM finance.payment_receipt WHERE invoice_id=:i]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_concurrent_financial_operations[post]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_concurrent_financial_operations[reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_concurrent_financial_operations[collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_concurrent_financial_operations[void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_concurrent_financial_operations[stock]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_concurrent_financial_operations[reverse_collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_populated_downgrade_refuses_without_losing_history",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_stale_financial_versions_are_rejected[reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_stale_financial_versions_are_rejected[collect]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_stale_financial_versions_are_rejected[void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_reversals_require_valid_reasons[inactive-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_reversals_require_valid_reasons[inactive-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_reversals_require_valid_reasons[wrong_category-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_reversals_require_valid_reasons[wrong_category-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_reversals_require_valid_reasons[unknown-reverse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_reversals_require_valid_reasons[unknown-void]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_posting_rejects_deactivated_references[customer]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_posting_rejects_deactivated_references[warehouse]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_posting_rejects_deactivated_references[product]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_shared_source_route_revalidated_without_expanding_inventory_scope",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_managers_receipt_reads_require_branch_and_territory",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_cycle_safety::test_posting_rejects_inconsistent_draft_snapshot",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_excel::test_line_total_matches_excel_cached_value",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_excel::test_invoice_totals_invariant_on_real_rows",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_excel::test_vat_invariant_holds_but_not_excel_reconciled",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_list::test_owner_lists_invoices_with_total",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_list::test_owner_filters_by_customer_status_and_date",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_list::test_pagination_limit_keeps_total",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_list::test_rep_sees_only_own_created_in_own_territory",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_list::test_auditor_sees_only_posted_and_none_exist_without_posting",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_list::test_auditor_posted_only_scoping_on_mixed_data",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_reversal::test_reverse_invoice_atomic_restores_stock_and_ar",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_reversal::test_reversal_requires_active_reversal_reason",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_reversal::test_reversal_refused_when_active_receipts_exist",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_reversal::test_reverse_endpoint_owner_and_finance",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_reversal::test_reverse_endpoint_medical_rep_denied",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_reversal::test_reversal_preserves_original_vat_and_line_snapshots",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_routing::test_shared_dakahlia_source_allowed_for_routed_sharqia_branch",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_routing::test_unrouted_shared_warehouse_rejected_for_incompatible_branch",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_routing::test_warehouse_not_assigned_to_caller_is_hidden",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_routing::test_own_branch_warehouse_still_allowed",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_invoice_schema::test_invoice_reference_and_safety_schema_exists",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_marketing::test_spend_with_products_and_objective",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_marketing::test_spend_missing_fields",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_marketing::test_marketing_unauthenticated",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_marketing::test_spend_rejects_nonfinite_amount_without_writes[NaN]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_marketing::test_spend_rejects_nonfinite_amount_without_writes[sNaN]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_marketing::test_spend_rejects_nonfinite_amount_without_writes[Infinity]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_marketing::test_spend_rejects_nonfinite_amount_without_writes[-Infinity]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_api::test_master_reads_require_a_session",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_api::test_owner_sees_seeded_references",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_api::test_warehouse_branch_filter_keeps_owned_and_routed",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_api::test_rep_sees_only_granted_territories",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_api::test_lookup_references_build_a_server_priced_draft",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_api::test_posting_gate_stays_closed_for_the_ui",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_api::test_roles_outside_the_read_set_are_denied",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_api::test_customers_without_a_branch_are_hidden",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_api::test_read_only_auditor_can_read_but_not_create",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_data_b::test_master_b_reads_require_a_session",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_data_b::test_owner_sees_seeded_rows",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_data_b::test_least_privilege_role_sets",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_data_b::test_owner_role_without_the_flag_is_denied",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_data_b::test_doctors_are_branch_scoped",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_data_b::test_inactive_rows_are_soft_deleted",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_data_b::test_account_type_filter_and_domain",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_data_b::test_supplier_and_doctor_filters",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_data_b::test_coa_parent_relationship",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_data_b::test_database_invariants",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_master_data_b::test_search_metacharacters_are_literal",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_permission_isolation::test_new_endpoints_require_auth",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_permission_isolation::test_medical_rep_cannot_manage_targets",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_permission_isolation::test_branch_scoped_user_cannot_see_other_warehouse_batches",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_posting::test_post_invoice_atomic_decrements_stock_creates_ar_and_posts",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_posting::test_post_insufficient_stock_rolls_back_everything",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_posting::test_post_rejects_non_draft_invoice",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_posting::test_posting_http_endpoint_stays_disabled",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_posting_flag::test_flag_defaults_off",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_posting_flag::test_flag_on_delegates_to_atomic",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_posting_flag::test_flag_on_with_depleted_stock_returns_409",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_private_accounts::test_owner_can_create_and_list_private_entry",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_private_accounts::test_non_owner_denied",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_private_accounts::test_unauthenticated_denied",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_private_accounts::test_private_entry_rejects_nonfinite_amount_without_writes[NaN-debit]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_private_accounts::test_private_entry_rejects_nonfinite_amount_without_writes[NaN-credit]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_private_accounts::test_private_entry_rejects_nonfinite_amount_without_writes[sNaN-debit]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_private_accounts::test_private_entry_rejects_nonfinite_amount_without_writes[sNaN-credit]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_private_accounts::test_private_entry_rejects_nonfinite_amount_without_writes[Infinity-debit]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_private_accounts::test_private_entry_rejects_nonfinite_amount_without_writes[Infinity-credit]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_private_accounts::test_private_entry_rejects_nonfinite_amount_without_writes[-Infinity-debit]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_private_accounts::test_private_entry_rejects_nonfinite_amount_without_writes[-Infinity-credit]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa::test_manifest_is_installable",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa::test_index_is_rtl_and_registers_sw",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa::test_i18n_key_parity",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa::test_pwa_is_served",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa_invoice_ui::test_index_has_invoice_screen_controls",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa_invoice_ui::test_index_remains_rtl_and_registers_service_worker",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa_invoice_ui::test_app_wires_master_data_and_invoice_endpoints",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa_invoice_ui::test_totals_are_labelled_estimate_then_server_authority",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa_invoice_ui::test_posting_goes_through_the_guarded_endpoint",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa_invoice_ui::test_frontend_stays_framework_free",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa_invoice_ui::test_i18n_keys_match_and_cover_the_screen",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa_invoice_ui::test_app_validates_incomplete_lines_and_read_only_role",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa_invoice_ui::test_app_never_injects_server_values_as_html",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_pwa_invoice_ui::test_assets_are_served_by_the_app",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_reason_codes::test_reason_codes_create_and_list",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_reason_codes::test_reason_codes_write_gated",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_reason_codes::test_reason_code_duplicate_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_reconciliation::test_sources_match_frozen_hashes",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_reconciliation::test_sources_are_full_size_real_workbooks",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_reconciliation::test_ar_row1_total_is_2_200_000",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_reconciliation::test_ar_balance_opening_and_running",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_reconciliation::test_ar_customer_balance_is_debits_minus_credits",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_reconciliation::test_net_price_rule_in_transaction_sheet",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_reconciliation::test_net_price_rule_holds_in_second_branch",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_reconciliation::test_line_total_is_qty_times_net",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_reconciliation::test_hq_rollup_balance_is_sales_minus_collection",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_reconciliation::test_payroll_sheet_structure",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_returns::test_return_increases_warehouse_stock",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_returns::test_return_missing_fields",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_returns::test_return_unauthenticated",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_returns::test_return_rejects_nonfinite_quantity_without_writes[NaN]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_returns::test_return_rejects_nonfinite_quantity_without_writes[sNaN]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_returns::test_return_rejects_nonfinite_quantity_without_writes[Infinity]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_returns::test_return_rejects_nonfinite_quantity_without_writes[-Infinity]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_sales_targets::test_owner_upsert_set_and_replace",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_sales_targets::test_product_and_book_targets_can_coexist",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_sales_targets::test_medical_rep_sees_only_own_rows",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_sales_targets::test_actuals_from_posted_lines_book_and_product",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_sales_targets::test_manage_validation",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_sales_targets::test_role_gating",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_search::test_search_returns_matching_customers_and_products",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_search::test_search_requires_auth",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_search::test_search_empty_query_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_search::test_search_customer_visibility_matches_master_territory_rules",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_search::test_search_customers_without_territory_or_branch_are_excluded",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_search::test_search_like_metacharacters_are_literal",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_settings_policy::test_defaults_are_d41",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_settings_policy::test_owner_write_updates_and_audits",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_settings_policy::test_non_owner_write_is_denied",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_settings_policy::test_invalid_values_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_settings_policy::test_unauthenticated_denied",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_transfers::test_transfer_moves_stock_between_warehouses",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_transfers::test_transfer_insufficient_stock",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_transfers::test_transfer_same_warehouse_rejected",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_transfers::test_transfer_unauthenticated",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_transfers::test_transfer_rejects_nonfinite_quantity_without_writes[NaN]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_transfers::test_transfer_rejects_nonfinite_quantity_without_writes[sNaN]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_transfers::test_transfer_rejects_nonfinite_quantity_without_writes[Infinity]",
+      "status": "passed"
+    },
+    {
+      "id": "tests.test_transfers::test_transfer_rejects_nonfinite_quantity_without_writes[-Infinity]",
+      "status": "passed"
+    }
+  ],
+  "counts": {
+    "passed": 429,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0
+  },
+  "after": {
+    ".env.dev": "b4ae1a085a3b43d186e65a4c318049ece0ca055d4fa63a62ab1702094c66f1ae",
+    "alembic/env.py": "b139283a03120937d3a9a788d32450873abcd0331772e77d247f51a8e6fb7526",
+    "alembic/README": "31595cf53626af9ed16e15c44fa43183209cc163fbc3ebcb904b22ac436a8884",
+    "alembic/script.py.mako": "d38920781b4d31ae1c0a71bc09f41c2ade8feab9e5a087e3f30cb4bbf0c1c9d3",
+    "alembic/versions/0001_platform.py": "c8876221a0380f442e3651859a8b0e386052c9a2ed00e8b37d639de12d9e3117",
+    "alembic/versions/0002_audit_log.py": "b11880ce8b4d5fc926b6894322c9f13a1693886318083c2586e567618cb495e7",
+    "alembic/versions/0003_invoice.py": "a6fe81825b40954b6077c02194b466c0c3d1b2641a56e0bd68d43dbba211ffd4",
+    "alembic/versions/0004_invoice_drafts.py": "b8011385c67e990cdc5703be01dfb6303b22414a788bae1a5295ab4df6df184f",
+    "alembic/versions/0005_inventory_stock.py": "8a8161615dc3d2d63438e2bd9ce49bdb413e9f6040e1611a1fcfd2ba729647ed",
+    "alembic/versions/0006_inventory_ar_gate.py": "ea7b2e089df5f5265818350cd7a57723785e90ba0bb2263dd19db50c97e6230a",
+    "alembic/versions/0007_ar_ledger.py": "99bd47857461ce16132fe6c6e2017249c0f42d87477f47d4b5e097fbdf8e5b73",
+    "alembic/versions/0008_branch_warehouse.py": "17d822acbfb5042c145b3fe2b71b42b3bb297ba84ea15247cde71afb45eda891",
+    "alembic/versions/0009_sales_source_warehouse.py": "9ce1f2450c9c906d66b087977d8b91b74444f91a57281894cfdfaef95fe898e8",
+    "alembic/versions/0010_invoice_collections.py": "91d5695e2611c07ec3cc8a1168df658cfc37dd90bb68ce4447adca2ce3507051",
+    "alembic/versions/0011_master_data_b.py": "cda55cbdb6f75a8fcf08504b93db8e4015cc91671bdb0ac30625830aaf9a49cd",
+    "alembic/versions/0012_sales_targets.py": "c82306a7ac9f949319eb662dbdcd7c2adbaa57f0be7ec57c7a192d31a158ddbe",
+    "alembic/versions/0013_sales_returns.py": "a0111207321eaec8d59382c12f21a291db87bd0add31935b3f81c732e3cc2b87",
+    "alembic/versions/0014_marketing_spend.py": "738ff6862e146b605ef9816f42797caac8545d55a2bdc4a98d63f13493bf4df7",
+    "alembic/versions/0015_private_accounts.py": "0f478e52f224ffc51ca3b56f211c7dc76754d6883616533294a9a7ead0f7cfc5",
+    "app/__init__.py": "1657c00578ec06ae9206bf81baba96f9426c6dfbca94ccc1db9fcecfaf7973ad",
+    "app/alembic_targeting.py": "d52427156221f9736fae31d6103afa19c3881111f566f9ff47ec960c2498e949",
+    "app/audit/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/audit/router.py": "070701fcff346a8add95413b382a8c1068ebb745bc8aa93f5d945eba71d4d1e7",
+    "app/auth/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/auth/rbac.py": "8a8640f395b9c5fc4ee07f0187a7af61ab4b9a3b94a683b7fde935fc36901403",
+    "app/auth/repo.py": "092c9853237709de31d330d63c95063949fb5d3ef319c70c7fdcd48770d0000f",
+    "app/auth/router.py": "d7dbe8017252256eaa197ed1585782ee47a247de3e29ca7391f36e41708c5f67",
+    "app/auth/security.py": "72a029a09b9cc583f20d70e34cc148b53b39a02565578f306177f35a5ec30574",
+    "app/browser_cleanup.py": "6a87c33284ebb5af3ebe07b0e8f3f84ee05b67753779b8f9bd2f0ee851d98427",
+    "app/config.py": "ac6cdbdab41e195b5298cd3e0a46f5a40d2b84ea46641af7b061cbd8613e1c37",
+    "app/db.py": "854cd21a826380ab725cb4fa618a15db60bc1f8bafd7fbfc965e84cd48f40c1e",
+    "app/finance/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/finance/ar.py": "96ed2b97020ea01ca9553f5d228a30dcc4272f3d5f77b9692aac0f9cc8fc30ad",
+    "app/finance/payment_router.py": "f0a661fa139200690907349535533f1a1ef80c441f1e814a5f82d15de36cc3e2",
+    "app/finance/payments.py": "c2b68d33390e32ed12c4d075913a3c58d3c9477054db7987b848690a5952efb3",
+    "app/finance/router.py": "2d731e5bf4dd873318b380fe5cf58dea99a4319498f9f81d405bac612a5d2145",
+    "app/finance/schemas.py": "b2c34b53c5ab4c9d2375fd5827ac464dc24b4e7a84175f83de21c23a449fb52d",
+    "app/inventory/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/inventory/router.py": "46d1f409a31e701359d4ca59baa28a8a5d0315b43e4847d34475170d26605506",
+    "app/inventory/schemas.py": "8018e4cf852dc26fc48b34b1bdb2c8a91d9da2e99f5d90299309158d617bd680",
+    "app/inventory/service.py": "e59485952aec89e4665b2e830982226f6ede4ef0c11b5830d3d486c9abc604c7",
+    "app/main.py": "397e233b9fd72aa15988dd53544bd168ffa977039d7e8d1fa03dfe0dd00270b5",
+    "app/marketing/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/marketing/router.py": "bf2d9efd35b99e5ba97b34624477bb77dc9a82e378ff99f99850821dfc14fe60",
+    "app/master/__init__.py": "f403a751be5c49c39dc25472455e148d3c5f5a47e2185c1e14c717699aca0822",
+    "app/master/router.py": "55b4023dfa1c2172cd1da590cea17ba393380c1c9eb9c529abc7633c9b08bb27",
+    "app/master/schemas.py": "2300995cbdd0525fe8cc238fc2f43c04d99280c518ff79a5e02457e3e97829a8",
+    "app/private_accounts/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/private_accounts/router.py": "9cfb8f671c7e76f4ceaa0755611ee43f8f325cb37cb3691b6ed83fe88828a7e8",
+    "app/reason_codes/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/reason_codes/router.py": "d8baebc168749ed85a7e5eaa0d4f62a834fe57fb25bb4d8a8ebfa524bb3c4103",
+    "app/returns/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/returns/router.py": "f45a16b9337dc0c0cff0851950067b318da19485dd5e56d19d705f5daffed2e7",
+    "app/sales/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/sales/calc.py": "d30623b1e77ab38ea8651ec81cb13c5074b9e6d621148b6d83a296cdfc2ea16b",
+    "app/sales/repo.py": "04c65aaeedb798f86551d399b4c4faa29fc78d66822edeb519e47560d34c1f26",
+    "app/sales/router.py": "40b5c7c1dd5fe0a28e83171e9579402532bdcc7f47bd79dbd5a998dafbb3e0e4",
+    "app/sales/schemas.py": "45040e4484bd8b6a52e3953a10b5a35cc76fac14f051d99d0ae92312f356aa40",
+    "app/sales/service.py": "4c63795fa59ba22c44974aa4590e79753e7d2e580beb7437b36cbd2c7fd0ac67",
+    "app/sales/target_repo.py": "570b1660b82e823961de67b82c5111694227d8821d641a30ba3934447b427a31",
+    "app/sales/target_router.py": "f127d5106a0b1cb13739454f7cb4c638c8765a97e11c550e58f994133c05b98f",
+    "app/search/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/search/router.py": "d2f8ebd832b98ada0987559dd45d55e1579450b8d7081e9e30e7ae5c87ae8497",
+    "app/settings/__init__.py": "aa065e7d3c059290fc53cb30ce6ed280265be98732f2ca17c1043a24959bcd24",
+    "app/settings/router.py": "97158ee76df9bd46c3b3de0cf8b5447b218d68d704a210687ecf5037e53d5dc4",
+    "app/settings/schemas.py": "bed1d4374b811b8a4de0a51af2f24dcd5da8cc53e9fdffc131415df610a3f40c",
+    "app/settings/service.py": "da203f8c5f4f433324c94c017578190aae32207efc8155675859ea2585756d42",
+    "app/text_search.py": "719dbcd2ebd5f2b9e84e0e5b92488357cebb5c5950b7c43c011e93fc57c42ce9",
+    "app/transfers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/transfers/router.py": "ad17c18a052939c19b0b2c1a9823f89070356ee4100ba8fbcf0c14505827fafd",
+    "docker-compose.yml": "96712294390bd12be484a69e605dccc3d474ba077eaa4a228ba421f43b23833e",
+    "Dockerfile": "f23cbc4bbc58f90fff4d47a669f726ca7c0bc4506d44dd2b8b52b95657d0e10f",
+    "requirements.txt": "3f11fc24159b9f2867d01d70faae5c988584aa72e1ba2b53015593ed1bd2da63",
+    "scripts/b1_import_dry_run.py": "9437384cdd1039ffa9783b8b43a32291463f462c2e031efc73cc00dfdb7ce335",
+    "scripts/browser_test.py": "28815d1d223e3142d52f815f589946f066d85aa9cc40f2408ee6ef99eb236d38",
+    "scripts/import_dry_run.py": "c5f28d85390fb00d6962d0cd7c0c7bd4f4ac37b93793ea377298847cc6661b57",
+    "scripts/make_demo.py": "25d4850138ead5eeea8ddfe4eccdde6c5c34d3a9d14637a9711822ab454948bf",
+    "scripts/model-router.js": "db47f2c312b505661496ef3a1e4a96aac1ccae7b262070d29fc774c4a4121db6",
+    "scripts/MODEL_ROUTING.md": "9a9dfbff97ae5850cb36ec8d871637e18ced2ce17fd7e5fd13fb4d9d2f3dadb5",
+    "scripts/palette_search_test.py": "91e4897a49bc60c0d78d73755ae3b4a8dda2c1e5a40523cc6443db1bfcb8b6a2",
+    "scripts/private_accounts_ui_test.py": "938bbe5b51a5c06c44f9f364a24fe5a4c62e779cd83fb4a3cf6a400a0ac059bb",
+    "scripts/r35_remaining_20261020.py": "87d41d1c326c752dfe3af4420b64bd8c8d2db03e84bbef1009a82c975fce18c8",
+    "scripts/rehearse_recovery.py": "eb3a9c787780dc015affb74df756761c1dbc3ddc6176d01120086d9e8aa4c279",
+    "scripts/run_demo.py": "cb6c328bc17278c3b545011ec6dfa80c7d5f704d66e3f718b6198860efd6f836",
+    "scripts/start_demo.ps1": "f3e4c1f21cef928db8ebf64807d3ae190657acaa59c3530ad8fa6ca073f34854",
+    "scripts/ui_workflow_test.py": "143af0fc915b60323cc820d3439994d71de971106af01edff85783e6fa2ef451",
+    "scripts/verify_invoice_cycle.py": "b6cf7c038bace7364fbba6cb14bca12e3476034bf554c6726b3621356a6bbf72",
+    "tests/conftest.py": "e8fe79c690659aff3b8d91aa02f5af6d67651abfaf3fcef47c6d0e163fcd3865",
+    "tests/test_alembic_targeting.py": "7db7a477f38bf1077e6e5fb96a639e69cff50ad86fa3d17182bcfead0f714f04",
+    "tests/test_ar_ledger.py": "2c3b4d4b53ecfe4c771d3523d58dd0d7a673d0c228f572fd7d5de71a761eb50a",
+    "tests/test_audit_read.py": "4a200e40c4fc0068c2a62addd7a4a7045d3da6955ac19c4ea8a1b8720d9de182",
+    "tests/test_auth.py": "db02f92d03bb3db3f850a7e89e1943174f6091778c2eda8f747dfa50e92fdc9c",
+    "tests/test_browser_cleanup.py": "5a32568e62648e64892ab22214cdb84ff7edda80ae73670a6f794df38db03e35",
+    "tests/test_collections.py": "d8c17365e6b2f45b1814bd5ed449a2a4ef41897fcfcc0244cc8bea68cd3fd4f0",
+    "tests/test_inventory_api.py": "07c3b03f0439dc3bc3cb6c1206542dd733c1136edff833695b0cabce2227facf",
+    "tests/test_inventory_authorization.py": "938e111fedbe072136b99dc23089c733372749503c6f4b7612bb46a6b0b57212",
+    "tests/test_inventory_batches.py": "bab622298f9078ea64eee45f12a2b945916696e4919d133276421dabf32eceb4",
+    "tests/test_inventory_cover.py": "c69b052281746bae8d4e85ef958025e4a48dcc2dd37c21059084b0a43c0f8ab4",
+    "tests/test_invoice_api.py": "33002b975d586e9acc2c3f281c0b4733e0f1732d49fc4ac8d0134f5caa7ee13d",
+    "tests/test_invoice_boundaries.py": "1afba1fbe7f1c9f758af6d3029c9f51d19777df6f18743ae3b8bc156518ef93e",
+    "tests/test_invoice_calc.py": "fdc2ab013c26bc4d817a95674fedeeaa6ccd7a5c6b7965bcd73eb15f011d50e4",
+    "tests/test_invoice_cycle.py": "8c1fe927bdcc9c33837ef9ef5156b5c294df7b5dbf060eb634af6f446c456705",
+    "tests/test_invoice_cycle_controls.py": "7186f88321b87fbe1d894497ba61b4553ba94bec1e3e2e15ba0297b181a7d5a8",
+    "tests/test_invoice_cycle_safety.py": "b69a3caddfda0961113171039e34af358be02ed059ac07e4834ed93fcf1fdafa",
+    "tests/test_invoice_excel.py": "cc88f2f303f330c79d54a29c3669ec1e39cf2b28973eeae0e8501ac454d03eaa",
+    "tests/test_invoice_list.py": "140829f2d4e03f9dd25782b8ef15d92790f21a0c8a4cc4c777d1dd47f76e2ecc",
+    "tests/test_invoice_reversal.py": "312e7542a571d0cebd16b07a0037b8768612533e1458ec1532b84d8bcd3cf96c",
+    "tests/test_invoice_routing.py": "e316fb5d53f3c688112c48eac0db7ec620d6d11b0d89f56049874bf1aa751fe0",
+    "tests/test_invoice_schema.py": "9a7724619e689fc7f88a02a70a0805b444c2c595648f661813bee25b54fcf056",
+    "tests/test_marketing.py": "7ff6cb667955066b0e66db61e5f6ecbb5278f2d76e68b962bdd3c7aa6878dc78",
+    "tests/test_master_api.py": "aa6846dcb411e2761c2f7adf4a0df855955d58a9491fca0a597093ca16955978",
+    "tests/test_master_data_b.py": "89dece9ddd8b47e9134bb25354475bfe457dc16ec8f82866156e60d9fde8a63b",
+    "tests/test_permission_isolation.py": "cd2a55bff7ec399ed3980ab3a665f8cd78bb1a6bddacb19d8f3924e75280f7e5",
+    "tests/test_posting.py": "f3a64da4029780829c44c24fe4b2114caf7d5354e2b8dcf0ac891064f0e82904",
+    "tests/test_posting_flag.py": "ad877c642b6d356dff12f1ad62ef6186fab90dc3fc88e214335f38a65e371ec6",
+    "tests/test_private_accounts.py": "42a9403e2d6fcafe16a53343a006971ce1e3929cbaae90b4880cc1fa9fea8e80",
+    "tests/test_pwa.py": "1ac20f06c2c362ea423ed0a32eb5856414f8da4c6c2c85ff54977a98f4103391",
+    "tests/test_pwa_invoice_ui.py": "ca6bc7bedc4e2a7169e9f96469274fe648120422fd481deb30da47cf42956fc3",
+    "tests/test_reason_codes.py": "07808e5f140e27a4c6ca88472c868fa77479538c0342991ed1416555e79f10bc",
+    "tests/test_reconciliation.py": "1cde2b9390250d5a3b4f2b636663cab80fec149e8884cb2aacc5c9c8c3ad6bf1",
+    "tests/test_returns.py": "7e579feed1e4d5e795da9e8396a25137ff6a56f694997e9f2ddb9604edba83bb",
+    "tests/test_sales_targets.py": "84c213369399065415586ff3c57fd68dbd301ae16afa1d89c47094a7b1124c4a",
+    "tests/test_search.py": "7d896edb53d8da7863c559afb3f150d5db787d5302c791dc7916447514c72367",
+    "tests/test_settings_policy.py": "a61b05f4cc1f1f92dd5ddbefeceab03023c3d351d3a75095bf7e27ca204a3e12",
+    "tests/test_transfers.py": "3aa03eb780cef05352fba6cb154acb6b6a16c2f28348ccf9b731c1ef2a475c92",
+    "web/app.js": "b8cb594c294f4c484bb8dab1d456b14ed6aa330b02ed4eb64b9d4bef2f0ec5ac",
+    "web/i18n/ar.json": "3b6cd55c12de0076abc723426cf9740ffe1fb4f2368b3456858ac068a6e23699",
+    "web/i18n/en.json": "0e8bd8a447edf7d3b4439b89edc2186ea1868e495faafb6eb5679bf3dd638186",
+    "web/icon.svg": "25783d608eee82b166e979975b5e980e45ebf3d6d1378bbb1b4cc88b38b67895",
+    "web/index.html": "487ebd4655291cd2ce0d70c5fe1312616648af1b1d55df1968d8d2fe439fea76",
+    "web/manifest.webmanifest": "96815a7cca3725b76c1a23dce51b36a443999ea330da86508deff6b221f7c13d",
+    "web/styles.css": "f208916de02d446ff9d247a48092927ba79c437125294db414f77c6060a520be",
+    "web/sw.js": "1bfd3889f52987081a348ebbcb479ab43b568d1e946a10d55df8d54682489083",
+    "\u0627\u0644\u0645\u064a\u0632\u0627\u0646\u064a\u0629 \u0627\u0644\u0639\u0645\u0648\u0645\u064a\u0629 2026.xlsx": "d4a64fb777ceaa0e4f1398cdf057e3548e1771baac36daa930cc93623f48b884",
+    "\u062d\u0633\u0627\u0628\u0627\u062a \u062e\u0627\u0635\u0647.xlsx": "37dac95c617ed6c69e2bd89eb944fd4681ff7d4a2945814ec9c8b7c985f19c37",
+    "\u0645\u0628\u064a\u0639\u0627\u062a 6 \u0627\u0643\u062a\u0648\u0628\u0631 2026.xlsx": "abf2b8163d33cae49d1a86572c593041faf59a166322cf5c8cf9b3f67b64cb7f",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u062f\u0642\u0647\u0644\u064a\u0647 2026.xlsx": "497f382926f18d5688346c2cf2b4d74fd9f2def379f143550385ca04d16277ca",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u0634\u0631\u0642\u064a\u0629 2026.xlsx": "06a0fbf918215b1aefed4735085ceceeedcc487256aa2dd5e4e2fad4aa8b735d",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u063a\u0631\u0628\u064a\u0629  2026.xlsx": "57a14aaa84a401025d7e605a2c24a5ade4452dce49f1da021668a6886ea2945c",
+    "\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u0641\u064a\u0648\u0645 2026.xlsx": "9824a300452c85030cbe17fa14964bcef11ecddf40bad962aff29055b5f94b08"
+  },
+  "unchanged": true,
+  "default_off_exit": 0,
+  "artifacts": {
+    "pytest.log": "8d5a68731ac85492465f20d3a0940759f5c2d0a4585c4bdb1260cc9235c14f14",
+    "pytest.xml": "90dbb053a435b114d08a58125794a90b9223d7c59d20a6ff7dd99ee444e9a3cc"
+  }
+}

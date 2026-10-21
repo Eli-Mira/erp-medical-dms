@@ -1,0 +1,197 @@
+{
+  "base": "38a3584dbbdfbb27b4597b805dbc8e7583e8c3bb",
+  "changed_bound_paths": [
+    "app/marketing/router.py",
+    "app/private_accounts/router.py",
+    "app/returns/router.py",
+    "app/transfers/router.py",
+    "tests/test_marketing.py",
+    "tests/test_private_accounts.py",
+    "tests/test_returns.py",
+    "tests/test_transfers.py"
+  ],
+  "protected_and_other_bound_paths_preserved": 132,
+  "workbooks_preserved": 7,
+  "v2_additions_enumerated": 18,
+  "stages": [
+    {
+      "stage": "finite_returns_red_20261021",
+      "direct_pytest_exit": 1,
+      "counts": {
+        "passed": 1,
+        "failed": 3,
+        "error": 0,
+        "skipped": 0
+      },
+      "database_removed": true,
+      "default_off_exit": 0,
+      "run_sha256": "3aca3eaa80871c470a4ebbc9cc9ef59902e42fd31829fba36dd1dbe4748f83a4",
+      "artifact_hashes": {
+        "pytest.log": "400049ea6896dca24d0a37560b43696fec0adb3607b07bc70e9cb9a1111d6d8f",
+        "pytest.xml": "c3949ec004e21d4168067dc29c57fe5947ca31512ef7eb31aa9ddd3e6b9685a7"
+      }
+    },
+    {
+      "stage": "finite_returns_green_20261021",
+      "direct_pytest_exit": 0,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      },
+      "database_removed": true,
+      "default_off_exit": 0,
+      "run_sha256": "b3575010c99d1e7b607901a248bdf181cafaa007743e4b6ac360b4fe1a6101c6",
+      "artifact_hashes": {
+        "pytest.log": "13e61cbe68b316efdada41e1253cb31dd9b6687342da8e2dd48babba26e4f6d6",
+        "pytest.xml": "484b43df75762e3772102e42bb731b8eb6f6c0438a919b1dc28457e90ba1cf93"
+      }
+    },
+    {
+      "stage": "finite_transfers_red_20261021",
+      "direct_pytest_exit": 1,
+      "counts": {
+        "passed": 1,
+        "failed": 3,
+        "error": 0,
+        "skipped": 0
+      },
+      "database_removed": true,
+      "default_off_exit": 0,
+      "run_sha256": "a1bc7fa7906179abf2f85717b1d2b651b743dc1692f1fa6c1b3ccf96d621a5dd",
+      "artifact_hashes": {
+        "pytest.log": "b1abaaa5cbc4751ae299836f0ad068fec8a49e3fcf3f7984157b92db808c1c87",
+        "pytest.xml": "30d9fc79d53fa804fbf3c062a88598f8ebc26ada989194488757f587b4e7629f"
+      }
+    },
+    {
+      "stage": "finite_transfers_green_20261021",
+      "direct_pytest_exit": 0,
+      "counts": {
+        "passed": 8,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      },
+      "database_removed": true,
+      "default_off_exit": 0,
+      "run_sha256": "b489a91c6223bf6091cecef4ebd694e663971d653680738daca5f571f52d2aca",
+      "artifact_hashes": {
+        "pytest.log": "532df5ca8cef1d4d2134600287bf20dd54cf46cb070faf64d08bff77d93caf8e",
+        "pytest.xml": "8a3310e1880b6ec139c10913ec6a88f94164f46f7e669eaaf83a0a86384c524e"
+      }
+    },
+    {
+      "stage": "finite_marketing_red_20261021",
+      "direct_pytest_exit": 1,
+      "counts": {
+        "passed": 1,
+        "failed": 3,
+        "error": 0,
+        "skipped": 0
+      },
+      "database_removed": true,
+      "default_off_exit": 0,
+      "run_sha256": "3d25fe7d395dc38b12026a9370d9fcd1d43ceddb58ba334311abe120a51d6756",
+      "artifact_hashes": {
+        "pytest.log": "c068f682233ff6784f3d0b7fa48bf66109bc3e23d0b17e0d6fd0c321a46d679f",
+        "pytest.xml": "f9e9071c4374438cdae6e1927e9a2df9b0c439fe6785d9bee65d9877fa5788f0"
+      }
+    },
+    {
+      "stage": "finite_marketing_green_20261021",
+      "direct_pytest_exit": 0,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      },
+      "database_removed": true,
+      "default_off_exit": 0,
+      "run_sha256": "5cc9a0c4bb7084b5bd8984277491e41e85a0f8c24baa61970653a6f028a204e8",
+      "artifact_hashes": {
+        "pytest.log": "9a4a4065e2d5a03deb1e68938fec02e35261b255dd48924aa50e2788f601ee83",
+        "pytest.xml": "39e07d11fb7868afd80d0bd3e417ef8ac0c470c1bc102be5e6b368c6dbb8d5be"
+      }
+    },
+    {
+      "stage": "finite_private_red_20261021",
+      "direct_pytest_exit": 1,
+      "counts": {
+        "passed": 2,
+        "failed": 6,
+        "error": 0,
+        "skipped": 0
+      },
+      "database_removed": true,
+      "default_off_exit": 0,
+      "run_sha256": "4ae11729bb7a446cae1adc356bbf7ee02c5b781ef60a71bd548c57829968538e",
+      "artifact_hashes": {
+        "pytest.log": "44c4b8110a02cc07d657fcb4971c123b107e1fb6d5c0e0d1121a67a1d546ab60",
+        "pytest.xml": "d3c3eafb4656f7bd5c8999d50826171fd9d0bd59272f8b146bc9058f2f3efc60"
+      }
+    },
+    {
+      "stage": "finite_private_green_20261021",
+      "direct_pytest_exit": 0,
+      "counts": {
+        "passed": 11,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      },
+      "database_removed": true,
+      "default_off_exit": 0,
+      "run_sha256": "cf0082231851b3ba7cfa500a90a991df742e103db9b0255b3caf8bb842426081",
+      "artifact_hashes": {
+        "pytest.log": "6f60e9308d06dcd5c7350f7f7815c8da358a53da2606d19b36ab61ae8f4fc7ac",
+        "pytest.xml": "e49b0a8a7442e4970841f3347d9282c844a5f65d1d6644e21c75d13d1114f4b9"
+      }
+    },
+    {
+      "stage": "finite_full_final_20261021",
+      "direct_pytest_exit": 0,
+      "counts": {
+        "passed": 429,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      },
+      "database_removed": true,
+      "default_off_exit": 0,
+      "run_sha256": "69f67270aae8e330f787a5bf6c24fa16929cec0038e911ac123a6142cbb4f85d",
+      "artifact_hashes": {
+        "pytest.log": "8d5a68731ac85492465f20d3a0940759f5c2d0a4585c4bdb1260cc9235c14f14",
+        "pytest.xml": "90dbb053a435b114d08a58125794a90b9223d7c59d20a6ff7dd99ee444e9a3cc"
+      }
+    },
+    {
+      "stage": "finite_full_bound_20261021",
+      "direct_pytest_exit": 0,
+      "counts": {
+        "passed": 429,
+        "failed": 0,
+        "error": 0,
+        "skipped": 0
+      },
+      "database_removed": true,
+      "default_off_exit": 0,
+      "run_sha256": "2ee6492e3676bc30ad0aec7d6e306fdb9cee8f035f253eb4f15c0c3bb5af1238",
+      "artifact_hashes": {
+        "pytest.log": "37a20b824e59ca64e6605cea55f85967b853962fe5c979da6eee560f22829986",
+        "pytest.xml": "d1ec917cc3c24f0e7ceeb49dcee629068478dac640cb21f0d6ee81678fe0ae43"
+      }
+    }
+  ],
+  "current_full_counts": {
+    "passed": 429,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0
+  },
+  "current_source_binding_matches": true,
+  "raw_evidence_survives_git_filters": true,
+  "independent_review": "PENDING: deleg_348d4595; code acceptance not yet declared"
+}

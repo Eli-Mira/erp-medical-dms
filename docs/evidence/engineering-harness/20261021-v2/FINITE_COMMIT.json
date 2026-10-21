@@ -1,0 +1,21 @@
+{
+  "commit": "7b7bd64db4588bd6fc2dd7c7e10f6d72f2341c9f",
+  "parent": "38a3584dbbdfbb27b4597b805dbc8e7583e8c3bb",
+  "branch": "fix/finite-values-20261021",
+  "committed_paths": [
+    "app/marketing/router.py",
+    "app/private_accounts/router.py",
+    "app/returns/router.py",
+    "app/transfers/router.py",
+    "tests/test_marketing.py",
+    "tests/test_private_accounts.py",
+    "tests/test_returns.py",
+    "tests/test_transfers.py"
+  ],
+  "committed_file_count": 8,
+  "committed_and_worktree_bytes_match_review": true,
+  "index_empty_after": true,
+  "review_disposition": "qualified parent source acceptance; reviewer delivery method NONCOMPLIANT, not certified",
+  "posting_or_production_authority": false,
+  "git_output": "[fix/finite-values-20261021 7b7bd64] [verified] Reject non-finite ERP write values\n 8 files changed, 116 insertions(+), 6 deletions(-)\n"
+}

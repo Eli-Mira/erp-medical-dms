@@ -1,5 +1,7 @@
 # Agent Handoff — Hermes → OpenCode
 
+> **Active continuation override — 2026-10-21:** The generated state below is historical, not the current branch/next task. Read the top of `docs/PROGRESS_CHECKLIST.md` first. The latest owner request is implementing and then safely activating the opt-in autonomous-development workflow. Its five-file core is frozen for independent review `deleg_0be52dd8`; fourteen current synthetic native tests, clean scoped Ruff and native doctor evidence are retained under `C:/Users/emadg/AppData/Local/hermes/audits/medical-dms/autonomous-core-20261021-034025/`. **Mode is not activated or committed; setup/ERP/live-continuation gates remain open.** Do not set `safety_ready` by hand or mistake unit tests for live worker validation. The finite-value source checkpoint is committed as `7b7bd64db4588bd6fc2dd7c7e10f6d72f2341c9f` after qualified parent intake; reviewer-method deviations remain preserved and are not certified. OpenCode's scoped coding POC remains blocked, so do not launch an unrestricted worker. All production, database, credential, publication and deployment restrictions remain unchanged.
+
 **Generated:** 2026-10-18
 **Purpose:** Complete, safe transfer of the ElsebaeyPharma ERP (Medical Company System) from Hermes to OpenCode.
 **Status:** Local source checkpoint verified and committed. Production OFF. No push. No DB recovery.

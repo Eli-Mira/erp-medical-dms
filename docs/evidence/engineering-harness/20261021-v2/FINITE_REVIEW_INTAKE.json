@@ -1,0 +1,62 @@
+{
+  "review_id": "deleg_348d4595",
+  "current_code_spec": "PASS",
+  "current_code_quality": "PASS",
+  "current_code_security": "PASS",
+  "reviewer_delivery_method": "NONCOMPLIANT_NOT_CERTIFIED",
+  "review_delivery_unqualified_acceptance": false,
+  "parent_current_source_disposition": "ACCEPTED_FOR_SCOPED_LOCAL_CHECKPOINT_ONLY",
+  "production_or_whole_release_approval": false,
+  "method_findings": [
+    "Completed trace contains 34 individual tool invocations against the brief cap of 24; API-turn count 22 is not that unit.",
+    "One forbidden terminal find command and 13 execute_code invocations, including two tempfile.mkdtemp scratch/reverse-apply operations. The brief prohibited terminal/Git/imports/writes and said reuse mechanical proof.",
+    "Manifest/diff were opened before mandatory base skill loads; eight complete source bodies were read after the three loads.",
+    "No retrospective compliant-method certification is made. The full reviewer delivery and trace are preserved; no replacement review or review-of-review is commissioned."
+  ],
+  "basis_for_scoped_source_disposition": [
+    "Independent current-code judgment covers all eight exact frozen source files and 12 hunks with no blocking code findings. This is retained separately from the noncompliant review-task delivery.",
+    "Parent revalidated final native 429-case raw XML/log hashes, eight final-source hashes, actual base and saved posting/default-off/disposable cleanup records. This is evidence revalidation, not new application execution.",
+    "The optional owner-fixture observation is not a code defect: tests/test_invoice_api.py:24-26 explicitly seeds owner=True; a wrong-role 403 would fail the required 422 assertion. No source edit or renewed review is warranted.",
+    "The historical method breach cannot be repaired by rerunning tests or improving its report. It remains NONCOMPLIANT; this parent decision accepts only the otherwise supported current-code checkpoint, not the worker compliance claims."
+  ],
+  "proof": {
+    "verification_type": "saved-native-evidence/source binding revalidation, NOT a new test run",
+    "base": "38a3584dbbdfbb27b4597b805dbc8e7583e8c3bb",
+    "source_hashes": {
+      "app/returns/router.py": "f45a16b9337dc0c0cff0851950067b318da19485dd5e56d19d705f5daffed2e7",
+      "app/transfers/router.py": "ad17c18a052939c19b0b2c1a9823f89070356ee4100ba8fbcf0c14505827fafd",
+      "app/marketing/router.py": "bf2d9efd35b99e5ba97b34624477bb77dc9a82e378ff99f99850821dfc14fe60",
+      "app/private_accounts/router.py": "9cfb8f671c7e76f4ceaa0755611ee43f8f325cb37cb3691b6ed83fe88828a7e8",
+      "tests/test_returns.py": "22858bec8569b6d64ddfc9784a7a76c1e2effc8fa9eb73333b72607fbbca8466",
+      "tests/test_transfers.py": "d6904b66085edc3184816c6f7557febcba28e9ec817d54e42fc71de02aa94851",
+      "tests/test_marketing.py": "8aaa62ef4b19220c3b9c539e8f8ea88b19dcd62d0af5d83e6be262f1112a4adf",
+      "tests/test_private_accounts.py": "8a80da1705500e91cd64affaf82a5a2b60b08fbb80032916f1c2507cebec97dc"
+    },
+    "diff_sha256": "ef99f09fc15513f02c4ae6c30585a2280d493487d57aa96aafaac147b358ef32",
+    "diff_bytes": 9665,
+    "diff_hunks": 12,
+    "counts": {
+      "passed": 429,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0
+    },
+    "unique_cases": 429,
+    "native_run_sha256": "2ee6492e3676bc30ad0aec7d6e306fdb9cee8f035f253eb4f15c0c3bb5af1238",
+    "native_artifacts": {
+      "pytest.log": "37a20b824e59ca64e6605cea55f85967b853962fe5c979da6eee560f22829986",
+      "pytest.xml": "d1ec917cc3c24f0e7ceeb49dcee629068478dac640cb21f0d6ee81678fe0ae43"
+    },
+    "posting_default_off_exit": 0,
+    "disposable_removed_record": true,
+    "review_trace_sha256": "aed334d0734a8f6c18aa69a16d2435b63f0c4c1efbb0b5046798ec01dbcb8f02",
+    "review_delivery_sha256": "5f4876a88b677c5a6b36c97a5c762b4337cf06741dd36bc09e35520d09450b27",
+    "staged_before": [],
+    "active_git_hooks": []
+  },
+  "limits": [
+    "No whole-machine no-read/no-write or traffic-monitoring claim from matching hashes.",
+    "No deployment/publication/production posting or quarantined database access authorized.",
+    "Autonomous-development candidate remains unactivated behind its separate review and integration gates."
+  ]
+}

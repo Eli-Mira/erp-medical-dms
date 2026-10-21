@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="4" time="0.404" timestamp="2026-10-21T01:53:27.642504+03:00" hostname="Lyra-Mira"><testcase classname="tests.test_transfers" name="test_transfer_rejects_nonfinite_quantity_without_writes[NaN]" time="0.097"><failure message="AssertionError: Internal Server Error&#10;assert 500 == 422&#10; +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code">tests\test_transfers.py:94: in test_transfer_rejects_nonfinite_quantity_without_writes
+    assert response.status_code == 422, response.text
+E   AssertionError: Internal Server Error
+E   assert 500 == 422
+E    +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code</failure></testcase><testcase classname="tests.test_transfers" name="test_transfer_rejects_nonfinite_quantity_without_writes[sNaN]" time="0.032"><failure message="AssertionError: Internal Server Error&#10;assert 500 == 422&#10; +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code">tests\test_transfers.py:94: in test_transfer_rejects_nonfinite_quantity_without_writes
+    assert response.status_code == 422, response.text
+E   AssertionError: Internal Server Error
+E   assert 500 == 422
+E    +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code</failure></testcase><testcase classname="tests.test_transfers" name="test_transfer_rejects_nonfinite_quantity_without_writes[Infinity]" time="0.037"><failure message="AssertionError: {&quot;detail&quot;:&quot;No stock balance exists to decrease&quot;}&#10;assert 409 == 422&#10; +  where 409 = &lt;Response [409 Conflict]&gt;.status_code">tests\test_transfers.py:94: in test_transfer_rejects_nonfinite_quantity_without_writes
+    assert response.status_code == 422, response.text
+E   AssertionError: {"detail":"No stock balance exists to decrease"}
+E   assert 409 == 422
+E    +  where 409 = &lt;Response [409 Conflict]&gt;.status_code</failure></testcase><testcase classname="tests.test_transfers" name="test_transfer_rejects_nonfinite_quantity_without_writes[-Infinity]" time="0.040" /></testsuite></testsuites>
