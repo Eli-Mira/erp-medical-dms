@@ -143,3 +143,57 @@ def test_transfer_rejects_destination_batch_with_conflicting_dates(invoice_env):
     ), {"id": ids["dest_batch"]}).mappings().one()
     assert persisted["manufacture_date"] == date.today() - timedelta(days=30)
     assert persisted["expiry_date"] == date.today() + timedelta(days=100)
+
+
+@pytest.mark.parametrize("manufacture_date", [None, date(2026, 1, 1)])
+def test_transfer_reuses_matching_destination_batch(invoice_env, manufacture_date):
+    client, db, ids, _payload, headers = invoice_env
+    destination, destination_batch = uuid4(), uuid4()
+    db.execute(text(
+        "INSERT INTO master_data.master_warehouse(id,branch_id,code,name_ar) "
+        "VALUES (:id,:b,:c,'Matching batch destination')"
+    ), {"id": destination, "b": ids["branch"], "c": destination.hex[:20]})
+    db.execute(text(
+        "UPDATE inventory.batch_record SET manufacture_date=:md WHERE id=:id"
+    ), {"md": manufacture_date, "id": ids["batch"]})
+    db.execute(text(
+        "INSERT INTO inventory.batch_record "
+        "(id,product_id,warehouse_id,batch_no,manufacture_date,expiry_date) "
+        "SELECT :id,product_id,:w,batch_no,manufacture_date,expiry_date "
+        "FROM inventory.batch_record WHERE id=:source"
+    ), {"id": destination_batch, "w": destination, "source": ids["batch"]})
+    db.commit()
+    auth = headers("owner")
+    opening = client.post("/inventory/movements", headers=auth, json={
+        "warehouse_id": str(ids["warehouse"]), "product_id": str(ids["product"]),
+        "batch_id": str(ids["batch"]), "movement_type": "opening", "quantity": "10",
+    })
+    assert opening.status_code == 201, opening.text
+    response = client.post("/transfers", headers=auth, json={
+        "source_warehouse_id": str(ids["warehouse"]),
+        "destination_warehouse_id": str(destination),
+        "product_id": str(ids["product"]), "batch_id": str(ids["batch"]),
+        "quantity": "4",
+    })
+    assert response.status_code == 201, response.text
+    batches = db.execute(text(
+        "SELECT id, manufacture_date FROM inventory.batch_record "
+        "WHERE warehouse_id=:w AND product_id=:p"
+    ), {"w": destination, "p": ids["product"]}).all()
+    assert batches == [(destination_batch, manufacture_date)]
+    movements = db.execute(text(
+        "SELECT movement_type, batch_id, quantity FROM inventory.stock_movement "
+        "WHERE source_type='transfer' AND source_id=:id"
+    ), {"id": response.json()["id"]}).all()
+    assert set(movements) == {
+        ("transfer_out", ids["batch"], -4), ("transfer_in", destination_batch, 4),
+    }
+    balances = db.execute(text(
+        "SELECT warehouse_id, batch_id, quantity FROM inventory.stock_balance "
+        "WHERE product_id=:p"
+    ), {"p": ids["product"]}).all()
+    assert set(balances) == {
+        (ids["warehouse"], ids["batch"], 6), (destination, destination_batch, 4),
+    }
+    for table in ("sales.sales_invoice", "finance.ar_entry"):
+        assert db.execute(text(f"SELECT count(*) FROM {table}")).scalar_one() == 0

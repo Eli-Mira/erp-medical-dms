@@ -111,7 +111,7 @@ def create_transfer(payload: dict, request: Request, db: Db, current: CurrentUse
         if dst_batch is None:
             existing = db.execute(
                 text("SELECT id, manufacture_date, expiry_date FROM inventory.batch_record "
-                     "WHERE product_id=:p AND warehouse_id=:w AND batch_no=:bn"),
+                     "WHERE product_id=:p AND warehouse_id=:w AND batch_no=:bn FOR UPDATE"),
                 {"p": product, "w": dst, "bn": br["batch_no"]},
             ).mappings().one()
             if (existing["manufacture_date"] != br["manufacture_date"] or
