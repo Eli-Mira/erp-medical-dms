@@ -1,5 +1,7 @@
 """Warehouse transfers: two linked movements, no sales side-effects."""
 
+from datetime import date, timedelta
+
 from uuid import uuid4
 
 import pytest
@@ -97,3 +99,47 @@ def test_transfer_rejects_nonfinite_quantity_without_writes(invoice_env, quantit
     assert db.execute(text(
         "SELECT count(*) FROM audit.audit_log WHERE entity_type='stock_transfer'"
     )).scalar_one() == 0
+
+
+def test_transfer_rejects_destination_batch_with_conflicting_dates(invoice_env):
+    client, db, ids, _payload, headers = invoice_env
+    ids["dest_warehouse"] = uuid4()
+    db.execute(text(
+        "INSERT INTO master_data.master_warehouse(id,branch_id,code,name_ar) "
+        "VALUES (:id,:b,:c,'Dest wh')"
+    ), {"id": ids["dest_warehouse"], "b": ids["branch"],
+        "c": ids["dest_warehouse"].hex[:20]})
+    db.commit()
+    # Destination batch: same product and batch_no as source, but different
+    # manufacture_date and expiry_date.
+    ids["dest_batch"] = uuid4()
+    db.execute(text(
+        "INSERT INTO inventory.batch_record(id,product_id,warehouse_id,batch_no,"
+        "manufacture_date,expiry_date) VALUES (:id,:p,:w,:bn,:md,:ed)"
+    ), {"id": ids["dest_batch"], "p": ids["product"],
+        "w": ids["dest_warehouse"], "bn": "TEST",
+        "md": date.today() - timedelta(days=30),
+        "ed": date.today() + timedelta(days=100)})
+    db.commit()
+    auth = headers("owner")
+    response = client.post("/transfers", headers=auth, json={
+        "source_warehouse_id": str(ids["warehouse"]),
+        "destination_warehouse_id": str(ids["dest_warehouse"]),
+        "product_id": str(ids["product"]),
+        "batch_id": str(ids["batch"]),
+        "quantity": "4", "note": "metadata conflict",
+    })
+    assert response.status_code == 422, response.text
+    # No writes: no movement, balance, audit entry, and destination batch
+    # unchanged (never overwritten).
+    assert db.execute(text("SELECT count(*) FROM inventory.stock_movement")).scalar_one() == 0
+    assert db.execute(text("SELECT count(*) FROM inventory.stock_balance")).scalar_one() == 0
+    assert db.execute(text(
+        "SELECT count(*) FROM audit.audit_log WHERE entity_type='stock_transfer'"
+    )).scalar_one() == 0
+    persisted = db.execute(text(
+        "SELECT manufacture_date, expiry_date FROM inventory.batch_record "
+        "WHERE id=:id"
+    ), {"id": ids["dest_batch"]}).mappings().one()
+    assert persisted["manufacture_date"] == date.today() - timedelta(days=30)
+    assert persisted["expiry_date"] == date.today() + timedelta(days=100)

@@ -109,11 +109,17 @@ def create_transfer(payload: dict, request: Request, db: Db, current: CurrentUse
              "md": br["manufacture_date"], "ed": br["expiry_date"]},
         ).scalar()
         if dst_batch is None:
-            dst_batch = db.execute(
-                text("SELECT id FROM inventory.batch_record WHERE product_id=:p "
-                     "AND warehouse_id=:w AND batch_no=:bn"),
+            existing = db.execute(
+                text("SELECT id, manufacture_date, expiry_date FROM inventory.batch_record "
+                     "WHERE product_id=:p AND warehouse_id=:w AND batch_no=:bn"),
                 {"p": product, "w": dst, "bn": br["batch_no"]},
-            ).scalar()
+            ).mappings().one()
+            if (existing["manufacture_date"] != br["manufacture_date"] or
+                    existing["expiry_date"] != br["expiry_date"]):
+                raise HTTPException(422,
+                    "Destination batch already exists with different manufacture/expiry "
+                    "dates")
+            dst_batch = existing["id"]
     transfer_id = uuid4()
     try:
         inv_service.record_movement(db, actor_id=current["id"], warehouse_id=src,
