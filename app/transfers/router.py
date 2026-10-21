@@ -80,8 +80,8 @@ def create_transfer(payload: dict, request: Request, db: Db, current: CurrentUse
         q = Decimal(str(qty))
     except (ValueError, TypeError, InvalidOperation, ArithmeticError):
         raise HTTPException(422, "quantity must be numeric")
-    if q <= 0:
-        raise HTTPException(422, "quantity must be positive")
+    if not q.is_finite() or q <= 0:
+        raise HTTPException(422, "quantity must be positive and finite")
     scope = _scope(db, current)
     for wid in (src, dst):
         if scope is not None and wid not in scope:

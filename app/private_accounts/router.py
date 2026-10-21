@@ -64,6 +64,8 @@ def create_entry(payload: dict, request: Request, db: Db, current: CurrentUser):
         c = Decimal(str(credit))
     except (ValueError, TypeError, InvalidOperation, ArithmeticError):
         raise HTTPException(422, "debit/credit must be numeric")
+    if not d.is_finite() or not c.is_finite():
+        raise HTTPException(422, "debit/credit must be finite")
     if d < 0 or c < 0 or (d == 0 and c == 0):
         raise HTTPException(422, "one of debit/credit must be > 0")
     rid = db.execute(

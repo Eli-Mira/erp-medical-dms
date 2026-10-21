@@ -52,8 +52,8 @@ def create_spend(payload: dict, request: Request, db: Db, current: CurrentUser):
         amt = Decimal(str(amount))
     except (ValueError, TypeError, InvalidOperation, ArithmeticError):
         raise HTTPException(422, "amount must be numeric")
-    if amt < 0:
-        raise HTTPException(422, "amount must be non-negative")
+    if not amt.is_finite() or amt < 0:
+        raise HTTPException(422, "amount must be non-negative and finite")
     if kol is not None and not db.execute(
             text("SELECT 1 FROM marketing.marketing_kol WHERE id=:id AND is_active"),
             {"id": kol}).scalar():

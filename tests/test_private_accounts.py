@@ -1,5 +1,11 @@
 """Private accounts (D40): owner-only, isolated schema."""
 
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import text
+
+from app.main import app
+
 pytest_plugins = ["test_invoice_api"]
 
 
@@ -37,3 +43,24 @@ def test_unauthenticated_denied(invoice_env):
     client, _db, _ids, _payload, _headers = invoice_env
     assert client.get("/private-accounts").status_code == 401
     assert client.post("/private-accounts", json={}).status_code == 401
+
+
+@pytest.mark.parametrize("field", ["debit", "credit"])
+@pytest.mark.parametrize("value", ["NaN", "sNaN", "Infinity", "-Infinity"])
+def test_private_entry_rejects_nonfinite_amount_without_writes(invoice_env, field, value):
+    _client, db, _ids, _payload, headers = invoice_env
+    auth = headers("owner")
+    payload = {
+        "account_label": "Finite guard test",
+        "entry_date": "2026-10-01",
+        "debit": "1",
+        "credit": "0",
+        field: value,
+    }
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post("/private-accounts", headers=auth, json=payload)
+    assert response.status_code == 422, response.text
+    assert db.execute(text("SELECT count(*) FROM private.account_entry")).scalar_one() == 0
+    assert db.execute(text(
+        "SELECT count(*) FROM audit.audit_log WHERE entity_type='private_account_entry'"
+    )).scalar_one() == 0

@@ -2,7 +2,11 @@
 
 from uuid import uuid4
 
+import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import text
+
+from app.main import app
 
 pytest_plugins = ["test_invoice_api"]
 
@@ -68,3 +72,28 @@ def test_transfer_same_warehouse_rejected(invoice_env):
 def test_transfer_unauthenticated(invoice_env):
     client, _db, _ids, _payload, _headers = invoice_env
     assert client.post("/transfers", json={}).status_code == 401
+
+
+@pytest.mark.parametrize("quantity", ["NaN", "sNaN", "Infinity", "-Infinity"])
+def test_transfer_rejects_nonfinite_quantity_without_writes(invoice_env, quantity):
+    _client, db, ids, _payload, headers = invoice_env
+    destination = uuid4()
+    db.execute(text(
+        "INSERT INTO master_data.master_warehouse(id,branch_id,code,name_ar) "
+        "VALUES (:id,:b,:c,'Finite guard destination')"
+    ), {"id": destination, "b": ids["branch"], "c": destination.hex[:20]})
+    db.commit()
+    auth = headers("owner")
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.post("/transfers", headers=auth, json={
+            "source_warehouse_id": str(ids["warehouse"]),
+            "destination_warehouse_id": str(destination),
+            "product_id": str(ids["product"]),
+            "quantity": quantity,
+        })
+    assert response.status_code == 422, response.text
+    for table in ("inventory.stock_movement", "inventory.stock_balance"):
+        assert db.execute(text(f"SELECT count(*) FROM {table}")).scalar_one() == 0
+    assert db.execute(text(
+        "SELECT count(*) FROM audit.audit_log WHERE entity_type='stock_transfer'"
+    )).scalar_one() == 0

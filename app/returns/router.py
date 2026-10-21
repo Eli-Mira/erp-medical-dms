@@ -52,8 +52,8 @@ def create_return(payload: dict, request: Request, db: Db, current: CurrentUser)
         q = Decimal(str(qty))
     except (ValueError, TypeError, InvalidOperation, ArithmeticError):
         raise HTTPException(422, "quantity must be numeric")
-    if q <= 0:
-        raise HTTPException(422, "quantity must be positive")
+    if not q.is_finite() or q <= 0:
+        raise HTTPException(422, "quantity must be positive and finite")
     for table, ident, label in (
         ("master_data.master_customer", customer, "customer"),
         ("master_data.master_product", product, "product"),
