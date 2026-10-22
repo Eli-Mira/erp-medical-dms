@@ -1,4 +1,4 @@
-"""Read-only master-data lookups for the invoice screen and B Master Data slice.
+"""Master-data lookups for the invoice screen and B Master Data slice.
 
 Scope rules mirror the invoice API exactly so the UI can only offer references
 that invoice creation would accept:
@@ -23,15 +23,19 @@ each gated to the roles that consume it (no purchasing/marketing role exists yet
                limited to their ``platform.user_branch`` grants. A doctor with no
                branch is never offered to a branch-scoped caller.
 
-Reads only. No writes, no commits, no schema changes.
+Supplier maintenance alone adds owner-only writes with atomic audit records.
+Other reference routes remain read-only; no schema changes.
 """
-from typing import Annotated, Literal
-from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Annotated, Literal
+from uuid import UUID, uuid4
+
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.auth.repo import log_audit
 from app.auth.router import get_current_user
 from app.db import get_db
 from app.master.schemas import (
@@ -40,7 +44,9 @@ from app.master.schemas import (
     CustomerOut,
     DoctorOut,
     ProductOut,
+    SupplierIn,
     SupplierOut,
+    SupplierPatch,
     WarehouseOut,
 )
 from app.text_search import like_pattern
@@ -49,7 +55,7 @@ router = APIRouter(prefix="/master", tags=["master-data"])
 Db = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[dict, Depends(get_current_user)]
 
-# Same role set that may read the invoice pipeline.
+# Read roles (invoice pipeline). Unchanged.
 READ_ROLES = {
     "owner",
     "finance",
@@ -63,8 +69,6 @@ GLOBAL_WAREHOUSE_ROLES = {"owner", "finance", "warehouse_staff", "read_only_audi
 GLOBAL_BRANCH_ROLES = {"owner", "finance", "read_only_auditor"}
 
 # B Master Data slice: company-wide references, each limited to its consumers.
-# No purchasing or marketing role exists in the role model (D34), so suppliers
-# and the COA stay with finance-side roles.
 SUPPLIER_ROLES = {"owner", "finance", "read_only_auditor"}
 ACCOUNT_ROLES = {"owner", "finance", "read_only_auditor"}
 DOCTOR_ROLES = {
@@ -101,8 +105,6 @@ def _limit(value: int) -> int:
     return min(value, LIMIT_MAX)
 
 
-
-
 def _territories(db, user):
     """Territory ids a non-owner may reference; None means unrestricted."""
     if _role(user) == "owner":
@@ -115,7 +117,7 @@ def _territories(db, user):
 
 
 def _branches(db, user):
-    """Branch ids a non-global caller may reference; None means unrestricted."""
+    """Branch ids a non-global caller may reference; None is unrestricted."""
     if user["role"] in GLOBAL_BRANCH_ROLES:
         return None
     rows = db.execute(
@@ -126,7 +128,7 @@ def _branches(db, user):
 
 
 def _warehouses(db, user):
-    """Active warehouse ids a non-global caller may reference; None is global."""
+    """Resolve branch grants to actual active warehouse IDs, not routes."""
     if user["role"] in GLOBAL_WAREHOUSE_ROLES:
         return None
     rows = db.execute(
@@ -138,6 +140,39 @@ def _warehouses(db, user):
         {"uid": user["id"]},
     ).fetchall()
     return {r[0] for r in rows}
+
+
+def _require_owner(current: CurrentUser) -> None:
+    _require(current, {"owner"})
+
+
+def _supplier_row(db, supplier_id: UUID, *, lock=False):
+    row = (
+        db.execute(
+            text(
+                "SELECT id, code, name_ar, name_en, contact_phone, address, is_active "
+                "FROM master_data.master_supplier WHERE id = :id"
+                + (" FOR UPDATE" if lock else "")
+            ),
+            {"id": str(supplier_id)},
+        )
+        .mappings()
+        .first()
+    )
+    if row is None:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+    return dict(row)
+
+
+def _supplier_values(payload: SupplierIn) -> dict:
+    return {
+        "id": uuid4(),
+        "code": payload.code,
+        "name_ar": payload.name_ar,
+        "name_en": payload.name_en,
+        "contact_phone": payload.contact_phone,
+        "address": payload.address,
+    }
 
 
 @router.get("/branches")
@@ -332,3 +367,135 @@ def list_doctors(
         params,
     ).mappings()
     return [DoctorOut.model_validate(dict(row)) for row in rows]
+
+
+@router.post(
+    "/suppliers",
+    status_code=201,
+    response_model=SupplierOut,
+    responses={409: {"description": "Unique supplier code conflict"}},
+)
+def create_supplier(db: Db, current: CurrentUser, payload: SupplierIn):
+    """Create a supplier as the confirmed active owner.
+
+    One transaction owns the row + actor-bound audit; the response is validated
+    against SupplierOut before commit. Any failure rolls back both.
+    """
+    _require_owner(current)
+    values = _supplier_values(payload)
+    try:
+        db.execute(
+            text(
+                "INSERT INTO master_data.master_supplier "
+                "(id, code, name_ar, name_en, contact_phone, address) "
+                "VALUES (:id, :code, :name_ar, :name_en, :contact_phone, :address)"
+            ),
+            values,
+        )
+        response = SupplierOut.model_validate({**values, "is_active": True})
+        log_audit(
+            db,
+            current["id"],
+            "created",
+            "master_supplier",
+            values["id"],
+            None,
+            response.model_dump(mode="json"),
+        )
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409, detail="Supplier code already exists"
+        ) from None
+    except Exception:
+        db.rollback()
+        raise
+    return response
+
+
+@router.get("/suppliers/{supplier_id}", response_model=SupplierOut)
+def get_supplier(db: Db, current: CurrentUser, supplier_id: UUID):
+    """Retrieve a supplier for maintenance: active or inactive rows both work.
+
+    Reads stay within the existing SUPPLIER_ROLES; inactive rows are not hidden.
+    """
+    _require(current, SUPPLIER_ROLES)
+    return SupplierOut.model_validate(_supplier_row(db, supplier_id))
+
+
+@router.patch("/suppliers/{supplier_id}", response_model=SupplierOut)
+def update_supplier(
+    supplier_id: UUID, payload: SupplierPatch, db: Db, current: CurrentUser
+):
+    _require_owner(current)
+    changes = payload.model_dump(exclude_unset=True)
+    try:
+        before = _supplier_row(db, supplier_id, lock=True)
+        # Identifiers come only from this fixed whitelist; values remain parameters.
+        columns = (
+            "code",
+            "name_ar",
+            "name_en",
+            "contact_phone",
+            "address",
+            "is_active",
+        )
+        assignments = ", ".join(
+            f"{field}=:{field}" for field in columns if field in changes
+        )
+        db.execute(
+            text(
+                "UPDATE master_data.master_supplier SET "
+                + assignments
+                + " WHERE id=:id"
+            ),
+            {"id": supplier_id, **changes},
+        )
+        response = SupplierOut.model_validate({**before, **changes})
+        log_audit(
+            db,
+            current["id"],
+            "updated",
+            "master_supplier",
+            supplier_id,
+            SupplierOut.model_validate(before).model_dump(mode="json"),
+            response.model_dump(mode="json"),
+        )
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Supplier code already exists") from None
+    except Exception:
+        db.rollback()
+        raise
+    return response
+
+
+@router.delete("/suppliers/{supplier_id}", status_code=204)
+def deactivate_supplier(supplier_id: UUID, db: Db, current: CurrentUser):
+    _require_owner(current)
+    try:
+        before = _supplier_row(db, supplier_id, lock=True)
+        if not before["is_active"]:
+            db.rollback()
+            return Response(status_code=204)
+        db.execute(
+            text("UPDATE master_data.master_supplier SET is_active=false WHERE id=:id"),
+            {"id": supplier_id},
+        )
+        old = SupplierOut.model_validate(before).model_dump(mode="json")
+        log_audit(
+            db,
+            current["id"],
+            "deactivated",
+            "master_supplier",
+            supplier_id,
+            old,
+            {**old, "is_active": False},
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return Response(status_code=204)
