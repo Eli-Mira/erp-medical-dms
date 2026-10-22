@@ -284,5 +284,16 @@
   "private_rule": "Leave one side at zero; an entry with both values at zero is rejected.",
   "private_save": "Save entry",
   "private_saved": "Entry saved and audited.",
-  "private_totals": "Total"
+  "private_totals": "Total",
+  "supplier_add": "Add supplier",
+  "supplier_name_ar": "Supplier name (Arabic)",
+  "supplier_name_en": "Supplier name (English)",
+  "supplier_save": "Save",
+  "supplier_cancel": "Cancel",
+  "supplier_actions": "Actions",
+  "supplier_edit": "Edit supplier",
+  "supplier_inactive": "Inactive",
+  "supplier_deactivate": "Deactivate supplier",
+  "supplier_reactivate": "Reactivate supplier",
+  "supplier_confirm_deactivate": "Deactivate this supplier? You can reactivate it later."
 }

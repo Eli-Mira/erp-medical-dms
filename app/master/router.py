@@ -287,10 +287,13 @@ def list_suppliers(
     current: CurrentUser,
     q: str | None = None,
     limit: int = LIMIT_DEFAULT,
+    include_inactive: bool = False,
 ) -> list[SupplierOut]:
     _require(current, SUPPLIER_ROLES)
-    clauses = ["is_active"]
-    params: dict = {"limit": _limit(limit)}
+    if include_inactive:
+        _require_owner(current)
+    clauses = ["(is_active OR :include_inactive)"]
+    params: dict = {"limit": _limit(limit), "include_inactive": include_inactive}
     if q:
         clauses.append("(name_ar ILIKE :q OR name_en ILIKE :q OR code ILIKE :q)")
         params["q"] = like_pattern(q)

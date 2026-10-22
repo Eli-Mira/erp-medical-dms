@@ -105,7 +105,7 @@
       <button type="button" class="nav-item sub" data-view="objectives" data-roles="owner,finance,sales_manager">
         <span class="glyph" aria-hidden="true">🎯</span><span data-i18n="nav_objectives">الأهداف وKPI</span><span class="proto-dot">نموذج</span>
       </button>
-      <button type="button" class="nav-item sub" data-view="suppliers" data-roles="owner,finance">
+      <button type="button" class="nav-item sub" data-view="suppliers" data-roles="owner,finance,read_only_auditor">
         <span class="glyph" aria-hidden="true">🚚</span><span data-i18n="nav_suppliers">المورّدون</span>
       </button>
       <button type="button" class="nav-item sub" data-view="purchases" data-roles="owner,finance">
@@ -709,7 +709,8 @@
             <p class="desc" data-i18n="suppliers_desc">دليل المورّدين الفعلي — بيانات تجريبية بالكامل.</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
-          <button type="button" class="default" data-refresh="suppliers" data-i18n="refresh">تحديث</button></span>
+          <button type="button" class="default" data-refresh="suppliers" data-i18n="refresh">تحديث</button>
+          <button type="button" id="supplier-add" class="primary hidden" data-i18n="supplier_add">إضافة مورّد</button></span>
         </div>
         <div id="suppliers-error" class="alert hidden" role="alert" data-kind="error"></div>
         <div class="table-wrap">
@@ -720,6 +721,8 @@
                 <th data-i18n="supplier">المورّد</th>
                 <th data-i18n="phone">الهاتف</th>
                 <th data-i18n="address">العنوان</th>
+                <th data-i18n="status">الحالة</th>
+                <th id="supplier-actions-head" class="hidden" data-i18n="supplier_actions">الإجراءات</th>
               </tr>
             </thead>
             <tbody id="supplier-rows"></tbody>
@@ -1129,6 +1132,40 @@
     <ul id="palette-list" class="palette-list"></ul>
   </dialog>
 
+  <dialog id="supplier-dialog" class="supplier-dialog" aria-labelledby="supplier-dialog-title">
+    <form id="supplier-form" novalidate>
+      <h2 id="supplier-dialog-title" data-i18n="supplier_add">إضافة مورّد</h2>
+      <div id="supplier-dialog-error" class="alert hidden" role="alert" data-kind="error"></div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="supplier-code" data-i18n="code">الكود</label>
+          <input id="supplier-code" required maxlength="30">
+        </div>
+        <div class="field">
+          <label for="supplier-name-ar" data-i18n="supplier_name_ar">اسم المورّد (عربي)</label>
+          <input id="supplier-name-ar" required maxlength="200">
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top: var(--space-4);">
+        <div class="field">
+          <label for="supplier-name-en" data-i18n="supplier_name_en">اسم المورّد (إنجليزي)</label>
+          <input id="supplier-name-en" maxlength="200">
+        </div>
+        <div class="field">
+          <label for="supplier-phone" data-i18n="phone">الهاتف</label>
+          <input id="supplier-phone" maxlength="30">
+        </div>
+      </div>
+      <div class="field" style="margin-top: var(--space-4);">
+        <label for="supplier-address" data-i18n="address">العنوان</label>
+        <textarea id="supplier-address"></textarea>
+      </div>
+      <div style="margin-top: var(--space-4); display: flex; gap: var(--space-2); justify-content: flex-end;">
+        <button type="button" id="supplier-cancel" class="default" data-i18n="supplier_cancel">إلغاء</button>
+        <button type="submit" id="supplier-save" class="primary" data-i18n="supplier_save">حفظ</button>
+      </div>
+    </form>
+  </dialog>
   <script src="app.js"></script>
   <script>
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");

@@ -2037,24 +2037,136 @@
     }
   }
 
+  function isOwnerUser(user) { return !!(user && user.role === "owner" && user.is_owner === true); }
+
   function loadSuppliers() {
     clearError(el.suppliersError);
+    if (el.supplierAdd) el.supplierAdd.classList.toggle("hidden", !isOwnerUser(state.user));
+    el.supplierActionsHead.classList.toggle("hidden", !isOwnerUser(state.user));
     var labels = { c: t("code"), n: t("supplier"), p: t("phone"), a: t("address") };
-    return api("/master/suppliers").then(function (rows) {
+    var url = isOwnerUser(state.user) ? "/master/suppliers?include_inactive=true" : "/master/suppliers";
+    return api(url).then(function (rows) {
       renderRows(el.supplierRows, rows, function (row) {
         var tr = document.createElement("tr");
+        tr.setAttribute("data-supplier-id", row.id);
         tr.appendChild(cell(labels.c, row.code, false, true));
         tr.appendChild(cell(labels.n, row.name_ar || row.name_en || row.code));
         tr.appendChild(cell(labels.p, row.contact_phone || "—", true));
         tr.appendChild(cell(labels.a, row.address || "—"));
+        tr.appendChild(cell(t("status"), t(row.is_active ? "active" : "supplier_inactive")));
+        if (isOwnerUser(state.user)) {
+          var actions = document.createElement("td");
+          actions.setAttribute("data-label", t("supplier_actions"));
+          var group = document.createElement("div");
+          group.className = "supplier-actions";
+          var edit = document.createElement("button");
+          edit.type = "button";
+          edit.className = "default";
+          edit.setAttribute("data-supplier-edit", row.id);
+          edit.setAttribute("aria-label", t("supplier_edit") + " " + row.code);
+          edit.textContent = t("supplier_edit");
+          edit.addEventListener("click", function () { editSupplier(row.id); });
+          group.appendChild(edit);
+          var toggle = document.createElement("button");
+          var action = row.is_active ? "supplier_deactivate" : "supplier_reactivate";
+          toggle.type = "button";
+          toggle.className = "default";
+          toggle.setAttribute(row.is_active ? "data-supplier-deactivate" : "data-supplier-reactivate", row.id);
+          toggle.setAttribute("aria-label", t(action) + " " + row.code);
+          toggle.textContent = t(action);
+          toggle.addEventListener("click", function () { changeSupplierActivity(row, toggle); });
+          group.appendChild(toggle);
+          actions.appendChild(group);
+          tr.appendChild(actions);
+        }
         return tr;
       });
-      if (!rows.length) emptyRow(el.supplierRows, 4, "empty_rows");
+      if (!rows.length) emptyRow(el.supplierRows, isOwnerUser(state.user) ? 6 : 5, "empty_rows");
     }).catch(function (error) {
       renderRows(el.supplierRows, [], function () { return null; });
-      emptyRow(el.supplierRows, 4, "empty_rows");
+      emptyRow(el.supplierRows, isOwnerUser(state.user) ? 6 : 5, "empty_rows");
       showError(el.suppliersError, messageFor(error));
     });
+  }
+
+  var supplierSaving = false;
+  var supplierEditingId = null;
+  async function changeSupplierActivity(row, button) {
+    if (button.disabled || !isOwnerUser(state.user)) return;
+    if (row.is_active && !window.confirm(t("supplier_confirm_deactivate"))) return;
+    button.disabled = true;
+    clearError(el.suppliersError);
+    try {
+      var options = row.is_active ? { method: "DELETE" } : { method: "PATCH", body: { is_active: true } };
+      await api("/master/suppliers/" + encodeURIComponent(row.id), options);
+      await loadSuppliers();
+    } catch (error) {
+      showError(el.suppliersError, messageFor(error));
+    } finally {
+      button.disabled = false;
+    }
+  }
+  async function editSupplier(id) {
+    if (supplierSaving || el.supplierDialog.open) return;
+    clearError(el.suppliersError);
+    try {
+      var row = await api("/master/suppliers/" + encodeURIComponent(id));
+      if (!el.supplierDialog.open) openSupplierDialog(row);
+    } catch (error) {
+      showError(el.suppliersError, messageFor(error));
+    }
+  }
+  function openSupplierDialog(row) {
+    if (!el.supplierDialog || !isOwnerUser(state.user)) return;
+    clearError(el.supplierDialogError);
+    if (el.supplierForm) el.supplierForm.reset();
+    supplierEditingId = row ? row.id : null;
+    var title = $("supplier-dialog-title");
+    title.setAttribute("data-i18n", row ? "supplier_edit" : "supplier_add");
+    title.textContent = t(row ? "supplier_edit" : "supplier_add");
+    if (row) {
+      el.supplierCode.value = row.code;
+      el.supplierNameAr.value = row.name_ar;
+      el.supplierNameEn.value = row.name_en || "";
+      el.supplierPhone.value = row.contact_phone || "";
+      el.supplierAddress.value = row.address || "";
+    }
+    supplierSaving = false;
+    if (el.supplierSave) el.supplierSave.disabled = false;
+    if (el.supplierCancel) el.supplierCancel.disabled = false;
+    el.supplierDialog.showModal();
+    setTimeout(function () { if (el.supplierCode) el.supplierCode.focus(); }, 0);
+  }
+  function closeSupplierDialog() {
+    if (supplierSaving) return;
+    if (el.supplierDialog && el.supplierDialog.open) el.supplierDialog.close();
+  }
+  async function saveSupplier(event) {
+    event.preventDefault();
+    if (supplierSaving || !el.supplierSave || el.supplierSave.disabled) return;
+    clearError(el.supplierDialogError);
+    supplierSaving = true;
+    el.supplierSave.disabled = true;
+    if (el.supplierCancel) el.supplierCancel.disabled = true;
+    try {
+      var payload = {
+        code: el.supplierCode.value.trim(),
+        name_ar: el.supplierNameAr.value.trim(),
+        name_en: el.supplierNameEn.value.trim() || null,
+        contact_phone: el.supplierPhone.value.trim() || null,
+        address: el.supplierAddress.value.trim() || null,
+      };
+      var path = "/master/suppliers" + (supplierEditingId ? "/" + encodeURIComponent(supplierEditingId) : "");
+      await api(path, { method: supplierEditingId ? "PATCH" : "POST", body: payload });
+      await loadSuppliers();
+      if (el.supplierDialog.open) el.supplierDialog.close();
+    } catch (error) {
+      showError(el.supplierDialogError, messageFor(error));
+    } finally {
+      supplierSaving = false;
+      if (el.supplierSave) el.supplierSave.disabled = false;
+      if (el.supplierCancel) el.supplierCancel.disabled = false;
+    }
   }
 
   function loadAccounts() {
@@ -2420,6 +2532,18 @@
     el.productRows = $("product-rows");
     el.warehouseRows = $("warehouse-rows");
     el.supplierRows = $("supplier-rows");
+    el.supplierActionsHead = $("supplier-actions-head");
+    el.supplierAdd = $("supplier-add");
+    el.supplierDialog = $("supplier-dialog");
+    el.supplierForm = $("supplier-form");
+    el.supplierCode = $("supplier-code");
+    el.supplierNameAr = $("supplier-name-ar");
+    el.supplierNameEn = $("supplier-name-en");
+    el.supplierPhone = $("supplier-phone");
+    el.supplierAddress = $("supplier-address");
+    el.supplierSave = $("supplier-save");
+    el.supplierCancel = $("supplier-cancel");
+    el.supplierDialogError = $("supplier-dialog-error");
     el.accountRows = $("account-rows");
     el.doctorRows = $("doctor-rows");
     el.entryRows = $("entry-rows");
@@ -2599,6 +2723,12 @@
     });
     el.paletteInput.addEventListener("input", function () { paletteSearch(el.paletteInput.value.trim()); });
     el.privateForm.addEventListener("submit", savePrivateEntry);
+    if (el.supplierAdd) el.supplierAdd.addEventListener("click", function () { openSupplierDialog(null); });
+    if (el.supplierForm) el.supplierForm.addEventListener("submit", saveSupplier);
+    if (el.supplierCancel) el.supplierCancel.addEventListener("click", closeSupplierDialog);
+    if (el.supplierDialog) el.supplierDialog.addEventListener("cancel", function (event) {
+      if (supplierSaving) event.preventDefault();
+    });
     $("open-palette").addEventListener("click", openPalette);
 
     el.visitPrev.addEventListener("input", updateVisitCalc);

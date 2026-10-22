@@ -284,5 +284,16 @@
   "private_rule": "اترك أحد الحقلين صفرًا؛ لا تُسجَّل حركة بقيمتين صفر.",
   "private_save": "حفظ الحركة",
   "private_saved": "تم حفظ الحركة وتدقيقها.",
-  "private_totals": "الإجمالي"
+  "private_totals": "الإجمالي",
+  "supplier_add": "إضافة مورّد",
+  "supplier_name_ar": "اسم المورّد (عربي)",
+  "supplier_name_en": "اسم المورّد (إنجليزي)",
+  "supplier_save": "حفظ",
+  "supplier_cancel": "إلغاء",
+  "supplier_actions": "الإجراءات",
+  "supplier_edit": "تعديل المورد",
+  "supplier_inactive": "غير نشط",
+  "supplier_deactivate": "تعطيل المورد",
+  "supplier_reactivate": "إعادة التفعيل",
+  "supplier_confirm_deactivate": "تعطيل هذا المورد؟ يمكن إعادة تفعيله لاحقًا."
 }
