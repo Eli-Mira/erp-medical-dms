@@ -42,6 +42,7 @@ from app.master.schemas import (
     AccountOut,
     BranchOut,
     CustomerOut,
+    CustomerPatch,
     DoctorOut,
     ProductOut,
     SupplierIn,
@@ -164,6 +165,24 @@ def _supplier_row(db, supplier_id: UUID, *, lock=False):
     return dict(row)
 
 
+def _customer_row(db, customer_id: UUID, *, lock=False):
+    row = (
+        db.execute(
+            text(
+                "SELECT id, code, name_ar, name_en, branch_id, territory_id "
+                "FROM master_data.master_customer WHERE id = :id"
+                + (" FOR UPDATE" if lock else "")
+            ),
+            {"id": str(customer_id)},
+        )
+        .mappings()
+        .first()
+    )
+    if row is None:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    return dict(row)
+
+
 def _supplier_values(payload: SupplierIn) -> dict:
     return {
         "id": uuid4(),
@@ -256,6 +275,43 @@ def list_customers(
         params,
     ).mappings()
     return [CustomerOut.model_validate(dict(row)) for row in rows]
+
+
+@router.patch("/customers/{customer_id}", response_model=CustomerOut)
+def update_customer(
+    customer_id: UUID, payload: CustomerPatch, db: Db, current: CurrentUser
+):
+    _require_owner(current)
+    changes = payload.model_dump(exclude_unset=True)
+    try:
+        before = _customer_row(db, customer_id, lock=True)
+        assignments = ", ".join(
+            f"{field}=:{field}" for field in ("name_ar", "name_en") if field in changes
+        )
+        if assignments:
+            db.execute(
+                text(
+                    "UPDATE master_data.master_customer SET "
+                    + assignments
+                    + " WHERE id=:id"
+                ),
+                {"id": customer_id, **changes},
+            )
+        response = CustomerOut.model_validate({**before, **changes})
+        log_audit(
+            db,
+            current["id"],
+            "updated",
+            "master_customer",
+            customer_id,
+            CustomerOut.model_validate(before).model_dump(mode="json"),
+            response.model_dump(mode="json"),
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return response
 
 
 @router.get("/products")

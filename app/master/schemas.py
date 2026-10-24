@@ -35,6 +35,27 @@ class CustomerOut(BaseModel):
     territory_id: UUID | None
 
 
+class CustomerPatch(BaseModel):
+    """PATCH /master/customers input: explicit partial fields.
+
+    Only the submitted columns change; server-controlled fields (id,
+    code, branch_id, territory_id, is_active) are forbidden.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    name_ar: str | None = Field(default=None, min_length=1, max_length=200)
+    name_en: str | None = Field(default=None, max_length=200)
+
+    @model_validator(mode="after")
+    def validate_patch(self):
+        if not self.model_fields_set:
+            raise ValueError("At least one customer name is required")
+        if "name_ar" in self.model_fields_set and self.name_ar is None:
+            raise ValueError("name_ar cannot be null")
+        return self
+
+
 class ProductOut(BaseModel):
     id: UUID
     sku: str
