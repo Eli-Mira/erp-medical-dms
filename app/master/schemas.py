@@ -17,6 +17,13 @@ class BranchOut(BaseModel):
     name_en: str | None
 
 
+class TerritoryOut(BaseModel):
+    id: UUID
+    code: str
+    name_ar: str
+    name_en: str | None
+
+
 class WarehouseOut(BaseModel):
     id: UUID
     branch_id: UUID
@@ -33,6 +40,7 @@ class CustomerOut(BaseModel):
     name_en: str | None
     branch_id: UUID | None
     territory_id: UUID | None
+    is_active: bool
 
 
 class CustomerPatch(BaseModel):
@@ -54,6 +62,23 @@ class CustomerPatch(BaseModel):
         if "name_ar" in self.model_fields_set and self.name_ar is None:
             raise ValueError("name_ar cannot be null")
         return self
+
+
+class CustomerIn(BaseModel):
+    """POST /master/customers input.
+
+    Owner-only write boundary: unknown fields are forbidden, required values
+    are trimmed/nonblank with length caps, and is_active defaults to true on
+    the server (never accepted from the client).
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    code: str = Field(min_length=1, max_length=30)
+    name_ar: str = Field(min_length=1, max_length=200)
+    name_en: str | None = Field(default=None, max_length=200)
+    branch_id: UUID
+    territory_id: UUID
 
 
 class ProductOut(BaseModel):

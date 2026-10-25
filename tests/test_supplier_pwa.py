@@ -1,5 +1,6 @@
 """Real browser -> shipped PWA -> real API -> independent persisted audit."""
 
+import json
 import os
 import socket
 import subprocess
@@ -108,18 +109,30 @@ def test_owner_supplier_create_pwa(live_app):
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.goto(base + "/app/", wait_until="domcontentloaded")
                 expect(page.locator("#login-form")).to_be_visible()
+                blocked_boot = []
+                page.route(
+                    "**/master/branches", lambda route: blocked_boot.append(route)
+                )
                 page.locator("#login-username").fill(username)
                 page.locator("#login-password").fill(password)
-                with page.expect_response(
-                    lambda r: (
-                        r.url.endswith("/auth/login") and r.request.method == "POST"
-                    )
-                ) as login:
+                with (
+                    page.expect_response(
+                        lambda r: (
+                            r.url.endswith("/auth/login") and r.request.method == "POST"
+                        )
+                    ) as login,
+                    page.expect_request(base + "/master/branches"),
+                ):
                     page.locator("#login-submit").click()
                 assert login.value.status == 200
                 nav = page.locator('[data-view="suppliers"]')
                 expect(nav).to_be_visible()
                 nav.click()
+                expect(page.locator("#suppliers-view")).to_be_visible()
+                assert len(blocked_boot) == 1
+                blocked_boot[0].continue_()
+                page.unroute("**/master/branches")
+                expect(page.locator("#login-submit")).to_be_enabled()
                 expect(page.locator("#suppliers-view")).to_be_visible()
                 expect(page.locator("#supplier-add")).to_be_visible(timeout=3000)
                 page.locator("#supplier-add").click()
@@ -352,6 +365,53 @@ def test_owner_supplier_edit_deactivate_reactivate_pwa(live_app, lang, width, re
             assert all(a.actor_user_id == user_id for a in audits)
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         _capture_supplier_state(page, request, "reactivated-list")
+
+
+@pytest.mark.parametrize("lang", ["ar", "en"])
+@pytest.mark.parametrize("width", [320, 390, 768, 1024, 1440])
+def test_header_controls_remain_reachable_after_resize(live_app, lang, width, request):
+    with _browser_user(live_app, lang=lang) as (page, _, _):
+        page.set_viewport_size({"width": width, "height": 900})
+        if width < 1024:
+            # Resizing animates the closed drawer out from its desktop position.
+            expect(page.locator("#sidebar")).not_to_be_in_viewport()
+        else:
+            expect(page.locator("#menu-toggle")).not_to_be_visible()
+        layout = page.evaluate("""() => {
+          const selectors = ['#open-palette', '#bell', '#logout', '#lang'];
+          if (innerWidth < 1024) selectors.unshift('#menu-toggle');
+          return {
+            viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+            mobileSearch: matchMedia('(max-width: 900px)').matches,
+            groups: [...document.querySelectorAll('.brand, .top-actions, #who, #offline-chip')].map(e => ({
+              selector:e.id || e.className, width:e.getBoundingClientRect().width,
+              display:getComputedStyle(e).display
+            })),
+            controls: selectors.map(selector => {
+              const e = document.querySelector(selector), r = e.getBoundingClientRect();
+              const c = getComputedStyle(e);
+              const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+              return {selector, x:r.x, y:r.y, width:r.width, height:r.height,
+                display:c.display, minWidth:c.minWidth, hit:e.contains(hit),
+                inDrawer:!!(hit && hit.closest('#sidebar'))};
+            })
+          };
+        }""")
+        target = Path(request.config.option.xmlpath).with_name(
+            request.node.name + ".json"
+        )
+        with target.open("x", encoding="utf-8") as evidence:
+            json.dump(layout, evidence, ensure_ascii=False, indent=2)
+        assert layout["scrollWidth"] <= layout["viewport"], layout
+        assert all(control["hit"] for control in layout["controls"]), layout
+        if width < 1024:
+            page.locator("#menu-toggle").click()
+            expect(page.locator("#menu-toggle")).to_have_attribute(
+                "aria-expanded", "true"
+            )
+        page.locator('#sidebar [data-view="home"]').first.click()
+        expect(page.locator("#home-view")).to_be_visible()
+        expect(page.locator("#menu-toggle")).to_have_attribute("aria-expanded", "false")
 
 
 def _capture_supplier_state(page, request, state):

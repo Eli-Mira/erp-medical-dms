@@ -625,11 +625,13 @@
         <div class="view-head">
           <div class="titles">
             <h1 id="customers-title" data-i18n="customers_title">العملاء</h1>
-            <p class="desc" data-i18n="customers_desc">دليل العملاء الفعلي المسجل — حسب الفرع والمنطقة؛ الإضافة والتعديل لاحقًا (شاهد الفاتورة للاستخدام الفعلي).</p>
+            <p class="desc" data-i18n="customers_desc">دليل العملاء الفعلي المسجل — حسب الفرع والمنطقة.</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="primary hidden" id="customer-add" data-i18n="customer_add">إضافة عميل</button>
           <button type="button" class="default" data-refresh="customers" data-i18n="refresh">تحديث</button></span>
         </div>
+        <div id="customers-notice" class="alert hidden" role="status" aria-live="polite"></div>
         <div id="customers-error" class="alert hidden" role="alert" data-kind="error"></div>
         <div class="table-wrap">
           <table class="grid-table">
@@ -639,6 +641,8 @@
                 <th data-i18n="customer">العميل</th>
                 <th data-i18n="branch">الفرع</th>
                 <th data-i18n="territory">المنطقة</th>
+                <th data-i18n="status">الحالة</th>
+                <th id="customer-actions-head" class="hidden" data-i18n="customer_actions">إجراءات</th>
               </tr>
             </thead>
             <tbody id="customer-rows"></tbody>
@@ -1163,6 +1167,38 @@
       <div style="margin-top: var(--space-4); display: flex; gap: var(--space-2); justify-content: flex-end;">
         <button type="button" id="supplier-cancel" class="default" data-i18n="supplier_cancel">إلغاء</button>
         <button type="submit" id="supplier-save" class="primary" data-i18n="supplier_save">حفظ</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="customer-dialog" aria-labelledby="customer-dialog-title">
+    <form id="customer-form">
+      <h2 id="customer-dialog-title" data-i18n="customer_add">إضافة عميل</h2>
+      <div id="customer-dialog-error" class="alert hidden" role="alert" data-kind="error"></div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="customer-code" data-i18n="code">الكود</label>
+          <input id="customer-code" required maxlength="30" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="customer-name-ar" data-i18n="customer_name_ar">اسم العميل (عربي)</label>
+          <input id="customer-name-ar" required maxlength="200" dir="rtl">
+        </div>
+        <div class="field">
+          <label for="customer-name-en" data-i18n="customer_name_en">اسم العميل (إنجليزي)</label>
+          <input id="customer-name-en" maxlength="200" dir="ltr">
+        </div>
+        <div class="field">
+          <label for="customer-branch" data-i18n="branch">الفرع</label>
+          <select id="customer-branch" required></select>
+        </div>
+        <div class="field">
+          <label for="customer-territory" data-i18n="territory">المنطقة</label>
+          <select id="customer-territory" required></select>
+        </div>
+      </div>
+      <div style="margin-top: var(--space-4); display: flex; gap: var(--space-2); justify-content: flex-end;">
+        <button type="button" id="customer-cancel" class="default" data-i18n="customer_cancel">إلغاء</button>
+        <button type="submit" id="customer-save" class="primary" data-i18n="customer_save">حفظ</button>
       </div>
     </form>
   </dialog>

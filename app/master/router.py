@@ -23,7 +23,7 @@ each gated to the roles that consume it (no purchasing/marketing role exists yet
                limited to their ``platform.user_branch`` grants. A doctor with no
                branch is never offered to a branch-scoped caller.
 
-Supplier maintenance alone adds owner-only writes with atomic audit records.
+Supplier and customer maintenance add owner-only writes with atomic audit records.
 Other reference routes remain read-only; no schema changes.
 """
 
@@ -41,6 +41,7 @@ from app.db import get_db
 from app.master.schemas import (
     AccountOut,
     BranchOut,
+    CustomerIn,
     CustomerOut,
     CustomerPatch,
     DoctorOut,
@@ -48,6 +49,7 @@ from app.master.schemas import (
     SupplierIn,
     SupplierOut,
     SupplierPatch,
+    TerritoryOut,
     WarehouseOut,
 )
 from app.text_search import like_pattern
@@ -169,7 +171,7 @@ def _customer_row(db, customer_id: UUID, *, lock=False):
     row = (
         db.execute(
             text(
-                "SELECT id, code, name_ar, name_en, branch_id, territory_id "
+                "SELECT id, code, name_ar, name_en, branch_id, territory_id, is_active "
                 "FROM master_data.master_customer WHERE id = :id"
                 + (" FOR UPDATE" if lock else "")
             ),
@@ -194,6 +196,17 @@ def _supplier_values(payload: SupplierIn) -> dict:
     }
 
 
+def _customer_values(payload: CustomerIn) -> dict:
+    return {
+        "id": uuid4(),
+        "code": payload.code,
+        "name_ar": payload.name_ar,
+        "name_en": payload.name_en,
+        "branch_id": payload.branch_id,
+        "territory_id": payload.territory_id,
+    }
+
+
 @router.get("/branches")
 def list_branches(db: Db, current: CurrentUser) -> list[BranchOut]:
     _role(current)
@@ -213,6 +226,26 @@ def list_branches(db: Db, current: CurrentUser) -> list[BranchOut]:
         params,
     ).mappings()
     return [BranchOut.model_validate(dict(row)) for row in rows]
+
+
+@router.get("/territories")
+def list_territories(db: Db, current: CurrentUser) -> list[TerritoryOut]:
+    scope = _territories(db, current)
+    if scope is not None and not scope:
+        return []
+    where, params = "", {}
+    if scope is not None:
+        where = "WHERE id = ANY(CAST(:territories AS uuid[]))"
+        params["territories"] = [str(t) for t in scope]
+    rows = db.execute(
+        text(
+            "SELECT id, code, name_ar, name_en FROM master_data.master_territory "
+            + where
+            + " ORDER BY name_ar"
+        ),
+        params,
+    ).mappings()
+    return [TerritoryOut.model_validate(dict(row)) for row in rows]
 
 
 @router.get("/warehouses")
@@ -249,16 +282,25 @@ def list_warehouses(
 
 @router.get("/customers")
 def list_customers(
-    db: Db, current: CurrentUser, branch_id: UUID | None = None
+    db: Db,
+    current: CurrentUser,
+    branch_id: UUID | None = None,
+    include_inactive: bool = False,
 ) -> list[CustomerOut]:
     territories = _territories(db, current)
+    if include_inactive:
+        _require_owner(current)
     if territories is not None and not territories:
         return []
     # Invoice create requires an active, territory-assigned customer whose
     # branch matches the invoice branch; a null branch can never satisfy that,
     # so it must never be offered here either.
-    clauses = ["c.is_active", "c.territory_id IS NOT NULL", "c.branch_id IS NOT NULL"]
-    params: dict = {}
+    clauses = [
+        "(c.is_active OR :include_inactive)",
+        "c.territory_id IS NOT NULL",
+        "c.branch_id IS NOT NULL",
+    ]
+    params: dict = {"include_inactive": include_inactive}
     if territories is not None:
         clauses.append("c.territory_id = ANY(CAST(:territories AS uuid[]))")
         params["territories"] = [str(t) for t in territories]
@@ -267,7 +309,7 @@ def list_customers(
         params["branch_id"] = branch_id
     rows = db.execute(
         text(
-            "SELECT c.id, c.code, c.name_ar, c.name_en, c.branch_id, c.territory_id "
+            "SELECT c.id, c.code, c.name_ar, c.name_en, c.branch_id, c.territory_id, c.is_active "
             "FROM master_data.master_customer c WHERE "
             + " AND ".join(clauses)
             + " ORDER BY c.name_ar"
@@ -275,6 +317,68 @@ def list_customers(
         params,
     ).mappings()
     return [CustomerOut.model_validate(dict(row)) for row in rows]
+
+
+@router.post(
+    "/customers",
+    status_code=201,
+    response_model=CustomerOut,
+    responses={409: {"description": "Unique customer code conflict"}},
+)
+def create_customer(db: Db, current: CurrentUser, payload: CustomerIn):
+    """Create a customer as the confirmed active owner.
+
+    One transaction owns the row + actor-bound audit; the response is validated
+    against CustomerOut before commit. Any failure rolls back both.
+    """
+    _require_owner(current)
+    values = _customer_values(payload)
+    try:
+        db.execute(
+            text(
+                "INSERT INTO master_data.master_customer "
+                "(id, code, name_ar, name_en, branch_id, territory_id) "
+                "VALUES (:id, :code, :name_ar, :name_en, :branch_id, :territory_id)"
+            ),
+            values,
+        )
+        response = CustomerOut.model_validate({**values, "is_active": True})
+        log_audit(
+            db,
+            current["id"],
+            "created",
+            "master_customer",
+            values["id"],
+            None,
+            response.model_dump(mode="json"),
+        )
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        if error.orig.sqlstate == "23505":
+            raise HTTPException(409, "Customer code already exists") from None
+        if error.orig.sqlstate == "23503":
+            raise HTTPException(
+                422, "Customer branch or territory does not exist"
+            ) from None
+        raise
+    except Exception:
+        db.rollback()
+        raise
+    return response
+
+
+@router.get("/customers/{customer_id}", response_model=CustomerOut)
+def get_customer(customer_id: UUID, db: Db, current: CurrentUser):
+    scope = _territories(db, current)
+    row = _customer_row(db, customer_id)
+    if scope is not None and (
+        row["territory_id"] not in scope
+        or row["branch_id"] is None
+        or not row["is_active"]
+    ):
+        raise HTTPException(404, "Customer not found")
+    return CustomerOut.model_validate(row)
 
 
 @router.patch("/customers/{customer_id}", response_model=CustomerOut)
@@ -285,6 +389,13 @@ def update_customer(
     changes = payload.model_dump(exclude_unset=True)
     try:
         before = _customer_row(db, customer_id, lock=True)
+        changes = {
+            field: value for field, value in changes.items() if before[field] != value
+        }
+        if not changes:
+            response = CustomerOut.model_validate(before)
+            db.rollback()
+            return response
         assignments = ", ".join(
             f"{field}=:{field}" for field in ("name_ar", "name_en") if field in changes
         )
@@ -302,6 +413,65 @@ def update_customer(
             db,
             current["id"],
             "updated",
+            "master_customer",
+            customer_id,
+            CustomerOut.model_validate(before).model_dump(mode="json"),
+            response.model_dump(mode="json"),
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return response
+
+
+@router.delete("/customers/{customer_id}", status_code=204)
+def deactivate_customer(customer_id: UUID, db: Db, current: CurrentUser):
+    _require_owner(current)
+    try:
+        before = _customer_row(db, customer_id, lock=True)
+        if not before["is_active"]:
+            db.rollback()
+            return Response(status_code=204)
+        db.execute(
+            text("UPDATE master_data.master_customer SET is_active=false WHERE id=:id"),
+            {"id": customer_id},
+        )
+        old = CustomerOut.model_validate(before).model_dump(mode="json")
+        log_audit(
+            db,
+            current["id"],
+            "deactivated",
+            "master_customer",
+            customer_id,
+            old,
+            {**old, "is_active": False},
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return Response(status_code=204)
+
+
+@router.patch("/customers/{customer_id}/activate", response_model=CustomerOut)
+def activate_customer(customer_id: UUID, db: Db, current: CurrentUser):
+    _require_owner(current)
+    try:
+        before = _customer_row(db, customer_id, lock=True)
+        if before["is_active"]:
+            response = CustomerOut.model_validate(before)
+            db.rollback()
+            return response
+        db.execute(
+            text("UPDATE master_data.master_customer SET is_active=true WHERE id=:id"),
+            {"id": customer_id},
+        )
+        response = CustomerOut.model_validate({**before, "is_active": True})
+        log_audit(
+            db,
+            current["id"],
+            "activated",
             "master_customer",
             customer_id,
             CustomerOut.model_validate(before).model_dump(mode="json"),

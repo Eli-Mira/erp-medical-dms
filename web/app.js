@@ -1961,24 +1961,50 @@
     await loadPrivate();
   }
 
-  function loadCustomers() {
+  var customerTerritories = [];
+  async function loadCustomers() {
     clearError(el.customersError);
-    var labels = { c: t("code"), n: t("customer"), b: t("branch"), t: t("territory") };
-    return api("/master/customers").then(function (rows) {
-      renderRows(el.customerRows, rows, function (row) {
+    var owner = isOwnerUser(state.user);
+    el.customerAdd.classList.toggle("hidden", !owner);
+    el.customerActionsHead.classList.toggle("hidden", !owner);
+    try {
+      var results = await Promise.all([
+        api(owner ? "/master/customers?include_inactive=true" : "/master/customers"),
+        api("/master/territories"),
+      ]);
+      customerTerritories = results[1];
+      state.customers = results[0].filter(function (row) { return row.is_active; });
+      refreshCustomerSelects();
+      renderRows(el.customerRows, results[0], function (row) {
         var tr = document.createElement("tr");
-        tr.appendChild(cell(labels.c, row.code, false, true));
-        tr.appendChild(cell(labels.n, row.name_ar || row.name_en || row.code));
-        tr.appendChild(cell(labels.b, branchLabel(row.branch_id)));
-        tr.appendChild(cell(labels.t, shortId(row.territory_id)));
+        tr.setAttribute("data-customer-id", row.id);
+        tr.appendChild(cell(t("code"), row.code, false, true));
+        tr.appendChild(cell(t("customer"), row.name_ar || row.name_en || row.code));
+        tr.appendChild(cell(t("branch"), branchLabel(row.branch_id)));
+        var territory = customerTerritories.find(function (item) { return item.id === row.territory_id; });
+        tr.appendChild(cell(t("territory"), territory ? referenceName(territory) : shortId(row.territory_id)));
+        tr.appendChild(cell(t("status"), t(row.is_active ? "active" : "customer_inactive")));
+        if (owner) {
+          var actions = document.createElement("td");
+          actions.setAttribute("data-label", t("customer_actions"));
+          var group = node("div", "supplier-actions");
+          var edit = node("button", "default", t("customer_edit"));
+          edit.type = "button";
+          edit.setAttribute("data-customer-edit", row.id);
+          edit.addEventListener("click", function () { openCustomerDialog(row); });
+          var activity = node("button", "default", t(row.is_active ? "customer_deactivate" : "customer_reactivate"));
+          activity.type = "button";
+          activity.setAttribute(row.is_active ? "data-customer-deactivate" : "data-customer-reactivate", row.id);
+          activity.addEventListener("click", function () { changeCustomerActivity(row, activity); });
+          group.appendChild(edit); group.appendChild(activity); actions.appendChild(group);
+          tr.appendChild(actions);
+        }
         return tr;
       });
-      if (!rows.length) emptyRow(el.customerRows, 4, "empty_rows");
-    }).catch(function (error) {
-      renderRows(el.customerRows, [], function () { return null; });
-      emptyRow(el.customerRows, 4, "empty_rows");
+      if (!results[0].length) emptyRow(el.customerRows, owner ? 6 : 5, "empty_rows");
+    } catch (error) {
       showError(el.customersError, messageFor(error));
-    });
+    }
   }
 
   function loadProducts() {
@@ -2141,6 +2167,127 @@
     if (supplierSaving) return;
     if (el.supplierDialog && el.supplierDialog.open) el.supplierDialog.close();
   }
+
+  var customerSaving = false;
+  var customerEditingRow = null;
+  var customerDialogGeneration = 0;
+
+  function referenceName(row) {
+    return (state.lang === "en" ? row.name_en || row.name_ar : row.name_ar || row.name_en) || row.code;
+  }
+
+  async function refreshCustomerData(customer) {
+    // A confirmed mutation must update invoice choices even if the readback fails.
+    state.customers = state.customers.filter(function (row) { return row.id !== customer.id; });
+    if (customer.is_active) state.customers.push(customer);
+    refreshCustomerSelects();
+    await loadCustomers();
+  }
+
+  async function changeCustomerActivity(row, button) {
+    if (button.disabled || !isOwnerUser(state.user)) return;
+    if (!window.confirm(t(row.is_active ? "customer_confirm_deactivate" : "customer_confirm_reactivate"))) return;
+    button.disabled = true;
+    clearError(el.customersError);
+    try {
+      var path = "/master/customers/" + encodeURIComponent(row.id) + (row.is_active ? "" : "/activate");
+      var saved = await api(path, { method: row.is_active ? "DELETE" : "PATCH" });
+      showNotice(el.customersNotice, t("customer_saved"), "success");
+      await refreshCustomerData(saved || Object.assign({}, row, { is_active: false }));
+    } catch (error) {
+      showError(el.customersError, messageFor(error));
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function openCustomerDialog(row) {
+    if (!isOwnerUser(state.user) || el.customerDialog.open) return;
+    var generation = ++customerDialogGeneration;
+    customerEditingRow = row || null;
+    customerSaving = false;
+    el.customerForm.reset();
+    clearError(el.customerDialogError);
+    el.customerCode.disabled = !!row;
+    el.customerBranch.disabled = !!row;
+    el.customerTerritory.disabled = !!row;
+    el.customerCode.value = row ? row.code : "";
+    el.customerNameAr.value = row ? row.name_ar : "";
+    el.customerNameEn.value = row ? row.name_en || "" : "";
+    var title = $("customer-dialog-title");
+    title.dataset.i18n = row ? "customer_edit" : "customer_add";
+    title.textContent = t(title.dataset.i18n);
+    fillSelect(el.customerBranch, [], referenceName, "customer_select_branch");
+    fillSelect(el.customerTerritory, [], referenceName, "customer_select_territory");
+    el.customerSave.disabled = true;
+    el.customerCancel.disabled = false;
+    el.customerDialog.showModal();
+    (row ? el.customerNameAr : el.customerCode).focus();
+    try {
+      var results = await Promise.all([api("/master/branches"), api("/master/territories")]);
+      if (generation !== customerDialogGeneration || !el.customerDialog.open) return;
+      fillSelect(el.customerBranch, results[0], referenceName, "customer_select_branch");
+      fillSelect(el.customerTerritory, results[1], referenceName, "customer_select_territory");
+      if (row) {
+        el.customerBranch.value = row.branch_id;
+        el.customerTerritory.value = row.territory_id;
+      }
+      if (!results[0].length || !results[1].length) {
+        showError(el.customerDialogError, t("customer_references_required"));
+      } else {
+        el.customerSave.disabled = false;
+      }
+    } catch (error) {
+      if (generation === customerDialogGeneration && el.customerDialog.open) showError(el.customerDialogError, messageFor(error));
+    }
+  }
+
+  function closeCustomerDialog() {
+    if (customerSaving) return;
+    ++customerDialogGeneration;
+    el.customerDialog.close();
+  }
+
+  async function saveCustomer(event) {
+    event.preventDefault();
+    if (customerSaving || el.customerSave.disabled || !isOwnerUser(state.user)) return;
+    clearError(el.customerDialogError);
+    var names = { name_ar: el.customerNameAr.value.trim(), name_en: el.customerNameEn.value.trim() || null };
+    if (!names.name_ar || (!customerEditingRow && !el.customerCode.value.trim())) {
+      showError(el.customerDialogError, t("customer_required"));
+      return;
+    }
+    var payload;
+    if (customerEditingRow) {
+      payload = {};
+      Object.keys(names).forEach(function (key) {
+        if (names[key] !== customerEditingRow[key]) payload[key] = names[key];
+      });
+      if (!Object.keys(payload).length) { closeCustomerDialog(); return; }
+    } else {
+      payload = Object.assign({ code: el.customerCode.value.trim(), branch_id: el.customerBranch.value, territory_id: el.customerTerritory.value }, names);
+    }
+    customerSaving = true;
+    el.customerSave.disabled = true;
+    el.customerCancel.disabled = true;
+    try {
+      var path = "/master/customers" + (customerEditingRow ? "/" + encodeURIComponent(customerEditingRow.id) : "");
+      var saved = await api(path, { method: customerEditingRow ? "PATCH" : "POST", body: payload });
+      el.customerDialog.close();
+      showNotice(el.customersNotice, t("customer_saved"), "success");
+      await refreshCustomerData(saved);
+    } catch (error) {
+      var detail = error.data && error.data.detail;
+      var message = detail === "Customer code already exists" ? t("customer_duplicate") :
+        detail === "Customer branch or territory does not exist" ? t("customer_reference_invalid") : messageFor(error);
+      showError(el.customerDialog.open ? el.customerDialogError : el.customersError, message);
+    } finally {
+      customerSaving = false;
+      el.customerSave.disabled = false;
+      el.customerCancel.disabled = false;
+    }
+  }
+
   async function saveSupplier(event) {
     event.preventDefault();
     if (supplierSaving || !el.supplierSave || el.supplierSave.disabled) return;
@@ -2407,18 +2554,20 @@
     el.invoiceDate.value = todayLocal();
     el.invoiceNo.value = "INV-" + Date.now().toString().slice(-8);
     await loadMaster();
-    try { await loadWarehouses(null); } catch (_e) {
-      // Non-global roles scope warehouses per branch; labels fall back to ids.
-    }
-    showView("home");
-    if (me.role === "read_only_auditor") {
-      el.saveDraft.disabled = true;
-      el.addLine.disabled = true;
-      showNotice(el.formError, t("read_only_role"), "warn");
-    }
-    // Finance/owner: prime the entries cache for ledger/aging widgets.
-    if (me.role !== "medical_rep") loadEntriesIfAllowed();
-  }
+        try { await loadWarehouses(null); } catch (_e) {
+          // Non-global roles scope warehouses per branch; labels fall back to ids.
+        }
+        // Preserve an explicit user selection made during async boot; only land on
+        // Home when the user has not already navigated away from the login screen.
+        if (currentSection === "login-view") showView("home");
+        if (me.role === "read_only_auditor") {
+          el.saveDraft.disabled = true;
+          el.addLine.disabled = true;
+          showNotice(el.formError, t("read_only_role"), "warn");
+        }
+        // Finance/owner: prime the entries cache for ledger/aging widgets.
+        if (me.role !== "medical_rep") loadEntriesIfAllowed();
+      }
 
   async function login(event) {
     event.preventDefault();
@@ -2529,6 +2678,19 @@
     el.doctorsError = $("doctors-error");
     el.movementRows = $("movement-rows");
     el.customerRows = $("customer-rows");
+    el.customerAdd = $("customer-add");
+    el.customerActionsHead = $("customer-actions-head");
+    el.customerDialog = $("customer-dialog");
+    el.customerForm = $("customer-form");
+    el.customerCode = $("customer-code");
+    el.customerNameAr = $("customer-name-ar");
+    el.customerNameEn = $("customer-name-en");
+    el.customerBranch = $("customer-branch");
+    el.customerTerritory = $("customer-territory");
+    el.customerSave = $("customer-save");
+    el.customerCancel = $("customer-cancel");
+    el.customersNotice = $("customers-notice");
+    el.customerDialogError = $("customer-dialog-error");
     el.productRows = $("product-rows");
     el.warehouseRows = $("warehouse-rows");
     el.supplierRows = $("supplier-rows");
@@ -2695,6 +2857,7 @@
       loadI18n(state.lang === "ar" ? "en" : "ar").then(function () {
         if (state.user) {
           rebuildLines();
+          if (currentSection === "customers-view") loadCustomers();
           if (currentSection === "module-view") {
             var key = (moduleKey() || "analytics");
             openPreview(key);
@@ -2723,6 +2886,13 @@
     });
     el.paletteInput.addEventListener("input", function () { paletteSearch(el.paletteInput.value.trim()); });
     el.privateForm.addEventListener("submit", savePrivateEntry);
+    el.customerAdd.addEventListener("click", function () { openCustomerDialog(null); });
+    el.customerForm.addEventListener("submit", saveCustomer);
+    el.customerCancel.addEventListener("click", closeCustomerDialog);
+    el.customerDialog.addEventListener("cancel", function (event) {
+      if (customerSaving) event.preventDefault();
+      else ++customerDialogGeneration;
+    });
     if (el.supplierAdd) el.supplierAdd.addEventListener("click", function () { openSupplierDialog(null); });
     if (el.supplierForm) el.supplierForm.addEventListener("submit", saveSupplier);
     if (el.supplierCancel) el.supplierCancel.addEventListener("click", closeSupplierDialog);

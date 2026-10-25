@@ -1,5 +1,15 @@
 # Progress Checklist — Medical Company System
 
+## Customer lifecycle — S1 local delivery, 2026-10-25
+
+- Owner authority: the S1 continuous-delivery directive and immediate-recovery directive (`pasted_content_2026-10-25_07-58-11-296_78e520.txt`), superseding the older harness-first pointer below for this isolated feature only.
+- Worktree: `C:/Desktop/ERPWorktrees/customer-creation-20261025`, branch `feature/customer-creation-20261025`, based on accepted B-01 `34ee1f12c418a6ca31889a59ced9d4db5bd8d0fe`. Rejected H1 `d39788ec` is not an ancestor. Accepted supplier UI hunks from `48d4d8b` are integrated as file-specific changes, not a merge of controller ancestry.
+- Basic customer lifecycle: owner-only create, name editing, soft-deactivation/reactivation; required code/Arabic name/existing branch/existing territory; duplicate-code prevention; assigned-territory reads; active-only invoice choices; historical invoice/AR/stock preservation; atomic actor-bound audit and idempotent/no-op handling. No contact/credit-policy expansion or new schema migration.
+- Real vanilla PWA: Arabic/English customer form, protected identity/reference fields during name edits, confirmation, single-flight writes, recoverable validation/reference failures, refresh persistence, and desktop/mobile browser checks.
+- Native final stage `customer_full_after_review_fix`: **625 passed, 0 failed/errors/skipped**, 319.12s; fresh disposable PostgreSQL, migration up/down/up to `0015_private_accounts`, default posting OFF, source/config/seven workbooks unchanged, UUID database removed. This is local feature/regression evidence, not production or H1 acceptance.
+- Append-only private evidence: `C:/Users/emadg/AppData/Local/hermes/audits/medical-dms/customer-lifecycle-recovery-20261025/`. Initial independent review `review/validated-verdict.json` returned FAIL on stale invoice choices after a successful deactivation plus failed readback; a native browser regression reproduced it, then passed after the correction. Exact final corrective review and commit disposition are bound by `review-corrected/validated-verdict.json` and `COMMIT_RECEIPT.json` there; a passing test count alone is not review acceptance. Earlier failed candidate/test-fixture/browser captures remain preserved.
+- H1 remains NOT ACCEPTED; scheduler and production posting remain OFF; quarantined `medical_dms`, source workbooks, protected config, other sessions and publishing are outside this feature's write scope.
+
 ## Active owner request — 2026-10-21: autonomous-development integration (IN PROGRESS)
 
 The owner's latest directive is `pasted_content_2026-10-20_22-57-47-588_741e7a.txt` plus the explicit request to implement a permanent opt-in workflow, not merely document it. Finish this integration before resuming the older next-feature pointer below.

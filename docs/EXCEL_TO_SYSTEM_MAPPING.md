@@ -68,6 +68,12 @@
 - **Formulas preserved as logic:** `E=C*(1-D)` (transaction sheets), `الرصيد = C-D` (with explicit known anomaly; see INVOICE_SLICE_1.md). Payroll `E=B-C-D` is UNVERIFIED, cross-sheet references, `SUMIFS(B:B,A:A,A2)`. No behavioral expansion beyond cited logic.
 - **Discovery-gated:** Purchasing/Raw Materials/Manufacturing (BOM/MRP/PO depth), Budgeting, UOM necessity, deeper Payroll HR/attendance/leave/taxes.
 
+## B-01. Customer creation and lifecycle (explicit owner-approved addition)
+
+Source: PRD B-01; APP_FLOW §B1 (create active by default; inactive prevents new sales and preserves history); D34 responsibility/territory access; S1 immediate-recovery directive `pasted_content_2026-10-25_07-58-11-296_78e520.txt`.
+
+The approved basic slice uses the existing `master_data.master_customer` fields: unique code, Arabic/optional English names, existing branch and territory, and server-owned `is_active`. Owner-only create/name-edit/deactivate/reactivate is persisted and atomically audited; readers retain assigned-territory restrictions. No branch-to-territory relationship is invented: the present territory schema has no branch foreign key. Inactive customers remain retrievable by the owner, disappear from new-sale choices, and retain invoices, AR and stock history. Contact fields, credit policy, reassignment and imports are not implemented by this slice. Arabic/English PWA and disposable verification evidence are linked from `PROGRESS_CHECKLIST.md`.
+
 ## References
 - `docs/summary_extract.md` (all citations above)
 - `docs/inventory_raw.md`, `docs/inventory.json`
