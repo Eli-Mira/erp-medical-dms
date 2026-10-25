@@ -74,6 +74,12 @@ Source: PRD B-01; APP_FLOW §B1 (create active by default; inactive prevents new
 
 The approved basic slice uses the existing `master_data.master_customer` fields: unique code, Arabic/optional English names, existing branch and territory, and server-owned `is_active`. Owner-only create/name-edit/deactivate/reactivate is persisted and atomically audited; readers retain assigned-territory restrictions. No branch-to-territory relationship is invented: the present territory schema has no branch foreign key. Inactive customers remain retrievable by the owner, disappear from new-sale choices, and retain invoices, AR and stock history. Contact fields, credit policy, reassignment and imports are not implemented by this slice. Arabic/English PWA and disposable verification evidence are linked from `PROGRESS_CHECKLIST.md`.
 
+## B-01. Customer phone/address maintenance (explicit owner-approved extension)
+
+Source: PRD B-01; APP_FLOW B1; DATABASE_SCHEMA master_customer row; owner S1 customer-contact directive `pasted_content_2026-10-25_11-33-10-789_c4c010.txt`. These are approved additional master fields, **not claimed extracted/populated from workbook cells**; the data dictionary supplies no additional phone format or multiplicity policy.
+
+`0016_customer_contacts` adds nullable `contact_phone varchar(30)` and `address text` without changing existing customer records. Existing customer create/read/partial-update and the current bilingual PWA maintain them under owner-write/assigned-territory-read rules. Optional contact strings trim only outer whitespace, preserve local number text, accept NULL, and normalize blank to NULL; omitted fields stay unchanged. Phone sharing is permitted because no unique-contact requirement exists. Written addresses never reassign branch, territory or warehouse. Audit includes authenticated actor and full relevant old/new snapshot in the same locked transaction; unchanged values do not duplicate audit. Existing invoices/receivables/history, names and lifecycle are preserved. Downgrade refuses to discard populated contact fields. No multiple-phone model, email/VAT/credit rules, imports or accounting changes are introduced. Current evidence is linked from PROGRESS_CHECKLIST.
+
 ## References
 - `docs/summary_extract.md` (all citations above)
 - `docs/inventory_raw.md`, `docs/inventory.json`

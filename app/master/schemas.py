@@ -7,7 +7,14 @@ a draft, with the same decimal types the invoice API validates against.
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    field_validator,
+    model_validator,
+)
 
 
 class BranchOut(BaseModel):
@@ -41,24 +48,31 @@ class CustomerOut(BaseModel):
     branch_id: UUID | None
     territory_id: UUID | None
     is_active: bool
+    contact_phone: str | None = None
+    address: str | None = None
 
 
 class CustomerPatch(BaseModel):
-    """PATCH /master/customers input: explicit partial fields.
-
-    Only the submitted columns change; server-controlled fields (id,
-    code, branch_id, territory_id, is_active) are forbidden.
-    """
+    """Partial owner edits; identity, branch, territory and status stay server-owned."""
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     name_ar: str | None = Field(default=None, min_length=1, max_length=200)
     name_en: str | None = Field(default=None, max_length=200)
+    contact_phone: str | None = Field(default=None, max_length=30)
+    address: str | None = None
+
+    @field_validator("contact_phone", "address")
+    @classmethod
+    def normalize_contact(cls, value):
+        if value is not None and "\x00" in value:
+            raise ValueError("Contact fields cannot contain null characters")
+        return value or None
 
     @model_validator(mode="after")
     def validate_patch(self):
         if not self.model_fields_set:
-            raise ValueError("At least one customer name is required")
+            raise ValueError("At least one customer field is required")
         if "name_ar" in self.model_fields_set and self.name_ar is None:
             raise ValueError("name_ar cannot be null")
         return self
@@ -79,6 +93,15 @@ class CustomerIn(BaseModel):
     name_en: str | None = Field(default=None, max_length=200)
     branch_id: UUID
     territory_id: UUID
+    contact_phone: str | None = Field(default=None, max_length=30)
+    address: str | None = None
+
+    @field_validator("contact_phone", "address")
+    @classmethod
+    def normalize_contact(cls, value):
+        if value is not None and "\x00" in value:
+            raise ValueError("Contact fields cannot contain null characters")
+        return value or None
 
 
 class ProductOut(BaseModel):

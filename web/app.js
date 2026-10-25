@@ -67,6 +67,7 @@
   // ------------------------------------------------------------ API client
   async function api(path, opts) {
     opts = opts || {};
+    var requestToken = state.token;
     var headers = { "Content-Type": "application/json" };
     if (state.token) headers.Authorization = "Bearer " + state.token;
     var response = await fetch(path, {
@@ -81,6 +82,10 @@
       var error = new Error("request_failed");
       error.status = response.status;
       error.data = data;
+      if (response.status === 401 && requestToken && state.token === requestToken) {
+        clearSession();
+        showError(el.loginError, messageFor(error));
+      }
       throw error;
     }
     return data;
@@ -222,11 +227,13 @@
   }
 
   async function loadMaster() {
+    var requestToken = state.token;
     var results = await Promise.all([
       api("/master/branches"),
       api("/master/customers"),
       api("/master/products"),
     ]);
+    if (state.token !== requestToken) return;
     state.branches = results[0];
     state.customers = results[1];
     state.products = results[2];
@@ -1962,24 +1969,22 @@
   }
 
   var customerTerritories = [];
-  async function loadCustomers() {
-    clearError(el.customersError);
+  var customerDirectoryRows = [];
+  var customerPageIndex = 0;
+
+  function renderCustomerDirectory() {
     var owner = isOwnerUser(state.user);
-    el.customerAdd.classList.toggle("hidden", !owner);
-    el.customerActionsHead.classList.toggle("hidden", !owner);
-    try {
-      var results = await Promise.all([
-        api(owner ? "/master/customers?include_inactive=true" : "/master/customers"),
-        api("/master/territories"),
-      ]);
-      customerTerritories = results[1];
-      state.customers = results[0].filter(function (row) { return row.is_active; });
-      refreshCustomerSelects();
-      renderRows(el.customerRows, results[0], function (row) {
+    var total = customerDirectoryRows.length;
+    customerPageIndex = Math.max(0, Math.min(customerPageIndex, Math.max(0, Math.ceil(total / 50) - 1)));
+      renderRows(el.customerRows, customerDirectoryRows.slice(customerPageIndex * 50, (customerPageIndex + 1) * 50), function (row) {
         var tr = document.createElement("tr");
         tr.setAttribute("data-customer-id", row.id);
         tr.appendChild(cell(t("code"), row.code, false, true));
         tr.appendChild(cell(t("customer"), row.name_ar || row.name_en || row.code));
+        var phone = cell(t("phone"), row.contact_phone || "—");
+        phone.dir = "ltr";
+        tr.appendChild(phone);
+        tr.appendChild(cell(t("address"), row.address || "—"));
         tr.appendChild(cell(t("branch"), branchLabel(row.branch_id)));
         var territory = customerTerritories.find(function (item) { return item.id === row.territory_id; });
         tr.appendChild(cell(t("territory"), territory ? referenceName(territory) : shortId(row.territory_id)));
@@ -2001,8 +2006,43 @@
         }
         return tr;
       });
-      if (!results[0].length) emptyRow(el.customerRows, owner ? 6 : 5, "empty_rows");
+      if (!customerDirectoryRows.length) emptyRow(el.customerRows, owner ? 8 : 7, "empty_rows");
+    el.customerPrev.disabled = customerPageIndex === 0;
+    el.customerNext.disabled = (customerPageIndex + 1) * 50 >= total;
+    el.customerPageStatus.textContent = total ? (customerPageIndex * 50 + 1) + "–" + Math.min((customerPageIndex + 1) * 50, total) + " / " + total : "0";
+    $("customer-pagination").classList.toggle("hidden", total <= 50);
+    try { sessionStorage.setItem("medsys.customers.page." + state.user.id, String(customerPageIndex)); } catch (_e) { /* Page recall is optional. */ }
+  }
+
+  async function loadCustomers(focusId) {
+    var requestToken = state.token;
+    customerDirectoryRows = [];
+    el.customerRows.replaceChildren();
+    el.customerPrev.disabled = true;
+    el.customerNext.disabled = true;
+    $("customer-pagination").classList.add("hidden");
+    clearError(el.customersError);
+    var owner = isOwnerUser(state.user);
+    el.customerAdd.classList.toggle("hidden", !owner);
+    el.customerActionsHead.classList.toggle("hidden", !owner);
+    try {
+      var results = await Promise.all([
+        api(owner ? "/master/customers?include_inactive=true" : "/master/customers"),
+        api("/master/territories"),
+      ]);
+      if (!state.user || state.token !== requestToken) return;
+      customerTerritories = results[1];
+      customerDirectoryRows = results[0];
+      state.customers = results[0].filter(function (row) { return row.is_active; });
+      refreshCustomerSelects();
+      var savedPage = 0;
+      try { savedPage = Number(sessionStorage.getItem("medsys.customers.page." + state.user.id)); } catch (_e) { /* Page recall is optional. */ }
+      customerPageIndex = Number.isInteger(savedPage) ? savedPage : 0;
+      var index = customerDirectoryRows.findIndex(function (row) { return row.id === focusId; });
+      if (index >= 0) customerPageIndex = Math.floor(index / 50);
+      renderCustomerDirectory();
     } catch (error) {
+      if (state.token !== requestToken) return;
       showError(el.customersError, messageFor(error));
     }
   }
@@ -2181,7 +2221,7 @@
     state.customers = state.customers.filter(function (row) { return row.id !== customer.id; });
     if (customer.is_active) state.customers.push(customer);
     refreshCustomerSelects();
-    await loadCustomers();
+    await loadCustomers(customer.id);
   }
 
   async function changeCustomerActivity(row, button) {
@@ -2191,10 +2231,13 @@
     clearError(el.customersError);
     try {
       var path = "/master/customers/" + encodeURIComponent(row.id) + (row.is_active ? "" : "/activate");
+      var requestToken = state.token;
       var saved = await api(path, { method: row.is_active ? "DELETE" : "PATCH" });
+      if (state.token !== requestToken) return;
       showNotice(el.customersNotice, t("customer_saved"), "success");
       await refreshCustomerData(saved || Object.assign({}, row, { is_active: false }));
     } catch (error) {
+      if (state.token !== requestToken) return;
       showError(el.customersError, messageFor(error));
     } finally {
       button.disabled = false;
@@ -2214,6 +2257,8 @@
     el.customerCode.value = row ? row.code : "";
     el.customerNameAr.value = row ? row.name_ar : "";
     el.customerNameEn.value = row ? row.name_en || "" : "";
+    el.customerPhone.value = row ? row.contact_phone || "" : "";
+    el.customerAddress.value = row ? row.address || "" : "";
     var title = $("customer-dialog-title");
     title.dataset.i18n = row ? "customer_edit" : "customer_add";
     title.textContent = t(title.dataset.i18n);
@@ -2252,7 +2297,8 @@
     event.preventDefault();
     if (customerSaving || el.customerSave.disabled || !isOwnerUser(state.user)) return;
     clearError(el.customerDialogError);
-    var names = { name_ar: el.customerNameAr.value.trim(), name_en: el.customerNameEn.value.trim() || null };
+    var names = { name_ar: el.customerNameAr.value.trim(), name_en: el.customerNameEn.value.trim() || null,
+      contact_phone: el.customerPhone.value.trim() || null, address: el.customerAddress.value.trim() || null };
     if (!names.name_ar || (!customerEditingRow && !el.customerCode.value.trim())) {
       showError(el.customerDialogError, t("customer_required"));
       return;
@@ -2261,7 +2307,9 @@
     if (customerEditingRow) {
       payload = {};
       Object.keys(names).forEach(function (key) {
-        if (names[key] !== customerEditingRow[key]) payload[key] = names[key];
+        var original = customerEditingRow[key];
+        var displayed = typeof original === "string" ? original.trim() || null : original;
+        if (names[key] !== displayed) payload[key] = names[key];
       });
       if (!Object.keys(payload).length) { closeCustomerDialog(); return; }
     } else {
@@ -2272,19 +2320,24 @@
     el.customerCancel.disabled = true;
     try {
       var path = "/master/customers" + (customerEditingRow ? "/" + encodeURIComponent(customerEditingRow.id) : "");
+      var requestToken = state.token;
       var saved = await api(path, { method: customerEditingRow ? "PATCH" : "POST", body: payload });
+      if (state.token !== requestToken) return;
       el.customerDialog.close();
       showNotice(el.customersNotice, t("customer_saved"), "success");
       await refreshCustomerData(saved);
     } catch (error) {
+      if (state.token !== requestToken) return;
       var detail = error.data && error.data.detail;
       var message = detail === "Customer code already exists" ? t("customer_duplicate") :
         detail === "Customer branch or territory does not exist" ? t("customer_reference_invalid") : messageFor(error);
       showError(el.customerDialog.open ? el.customerDialogError : el.customersError, message);
     } finally {
-      customerSaving = false;
-      el.customerSave.disabled = false;
-      el.customerCancel.disabled = false;
+      if (state.token === requestToken) {
+        customerSaving = false;
+        el.customerSave.disabled = false;
+        el.customerCancel.disabled = false;
+      }
     }
   }
 
@@ -2540,7 +2593,9 @@
   // AUTH + BOOT
   // =========================================================================
   async function boot() {
+    var requestToken = state.token;
     var me = await api("/auth/me");
+    if (state.token !== requestToken) return;
     state.user = me;
     el.whoName.textContent = me.username;
     el.whoRole.textContent = me.role;
@@ -2554,9 +2609,11 @@
     el.invoiceDate.value = todayLocal();
     el.invoiceNo.value = "INV-" + Date.now().toString().slice(-8);
     await loadMaster();
+    if (state.token !== requestToken) return;
         try { await loadWarehouses(null); } catch (_e) {
           // Non-global roles scope warehouses per branch; labels fall back to ids.
         }
+        if (state.token !== requestToken) return;
         // Preserve an explicit user selection made during async boot; only land on
         // Home when the user has not already navigated away from the login screen.
         if (currentSection === "login-view") showView("home");
@@ -2583,6 +2640,7 @@
       el.loginPassword.value = "";
       await boot();
     } catch (error) {
+      if (out && state.token !== out.access_token) return;
       showError(el.loginError, messageFor(error));
     } finally {
       el.loginSubmit.disabled = false;
@@ -2590,11 +2648,26 @@
   }
 
   async function logout() {
-    try { await api("/auth/logout", { method: "POST" }); } catch (_e) { /* best effort */ }
+    var pending = api("/auth/logout", { method: "POST" });
+    clearSession();
+    try { await pending; } catch (_e) { /* Local teardown must not wait for the network. */ }
+  }
+
+  function clearSession() {
     state.token = null;
     state.user = null;
     state.entries = null;
     state.balancesCache = [];
+    state.customers = [];
+    customerDirectoryRows = [];
+    customerTerritories = [];
+    customerEditingRow = null;
+    customerSaving = false;
+    ++customerDialogGeneration;
+    el.customerRows.replaceChildren();
+    el.customerForm.reset();
+    if (el.customerDialog.open) el.customerDialog.close();
+    refreshCustomerSelects();
     localStorage.removeItem("token");
     el.who.classList.add("hidden");
     el.logout.classList.add("hidden");
@@ -2678,6 +2751,11 @@
     el.doctorsError = $("doctors-error");
     el.movementRows = $("movement-rows");
     el.customerRows = $("customer-rows");
+    el.customerPrev = $("customer-prev");
+    el.customerNext = $("customer-next");
+    el.customerPageStatus = $("customer-page-status");
+    el.customerPrev.addEventListener("click", function () { --customerPageIndex; renderCustomerDirectory(); });
+    el.customerNext.addEventListener("click", function () { ++customerPageIndex; renderCustomerDirectory(); });
     el.customerAdd = $("customer-add");
     el.customerActionsHead = $("customer-actions-head");
     el.customerDialog = $("customer-dialog");
@@ -2685,6 +2763,8 @@
     el.customerCode = $("customer-code");
     el.customerNameAr = $("customer-name-ar");
     el.customerNameEn = $("customer-name-en");
+    el.customerPhone = $("customer-phone");
+    el.customerAddress = $("customer-address");
     el.customerBranch = $("customer-branch");
     el.customerTerritory = $("customer-territory");
     el.customerSave = $("customer-save");
@@ -2951,7 +3031,7 @@
     var token = localStorage.getItem("token");
     if (token) {
       state.token = token;
-      try { await boot(); } catch (_e) { await logout(); }
+      try { await boot(); } catch (_e) { if (state.token === token) await logout(); }
     }
   }
 

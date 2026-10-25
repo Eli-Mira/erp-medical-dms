@@ -184,6 +184,8 @@
   "customers_title": "العملاء",
   "customers_desc": "إدارة العملاء حسب الفرع والمنطقة. إيقاف العميل يمنع المبيعات الجديدة ويحفظ سجله السابق.",
   "customer_add": "إضافة عميل",
+  "customer_previous": "السابق",
+  "customer_next": "التالي",
   "customer_edit": "تعديل العميل",
   "customer_actions": "الإجراءات",
   "customer_inactive": "غير نشط",

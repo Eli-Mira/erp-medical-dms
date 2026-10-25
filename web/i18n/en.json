@@ -184,6 +184,8 @@
   "customers_title": "Customers",
   "customers_desc": "Manage customers by branch and territory. Inactive customers keep their history but cannot be used for new sales.",
   "customer_add": "Add customer",
+  "customer_previous": "Previous",
+  "customer_next": "Next",
   "customer_edit": "Edit customer",
   "customer_actions": "Actions",
   "customer_inactive": "Inactive",

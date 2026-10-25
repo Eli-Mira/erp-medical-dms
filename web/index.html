@@ -639,6 +639,8 @@
               <tr>
                 <th data-i18n="code">الكود</th>
                 <th data-i18n="customer">العميل</th>
+                <th data-i18n="phone">الهاتف</th>
+                <th data-i18n="address">العنوان</th>
                 <th data-i18n="branch">الفرع</th>
                 <th data-i18n="territory">المنطقة</th>
                 <th data-i18n="status">الحالة</th>
@@ -647,6 +649,11 @@
             </thead>
             <tbody id="customer-rows"></tbody>
           </table>
+        </div>
+        <div id="customer-pagination" class="supplier-actions hidden" style="margin-top: var(--space-3);">
+          <button type="button" id="customer-prev" class="default" data-i18n="customer_previous">السابق</button>
+          <span id="customer-page-status" role="status" aria-live="polite" dir="ltr"></span>
+          <button type="button" id="customer-next" class="default" data-i18n="customer_next">التالي</button>
         </div>
       </section>
 
@@ -1186,6 +1193,14 @@
         <div class="field">
           <label for="customer-name-en" data-i18n="customer_name_en">اسم العميل (إنجليزي)</label>
           <input id="customer-name-en" maxlength="200" dir="ltr">
+        </div>
+        <div class="field">
+          <label for="customer-phone" data-i18n="phone">الهاتف</label>
+          <input id="customer-phone" type="tel" maxlength="30" dir="ltr" autocomplete="tel">
+        </div>
+        <div class="field" style="grid-column: 1 / -1;">
+          <label for="customer-address" data-i18n="address">العنوان</label>
+          <textarea id="customer-address" dir="auto" rows="2" autocomplete="street-address"></textarea>
         </div>
         <div class="field">
           <label for="customer-branch" data-i18n="branch">الفرع</label>

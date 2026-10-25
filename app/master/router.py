@@ -171,7 +171,7 @@ def _customer_row(db, customer_id: UUID, *, lock=False):
     row = (
         db.execute(
             text(
-                "SELECT id, code, name_ar, name_en, branch_id, territory_id, is_active "
+                "SELECT id, code, name_ar, name_en, branch_id, territory_id, is_active, contact_phone, address "
                 "FROM master_data.master_customer WHERE id = :id"
                 + (" FOR UPDATE" if lock else "")
             ),
@@ -204,6 +204,8 @@ def _customer_values(payload: CustomerIn) -> dict:
         "name_en": payload.name_en,
         "branch_id": payload.branch_id,
         "territory_id": payload.territory_id,
+        "contact_phone": payload.contact_phone,
+        "address": payload.address,
     }
 
 
@@ -309,7 +311,7 @@ def list_customers(
         params["branch_id"] = branch_id
     rows = db.execute(
         text(
-            "SELECT c.id, c.code, c.name_ar, c.name_en, c.branch_id, c.territory_id, c.is_active "
+            "SELECT c.id, c.code, c.name_ar, c.name_en, c.branch_id, c.territory_id, c.is_active, c.contact_phone, c.address "
             "FROM master_data.master_customer c WHERE "
             + " AND ".join(clauses)
             + " ORDER BY c.name_ar"
@@ -337,8 +339,8 @@ def create_customer(db: Db, current: CurrentUser, payload: CustomerIn):
         db.execute(
             text(
                 "INSERT INTO master_data.master_customer "
-                "(id, code, name_ar, name_en, branch_id, territory_id) "
-                "VALUES (:id, :code, :name_ar, :name_en, :branch_id, :territory_id)"
+                "(id, code, name_ar, name_en, branch_id, territory_id, contact_phone, address) "
+                "VALUES (:id, :code, :name_ar, :name_en, :branch_id, :territory_id, :contact_phone, :address)"
             ),
             values,
         )
@@ -397,7 +399,9 @@ def update_customer(
             db.rollback()
             return response
         assignments = ", ".join(
-            f"{field}=:{field}" for field in ("name_ar", "name_en") if field in changes
+            f"{field}=:{field}"
+            for field in ("name_ar", "name_en", "contact_phone", "address")
+            if field in changes
         )
         if assignments:
             db.execute(
