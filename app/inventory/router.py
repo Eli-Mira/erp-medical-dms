@@ -22,6 +22,7 @@ from app.inventory.schemas import (
     BalanceOut,
     BatchOut,
     CoverOut,
+    ExpiryWarningOut,
     MovementIn,
     MovementOut,
     MovementResult,
@@ -132,6 +133,19 @@ def list_movements(db: Db, current: CurrentUser, warehouse_id: UUID | None = Non
                                   warehouse_ids=warehouse_ids,
                                   scoped_user_id=current["id"] if warehouse_ids is not None else None)
     return [MovementOut.model_validate(row) for row in rows]
+
+
+@router.get("/expiry-warnings", response_model=list[ExpiryWarningOut])
+def expiry_warnings(db: Db, current: CurrentUser,
+                    warehouse_id: UUID | None = None) -> list[ExpiryWarningOut]:
+    """Batches expiring within the configured warning window (V2 §2B.7)."""
+    _role(current, READ_ROLES)
+    warehouse_ids = _read_scope(db, current, warehouse_id)
+    policy = settings_service.read_policy(db)
+    return [ExpiryWarningOut.model_validate(row)
+            for row in service.expiry_warnings(
+                db, policy["expiry_warning_days"],
+                warehouse_id=warehouse_id, warehouse_ids=warehouse_ids)]
 
 
 @router.post("/movements", status_code=201)

@@ -116,3 +116,44 @@ def test_cover_flags_overstock(cover_env):
 def test_cover_unauthenticated_denied(stock_env):
     client, _db, _ids, _headers, _m = stock_env
     assert client.get("/inventory/cover").status_code == 401
+
+
+def test_expiry_warnings_returns_near_expiry_batches(stock_env):
+    client, db, ids, headers, movement = stock_env
+    from datetime import date, timedelta
+    # Batch expiring in 5 days
+    ids["near_batch"] = uuid4()
+    db.execute(text(
+        "INSERT INTO inventory.batch_record(id,product_id,warehouse_id,batch_no,"
+        "manufacture_date,expiry_date) VALUES (:id,:p,:w,:bn,:md,:ed)"
+    ), {"id": ids["near_batch"], "p": ids["product"], "w": ids["warehouse"],
+        "bn": "NEAR", "md": date.today() - timedelta(days=10),
+        "ed": date.today() + timedelta(days=5)})
+    db.execute(text(
+        "INSERT INTO inventory.stock_balance(warehouse_id,product_id,batch_id,quantity) "
+        "VALUES (:w,:p,:b,20)"
+    ), {"w": ids["warehouse"], "p": ids["product"], "b": ids["near_batch"]})
+    db.commit()
+
+    # Batch expiring in 60 days (outside default 30-day window)
+    ids["far_batch"] = uuid4()
+    db.execute(text(
+        "INSERT INTO inventory.batch_record(id,product_id,warehouse_id,batch_no,"
+        "manufacture_date,expiry_date) VALUES (:id,:p,:w,:bn,:md,:ed)"
+    ), {"id": ids["far_batch"], "p": ids["product"], "w": ids["warehouse"],
+        "bn": "FAR", "md": date.today() - timedelta(days=10),
+        "ed": date.today() + timedelta(days=60)})
+    db.execute(text(
+        "INSERT INTO inventory.stock_balance(warehouse_id,product_id,batch_id,quantity) "
+        "VALUES (:w,:p,:b,15)"
+    ), {"w": ids["warehouse"], "p": ids["product"], "b": ids["far_batch"]})
+    db.commit()
+
+    body = client.get("/inventory/expiry-warnings", headers=headers("owner"))
+    assert body.status_code == 200, body.text
+    rows = body.json()
+    assert len(rows) == 1
+    assert rows[0]["batch_no"] == "NEAR"
+    assert rows[0]["days_until_expiry"] == 5
+    assert rows[0]["quantity"] == "20.000"
+    # Far batch should not appear (outside 30-day default window)

@@ -86,3 +86,15 @@ class MovementOut(BaseModel):
 class MovementResult(BaseModel):
     movement: MovementOut
     balance_quantity: Decimal
+
+
+class ExpiryWarningOut(BaseModel):
+    """Batch near-expiry warning with remaining days and current balance."""
+    id: UUID
+    product_id: UUID
+    warehouse_id: UUID
+    batch_no: str
+    manufacture_date: date | None
+    expiry_date: date
+    days_until_expiry: int
+    quantity: Decimal

@@ -6,11 +6,13 @@ from pydantic import BaseModel, Field, model_validator
 class InventoryPolicyOut(BaseModel):
     stock_cover_window_days: int
     overstock_threshold_days: int
+    expiry_warning_days: int
 
 
 class InventoryPolicyIn(BaseModel):
     stock_cover_window_days: int = Field(ge=1, le=365)
     overstock_threshold_days: int = Field(ge=1, le=3650)
+    expiry_warning_days: int = Field(ge=1, le=365, default=30)
 
     @staticmethod
     def _normalize_payload(payload: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -44,7 +46,7 @@ class InventoryPolicyIn(BaseModel):
         data = cls._normalize_payload(data)
         if not isinstance(data, dict):
             return data
-        for key in ("stock_cover_window_days", "overstock_threshold_days"):
+        for key in ("stock_cover_window_days", "overstock_threshold_days", "expiry_warning_days"):
             value = data.get(key)
             if isinstance(value, bool):
                 raise ValueError(

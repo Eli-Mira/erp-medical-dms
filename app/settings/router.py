@@ -50,9 +50,10 @@ def write_inventory_policy(
     _role(current, {"owner"})
     old = service.read_policy(db)
     service.write_policy(db, current["id"], payload.stock_cover_window_days,
-                         payload.overstock_threshold_days)
+                         payload.overstock_threshold_days, payload.expiry_warning_days)
     new = {"stock_cover_window_days": payload.stock_cover_window_days,
-           "overstock_threshold_days": payload.overstock_threshold_days}
+           "overstock_threshold_days": payload.overstock_threshold_days,
+           "expiry_warning_days": payload.expiry_warning_days}
     log_audit(db, current["id"], "settings_changed", "platform_setting",
               None, old, new,
               ip_address=_host(request),

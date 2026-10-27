@@ -315,3 +315,39 @@ def list_movements(
         params,
     ).mappings()
     return [dict(row) for row in rows]
+
+
+def expiry_warnings(
+    db, warning_days: int, warehouse_id=None, warehouse_ids=None
+):
+    """Batches expiring within `warning_days` days (V2 §2B.7)."""
+    clauses, params = [], {"days": warning_days}
+    if warehouse_ids is not None:
+        if warehouse_ids:
+            clauses.append("b.warehouse_id = ANY(CAST(:warehouse_ids AS uuid[]))")
+            params["warehouse_ids"] = [str(w) for w in warehouse_ids]
+        else:
+            clauses.append("1 = 0")
+    if warehouse_id is not None:
+        clauses.append("b.warehouse_id = :warehouse_id")
+        params["warehouse_id"] = warehouse_id
+    clause = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+    rows = db.execute(
+        text(
+            "SELECT b.id, b.product_id, b.warehouse_id, b.batch_no, "
+            "b.manufacture_date, b.expiry_date, "
+            "COALESCE(sb.quantity, 0) AS quantity, "
+            "(b.expiry_date - CURRENT_DATE) AS days_until_expiry "
+            "FROM inventory.batch_record b "
+            "LEFT JOIN inventory.stock_balance sb "
+            "ON sb.batch_id = b.id AND sb.warehouse_id = b.warehouse_id "
+            "AND sb.product_id = b.product_id"
+            + clause +
+            " AND b.expiry_date <= CURRENT_DATE + CAST(:days AS integer) "
+            "AND b.expiry_date >= CURRENT_DATE "
+            "AND COALESCE(sb.quantity, 0) > 0 "
+            "ORDER BY b.expiry_date, b.batch_no"
+        ),
+        params,
+    ).mappings()
+    return [dict(row) for row in rows]
