@@ -1,5 +1,16 @@
 # Spec coverage matrix — current checkpoint 2026-10-21
 
+## S7 backend overlay — 2026-10-27 (supersedes only the rows named here)
+
+| Requirement | Current evidence-backed scope | Remaining product gap |
+|---|---|---|
+| V2 2B.9–11 / APP_FLOW C7 | Visits API, exact sell-through, scoped reads/writes, held-stock observations, audited atomic writes, and latest remaining visit projection are exercised by `s7_full_final` (803/0/0/0) and the included S7 API/durable controls. | Existing visit form is still a localStorage prototype. Persisted mobile UX and offline sync are NOT delivered. |
+| V2 2B.7 | Scoped expiry-warning API: default/configured days, inclusive day 0/window end, excluded expired and out-of-window/zero-stock batches; existing batch API still exposes expiry records. | No new staff-facing expiry screen or physical-device acceptance in this checkpoint. |
+
+Canonical private evidence and conditional local acceptance: `C:/Users/emadg/AppData/Local/hermes/audits/medical-dms/erp-s7-recovery-20261027T202217Z/{FULL_NATIVE_INTAKE.json,FINAL_REVIEW.json,COMMIT_RECEIPT.json}`. The full native run passed; acceptance requires matching final independent PASS and commit readback, never a commit subject or this note alone. Historical failed/uncontained attempts are not reclassified as accepted tests. All older missing/prototype statuses below remain historical where superseded; unrelated finance/import/production gates remain open.
+
+Next dependency-ready gap after acceptance: connect the existing mobile-first visit form to these APIs and verify real persistence/session isolation in Arabic/English. Do not treat the confirmed backend slice as a completed employee workflow or select undefined accounting rules merely to keep coding.
+
 ## Execution-directive V2 checkpoint (supersedes stale status summaries below)
 
 Inspection was resumed directly after the interrupted audit. Its retained trace (`deleg_cf6fc431/task-0.log`) ends with an explicit parent-requested interruption and no final artifact/verdict, not a diagnosed repository failure. Existing source, decisions and saved evidence were reused; no project restart, business-rule expansion or framework migration was undertaken.

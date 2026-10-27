@@ -11,7 +11,7 @@ def test_defaults_are_d41(stock_env):
     body = client.get("/settings/inventory-policy", headers=headers("owner"))
     assert body.status_code == 200, body.text
     assert body.json() == {"stock_cover_window_days": 30,
-                           "overstock_threshold_days": 180}
+                           "overstock_threshold_days": 180, "expiry_warning_days": 30}
 
 
 def test_owner_write_updates_and_audits(stock_env):
@@ -21,7 +21,7 @@ def test_owner_write_updates_and_audits(stock_env):
                                 "overstock_threshold_days": 200})
     assert response.status_code == 200, response.text
     assert response.json() == {"stock_cover_window_days": 45,
-                               "overstock_threshold_days": 200}
+                               "overstock_threshold_days": 200, "expiry_warning_days": 30}
     rows = db.execute(
         text("SELECT key, value FROM platform.platform_setting WHERE key IN "
              "('stock_cover_window_days','overstock_threshold_days') "

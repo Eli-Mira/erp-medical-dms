@@ -119,16 +119,16 @@ def test_cover_unauthenticated_denied(stock_env):
 
 
 def test_expiry_warnings_returns_near_expiry_batches(stock_env):
-    client, db, ids, headers, movement = stock_env
-    from datetime import date, timedelta
+    client, db, ids, headers, _movement = stock_env
+    today = db.execute(text("SELECT CURRENT_DATE")).scalar_one()
     # Batch expiring in 5 days
     ids["near_batch"] = uuid4()
     db.execute(text(
         "INSERT INTO inventory.batch_record(id,product_id,warehouse_id,batch_no,"
         "manufacture_date,expiry_date) VALUES (:id,:p,:w,:bn,:md,:ed)"
     ), {"id": ids["near_batch"], "p": ids["product"], "w": ids["warehouse"],
-        "bn": "NEAR", "md": date.today() - timedelta(days=10),
-        "ed": date.today() + timedelta(days=5)})
+        "bn": "NEAR", "md": today - timedelta(days=10),
+        "ed": today + timedelta(days=5)})
     db.execute(text(
         "INSERT INTO inventory.stock_balance(warehouse_id,product_id,batch_id,quantity) "
         "VALUES (:w,:p,:b,20)"
@@ -141,8 +141,8 @@ def test_expiry_warnings_returns_near_expiry_batches(stock_env):
         "INSERT INTO inventory.batch_record(id,product_id,warehouse_id,batch_no,"
         "manufacture_date,expiry_date) VALUES (:id,:p,:w,:bn,:md,:ed)"
     ), {"id": ids["far_batch"], "p": ids["product"], "w": ids["warehouse"],
-        "bn": "FAR", "md": date.today() - timedelta(days=10),
-        "ed": date.today() + timedelta(days=60)})
+        "bn": "FAR", "md": today - timedelta(days=10),
+        "ed": today + timedelta(days=60)})
     db.execute(text(
         "INSERT INTO inventory.stock_balance(warehouse_id,product_id,batch_id,quantity) "
         "VALUES (:w,:p,:b,15)"
@@ -152,8 +152,12 @@ def test_expiry_warnings_returns_near_expiry_batches(stock_env):
     body = client.get("/inventory/expiry-warnings", headers=headers("owner"))
     assert body.status_code == 200, body.text
     rows = body.json()
-    assert len(rows) == 1
-    assert rows[0]["batch_no"] == "NEAR"
-    assert rows[0]["days_until_expiry"] == 5
-    assert rows[0]["quantity"] == "20.000"
+    # Filter to only the batches we created (fixture may have other batches in window)
+    near_rows = [r for r in rows if r["batch_no"] == "NEAR"]
+    far_rows = [r for r in rows if r["batch_no"] == "FAR"]
+    assert len(near_rows) == 1
+    assert near_rows[0]["batch_no"] == "NEAR"
+    assert near_rows[0]["days_until_expiry"] == 5
+    assert near_rows[0]["quantity"] == "20.000"
     # Far batch should not appear (outside 30-day default window)
+    assert len(far_rows) == 0

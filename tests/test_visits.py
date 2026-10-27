@@ -1,8 +1,6 @@
 """Tests for customer stock visits (V2 §2B.10, §2B.11)."""
 
 from datetime import date
-from decimal import Decimal
-from uuid import uuid4
 
 from sqlalchemy import text
 
@@ -10,13 +8,13 @@ pytest_plugins = ["test_invoice_api"]
 
 
 def test_create_and_list_visit(invoice_env):
-    client, db, ids, _payload, headers = invoice_env
+    client, _db, ids, _payload, headers = invoice_env
     customer_id = ids["customer"]
     product_id = ids["product"]
 
     payload = {
         "customer_id": str(customer_id),
-        "visit_date": date.today().isoformat(),
+        "visit_date": date(2026, 10, 15).isoformat(),
         "notes": "Regular stock check",
         "lines": [
             {
@@ -51,7 +49,7 @@ def test_visit_deletion_audited(invoice_env):
 
     payload = {
         "customer_id": str(customer_id),
-        "visit_date": date.today().isoformat(),
+        "visit_date": date(2026, 10, 15).isoformat(),
         "lines": [{"product_id": str(product_id), "quantity_prev": "5"}],
     }
     res = client.post("/visits", headers=headers("owner"), json=payload)
@@ -62,41 +60,50 @@ def test_visit_deletion_audited(invoice_env):
     assert del_res.status_code == 200
 
     audit = db.execute(
-        text("SELECT action FROM audit.audit_log WHERE entity_id=:id AND entity_type='stock_visit'"),
+        text(
+            "SELECT action FROM audit.audit_log WHERE entity_id=:id AND entity_type='stock_visit' AND action='deleted'"
+        ),
         {"id": visit_id},
     ).scalar()
     assert audit == "deleted"
 
 
 def test_held_stock_persisted_from_visit(invoice_env):
-    client, db, ids, _payload, headers = invoice_env
+    client, _db, ids, _payload, headers = invoice_env
     customer_id = ids["customer"]
     product_id = ids["product"]
 
     # Create a visit with quantity_current = 12
     payload = {
         "customer_id": str(customer_id),
-        "visit_date": date.today().isoformat(),
-        "lines": [{
-            "product_id": str(product_id),
-            "quantity_prev": "10",
-            "quantity_delivered": "5",
-            "quantity_returned": "1",
-            "quantity_current": "12",
-        }],
+        "visit_date": date(2026, 10, 15).isoformat(),
+        "lines": [
+            {
+                "product_id": str(product_id),
+                "quantity_prev": "10",
+                "quantity_delivered": "5",
+                "quantity_returned": "1",
+                "quantity_current": "12",
+            }
+        ],
     }
     res = client.post("/visits", headers=headers("owner"), json=payload)
     assert res.status_code == 201, res.text
 
     # Held stock should now show 12 for this customer/product
-    held = client.get("/visits/held-stock", headers=headers("owner"),
-                      params={"customer_id": str(customer_id), "product_id": str(product_id)})
+    held = client.get(
+        "/visits/held-stock",
+        headers=headers("owner"),
+        params={"customer_id": str(customer_id), "product_id": str(product_id)},
+    )
     assert held.status_code == 200, held.text
     data = held.json()
     assert data["total"] >= 1
     found = False
     for item in data["items"]:
-        if str(item["customer_id"]) == str(customer_id) and str(item["product_id"]) == str(product_id):
+        if str(item["customer_id"]) == str(customer_id) and str(
+            item["product_id"]
+        ) == str(product_id):
             assert item["quantity_on_hand"] == "12.000"
             found = True
             break

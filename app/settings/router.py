@@ -49,11 +49,12 @@ def write_inventory_policy(
     # _role enforces role=="owner" AND the is_owner private-boundary flag (D10).
     _role(current, {"owner"})
     old = service.read_policy(db)
+    expiry = payload.expiry_warning_days if "expiry_warning_days" in payload.model_fields_set else old["expiry_warning_days"]
     service.write_policy(db, current["id"], payload.stock_cover_window_days,
-                         payload.overstock_threshold_days, payload.expiry_warning_days)
+                         payload.overstock_threshold_days, expiry)
     new = {"stock_cover_window_days": payload.stock_cover_window_days,
            "overstock_threshold_days": payload.overstock_threshold_days,
-           "expiry_warning_days": payload.expiry_warning_days}
+           "expiry_warning_days": expiry}
     log_audit(db, current["id"], "settings_changed", "platform_setting",
               None, old, new,
               ip_address=_host(request),

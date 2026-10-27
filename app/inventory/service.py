@@ -320,8 +320,10 @@ def list_movements(
 def expiry_warnings(
     db, warning_days: int, warehouse_id=None, warehouse_ids=None
 ):
-    """Batches expiring within `warning_days` days (V2 §2B.7)."""
-    clauses, params = [], {"days": warning_days}
+    """Positive stock expiring today through the window end; expired stock is separate."""
+    clauses = ["b.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + CAST(:days AS integer)",
+               "COALESCE(sb.quantity, 0) > 0"]
+    params = {"days": warning_days}
     if warehouse_ids is not None:
         if warehouse_ids:
             clauses.append("b.warehouse_id = ANY(CAST(:warehouse_ids AS uuid[]))")
@@ -331,22 +333,16 @@ def expiry_warnings(
     if warehouse_id is not None:
         clauses.append("b.warehouse_id = :warehouse_id")
         params["warehouse_id"] = warehouse_id
-    clause = (" WHERE " + " AND ".join(clauses)) if clauses else ""
     rows = db.execute(
         text(
             "SELECT b.id, b.product_id, b.warehouse_id, b.batch_no, "
-            "b.manufacture_date, b.expiry_date, "
-            "COALESCE(sb.quantity, 0) AS quantity, "
+            "b.manufacture_date, b.expiry_date, sb.quantity, "
             "(b.expiry_date - CURRENT_DATE) AS days_until_expiry "
             "FROM inventory.batch_record b "
-            "LEFT JOIN inventory.stock_balance sb "
+            "JOIN inventory.stock_balance sb "
             "ON sb.batch_id = b.id AND sb.warehouse_id = b.warehouse_id "
-            "AND sb.product_id = b.product_id"
-            + clause +
-            " AND b.expiry_date <= CURRENT_DATE + CAST(:days AS integer) "
-            "AND b.expiry_date >= CURRENT_DATE "
-            "AND COALESCE(sb.quantity, 0) > 0 "
-            "ORDER BY b.expiry_date, b.batch_no"
+            "AND sb.product_id = b.product_id WHERE " + " AND ".join(clauses) +
+            " ORDER BY b.expiry_date, b.batch_no, b.id"
         ),
         params,
     ).mappings()
