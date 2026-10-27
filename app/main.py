@@ -28,6 +28,7 @@ async def static_cache_headers(request, call_next):
             response.headers["Cache-Control"] = "no-cache"
     return response
 
+
 from app.auth.router import router as auth_router
 
 app.include_router(auth_router)
@@ -69,6 +70,9 @@ app.include_router(audit_router)
 from app.settings.router import router as settings_router
 
 app.include_router(settings_router)
+from app.reports.router import router as reports_router
+
+app.include_router(reports_router)
 
 from fastapi.staticfiles import StaticFiles
 

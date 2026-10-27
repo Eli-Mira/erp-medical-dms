@@ -1,5 +1,13 @@
 # Progress Checklist — Medical Company System
 
+## I1 combined local integration — 2026-10-26
+
+- Current owner authority is the I1 master execution directive; it supersedes old active harness/next-feature pointers below for this candidate only. Worktree `C:/Projects/ERPWorktrees/erp-i1-20261026`, branch `integration/erp-i1-20261026`, accepted H1-free S1 base `69d68499fe67919b61fb97e96ad69fd33b27af37`.
+- Inherited customer/supplier/contact/privacy features plus inspected feature-only S4 posted-sales, inventory-alert and D28 deltas are integrated without S4 ancestry. Supplier boot guard and derived REAL_VIEWS registry coexist. No original feature worktree was edited.
+- Reproduced/fixed settled-customer counting, failed-summary audit atomicity, imported-report logout/late-response isolation and warehouse-login/reference races. Seven original contact privacy tests remain unchanged. Focused final preparation passed 40/40; this is not a substitute for the complete combined final gate.
+- Canonical scope/limits: `docs/I1_INTEGRATION_ACCEPTANCE.md`. Final full native gate `i1_full_asof_final` (after the localized as-of-label RED/GREEN correction) (all cases, normal assertion rewriting, owner-approved 1 GiB verifier only), independent exact-byte review and local commit are valid only through matching records under `C:/Users/emadg/AppData/Local/hermes/audits/medical-dms/erp-i1-20261026/`. Do not infer acceptance from earlier S1/S4 counts or this preparation entry.
+- H1 remains NOT ACCEPTED; scheduler/posting OFF; no company database/resource changes, original workbook writes, protected dependency/configuration edits, S2/FreeLLMAPI private-source delegation, push, protected merge or deployment. Stop for owner I1 acceptance before any protected integration.
+
 ## Customer contact maintenance — S1 isolated slice, 2026-10-25
 
 - Owner authority: S1 customer-contact delivery directive `pasted_content_2026-10-25_11-33-10-789_c4c010.txt`; worktree `C:/Desktop/ERPWorktrees/customer-contacts-20261025`, branch `feature/customer-contacts-20261025`, accepted parent `cef937b3a2d1ecb83370a4977b3f8998339d9f12`; no rejected H1 ancestry.

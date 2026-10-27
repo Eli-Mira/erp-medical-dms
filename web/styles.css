@@ -775,3 +775,14 @@ dialog.palette::backdrop { background: rgba(15, 23, 42, 0.45); }
   #draft-lines tr.zero-qty { display: none !important; }
 }
 #draft-lines tr.zero-qty { opacity: .55; }
+
+/* Management summary KPI strip: short staggered mount reveal only —
+   the global prefers-reduced-motion rule above disables it. */
+.ms-kpi-reveal > * { animation: ms-rise .3s ease-out both; }
+.ms-kpi-reveal > *:nth-child(2) { animation-delay: 60ms; }
+.ms-kpi-reveal > *:nth-child(3) { animation-delay: 120ms; }
+.ms-kpi-reveal > *:nth-child(4) { animation-delay: 180ms; }
+@keyframes ms-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}

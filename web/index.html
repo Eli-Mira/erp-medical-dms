@@ -121,11 +121,17 @@
       <button type="button" class="nav-item sub" data-view="invoicelist">
         <span class="glyph" aria-hidden="true">📄</span><span data-i18n="nav_invoicelist">قائمة الفواتير</span>
       </button>
+      <button type="button" class="nav-item sub" data-view="salesreport" data-roles="owner,finance,sales_manager,district_manager,medical_rep,read_only_auditor">
+        <span class="glyph" aria-hidden="true">📊</span><span data-i18n="nav_salesreport">تقرير المبيعات</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
+      </button>
       <button type="button" class="nav-item sub" data-view="batches" data-roles="owner,finance,sales_manager,district_manager,read_only_auditor">
         <span class="glyph" aria-hidden="true">⏳</span><span data-i18n="nav_batches">التشغيلات والصلاحية</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
       </button>
       <button type="button" class="nav-item sub" data-view="cover" data-roles="owner,finance,sales_manager">
         <span class="glyph" aria-hidden="true">🗓️</span><span data-i18n="nav_cover">غطاء المخزون</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
+      </button>
+      <button type="button" class="nav-item sub" data-view="inventoryalerts" data-roles="owner,finance,sales_manager,district_manager,warehouse_staff,read_only_auditor">
+        <span class="glyph" aria-hidden="true">🚨</span><span data-i18n="nav_inventoryalerts">تنبيهات المخزون</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
       </button>
       <button type="button" class="nav-item sub" data-view="overstock" data-roles="owner,finance,sales_manager">
         <span class="glyph" aria-hidden="true">📈</span><span data-i18n="nav_overstock">تنبيه فائض المخزون</span><span class="proto-dot">نموذج</span>
@@ -159,6 +165,9 @@
         <span class="glyph" aria-hidden="true">⚙️</span><span data-i18n="nav_settings">الإعدادات</span><span class="proto-dot">نموذج</span>
       </button>
       <div class="sidebar-group-title">التقارير</div>
+      <button type="button" class="nav-item sub" data-view="mgmtsummary" data-roles="owner,finance,sales_manager,district_manager,read_only_auditor">
+        <span class="glyph" aria-hidden="true">🧾</span><span data-i18n="nav_mgmtsummary">الملخص الإداري</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
+      </button>
       <button type="button" class="nav-item sub" data-view="analytics">
         <span class="glyph" aria-hidden="true">📈</span><span data-i18n="nav_analytics">لوحة عبر الوحدات</span>
       </button>
@@ -872,6 +881,109 @@
         </div>
       </section>
 
+      <!-- ---------- Management summary (real, ledger-driven) ---------- -->
+      <section id="mgmtsummary-view" class="hidden" aria-labelledby="mgmtsummary-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="mgmtsummary-title" data-i18n="mgmtsummary_title">الملخص الإداري</h1>
+            <p class="desc" data-i18n="mgmtsummary_desc">مبيعات وتحصيلات وذمم من الدفاتر الفعلية — بديل التجميع اليدوي في إكسل.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="mgmtsummary" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="mgmtsummary-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="grid-2">
+          <span class="field">
+            <label for="ms-date" data-i18n="ms_as_of_date">حتى تاريخ</label>
+            <input type="date" id="ms-date" />
+          </span>
+        </div>
+        <div class="stat-grid ms-kpi-reveal" id="ms-kpis">
+          <div class="stat navy">
+            <span class="stat-label" data-i18n="ms_kpi_sales">مبيعات الشهر (مُرحّلة)</span>
+            <span class="stat-value num" id="ms-kpi-sales">—</span>
+            <span class="stat-sub num" id="ms-kpi-sales-sub"></span>
+          </div>
+          <div class="stat teal">
+            <span class="stat-label" data-i18n="ms_kpi_collections">تحصيلات الشهر</span>
+            <span class="stat-value num" id="ms-kpi-collections">—</span>
+            <span class="stat-sub num" id="ms-kpi-collections-sub"></span>
+          </div>
+          <div class="stat navy">
+            <span class="stat-label" data-i18n="ms_kpi_ar">أرصدة العملاء المستحقة</span>
+            <span class="stat-value num" id="ms-kpi-ar">—</span>
+            <span class="stat-sub num" id="ms-kpi-ar-sub"></span>
+          </div>
+          <div class="stat amber">
+            <span class="stat-label" data-i18n="ms_kpi_overstock">فائض المخزون</span>
+            <span class="stat-value num" id="ms-kpi-overstock">—</span>
+            <span class="stat-sub num" id="ms-kpi-overstock-sub"></span>
+          </div>
+        </div>
+        <p id="mgmtsummary-asof" class="desc"></p>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th data-i18n="ms_indicator">المؤشر</th>
+              <th class="num" data-i18n="ms_today">اليوم</th>
+              <th class="num" data-i18n="ms_mtd">الشهر حتى التاريخ</th>
+            </tr></thead>
+            <tbody id="mgmtsummary-rows"></tbody>
+          </table>
+        </div>
+        <p id="ms-alerts" class="desc"></p>
+      </section>
+
+      <!-- ---------- Inventory alerts (real, from /inventory/cover + policy) ---------- -->
+      <section id="inventoryalerts-view" class="hidden" aria-labelledby="inventoryalerts-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="inventoryalerts-title" data-i18n="invalerts_title">تنبيهات المخزون</h1>
+            <p class="desc" data-i18n="invalerts_desc">فائض المخزون وأيام التغطية من الحركات الفعلية وسياسة المخزون المعتمدة.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="inventoryalerts" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <p id="invalerts-policy" class="desc hidden"></p>
+        <div id="invalerts-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="invalerts-status" data-i18n="invalerts_status_filter">الحالة</label>
+            <select id="invalerts-status">
+              <option value="overstock" data-i18n="invalerts_overstock">فائض مخزون</option>
+              <option value="all" data-i18n="invalerts_all">الكل</option>
+              <option value="no_sales_history" data-i18n="invalerts_no_history">لا سجل مبيعات</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="invalerts-sort" data-i18n="invalerts_sort">الترتيب</label>
+            <select id="invalerts-sort">
+              <option value="cover_desc" data-i18n="invalerts_sort_cover_desc">أعلى تغطية أولًا</option>
+              <option value="cover_asc" data-i18n="invalerts_sort_cover_asc">أقل تغطية أولًا</option>
+              <option value="onhand_desc" data-i18n="invalerts_sort_onhand_desc">أكبر مخزون أولًا</option>
+            </select>
+          </div>
+          <span class="field">
+            <label for="invalerts-search" data-i18n="invalerts_search">بحث</label>
+            <input type="search" id="invalerts-search" autocomplete="off" />
+          </span>
+        </div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th data-i18n="product">المنتج</th>
+              <th data-i18n="warehouse">المستودع</th>
+              <th class="num" data-i18n="on_hand">المخزون</th>
+              <th class="num" data-i18n="sold_in_window">المباع</th>
+              <th class="num" data-i18n="invalerts_avg_daily">متوسط يومي</th>
+              <th class="num" data-i18n="cover_days">أيام التغطية</th>
+              <th data-i18n="status">الحالة</th>
+            </tr></thead>
+            <tbody id="invalerts-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
       <!-- ---------- Audit (real) ---------- -->
       <section id="audit-view" class="hidden" aria-labelledby="audit-title">
         <div class="view-head">
@@ -1007,6 +1119,78 @@
               </tr>
             </thead>
             <tbody id="invoice-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Sales report (real, posted-only aggregates) ---------- -->
+      <section id="salesreport-view" class="hidden" aria-labelledby="salesreport-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="salesreport-title" data-i18n="salesreport_title">تقرير أداء المبيعات</h1>
+            <p class="desc" data-i18n="salesreport_desc">من الفواتير المُرحّلة فقط: الإجماليات حسب المنطقة والمندوب والصنف.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <button type="button" class="default" data-refresh="salesreport" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <div id="salesreport-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="grid-2">
+          <span class="field">
+            <label for="sr-from" data-i18n="il_from">من تاريخ</label>
+            <input type="date" id="sr-from" />
+          </span>
+          <span class="field">
+            <label for="sr-to" data-i18n="il_to">إلى تاريخ</label>
+            <input type="date" id="sr-to" />
+          </span>
+        </div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th class="num" data-i18n="invoices_count">عدد الفواتير</th>
+              <th class="num" data-i18n="total_net">الصافي (قبل الضريبة)</th>
+              <th class="num" data-i18n="vat_amount">ضريبة القيمة المضافة</th>
+              <th class="num" data-i18n="grand_total">الإجمالي</th>
+            </tr></thead>
+            <tbody id="sr-totals-rows"></tbody>
+          </table>
+        </div>
+        <div class="section-head"><h2 data-i18n="sr_by_territory">حسب المنطقة</h2></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th data-i18n="territory">المنطقة</th>
+              <th class="num" data-i18n="invoices_count">عدد الفواتير</th>
+              <th class="num" data-i18n="total_net">الصافي (قبل الضريبة)</th>
+              <th class="num" data-i18n="vat_amount">ضريبة القيمة المضافة</th>
+              <th class="num" data-i18n="grand_total">الإجمالي</th>
+            </tr></thead>
+            <tbody id="sr-territory-rows"></tbody>
+          </table>
+        </div>
+        <div class="section-head"><h2 data-i18n="sr_by_rep">حسب المندوب</h2></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th data-i18n="rep">المندوب</th>
+              <th class="num" data-i18n="invoices_count">عدد الفواتير</th>
+              <th class="num" data-i18n="total_net">الصافي (قبل الضريبة)</th>
+              <th class="num" data-i18n="vat_amount">ضريبة القيمة المضافة</th>
+              <th class="num" data-i18n="grand_total">الإجمالي</th>
+            </tr></thead>
+            <tbody id="sr-rep-rows"></tbody>
+          </table>
+        </div>
+        <div class="section-head"><h2 data-i18n="sr_by_product">حسب الصنف</h2></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th data-i18n="product">الصنف</th>
+              <th class="num" data-i18n="quantity">الكمية</th>
+              <th class="num" data-i18n="line_total">إجمالي البند</th>
+              <th class="num" data-i18n="vat_amount">ضريبة القيمة المضافة</th>
+            </tr></thead>
+            <tbody id="sr-product-rows"></tbody>
           </table>
         </div>
       </section>

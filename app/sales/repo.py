@@ -42,6 +42,72 @@ def list_invoices(db, *, customer_id, status, date_from, date_to, limit, offset,
     return [dict(r, lines=[]) for r in rows], total
 
 
+def report_invoices(db, *, date_from, date_to, territories, created_by):
+    """Posted-only sales performance aggregates (totals + territory/rep/product).
+
+    WHERE conditions come only from fixed literals; a None argument means the
+    filter is absent (mirrors list_invoices scoping).
+    """
+    conditions = ["i.posting_status = 'Posted'", "i.posted_at IS NOT NULL"]
+    params = {}
+    if date_from is not None:
+        conditions.append("i.invoice_date >= :date_from"); params["date_from"] = date_from
+    if date_to is not None:
+        conditions.append("i.invoice_date <= :date_to"); params["date_to"] = date_to
+    if territories is not None:
+        conditions.append("i.territory_id = ANY(:territories)"); params["territories"] = territories
+    if created_by is not None:
+        conditions.append("i.created_by = :created_by"); params["created_by"] = created_by
+    where = " WHERE " + " AND ".join(conditions)
+
+    totals = dict(db.execute(text(
+        "SELECT count(*) AS invoice_count,"
+        " COALESCE(SUM(i.total_before_discount), 0.00) AS total_before_discount,"
+        " COALESCE(SUM(i.total_discount), 0.00) AS total_discount,"
+        " COALESCE(SUM(i.total_net), 0.00) AS total_net,"
+        " COALESCE(SUM(i.vat_amount), 0.00) AS vat_amount,"
+        " COALESCE(SUM(i.grand_total), 0.00) AS grand_total"
+        " FROM sales.sales_invoice i" + where
+    ), params).mappings().one())
+
+    by_territory = [dict(row) for row in db.execute(text(
+        "SELECT i.territory_id, t.code, t.name_ar, count(*) AS invoice_count,"
+        " SUM(i.total_net) AS total_net, SUM(i.vat_amount) AS vat_amount,"
+        " SUM(i.grand_total) AS grand_total"
+        " FROM sales.sales_invoice i"
+        " JOIN master_data.master_territory t ON t.id = i.territory_id" + where +
+        " GROUP BY i.territory_id, t.code, t.name_ar"
+        " ORDER BY SUM(i.grand_total) DESC, t.code"
+    ), params).mappings()]
+
+    by_rep = [dict(row) for row in db.execute(text(
+        "SELECT i.created_by AS user_id, u.username, count(*) AS invoice_count,"
+        " SUM(i.total_net) AS total_net, SUM(i.vat_amount) AS vat_amount,"
+        " SUM(i.grand_total) AS grand_total"
+        " FROM sales.sales_invoice i"
+        " JOIN platform.platform_user u ON u.id = i.created_by" + where +
+        " GROUP BY i.created_by, u.username"
+        " ORDER BY SUM(i.grand_total) DESC, u.username"
+    ), params).mappings()]
+
+    by_product = [dict(row) for row in db.execute(text(
+        "SELECT l.product_id, p.sku, p.name_ar, SUM(l.quantity) AS quantity,"
+        " SUM(l.line_total) AS line_total, SUM(l.vat_amount) AS vat_amount"
+        " FROM sales.sales_invoice i"
+        " JOIN sales.sales_invoice_line l ON l.invoice_id = i.id"
+        " JOIN master_data.master_product p ON p.id = l.product_id" + where +
+        " GROUP BY l.product_id, p.sku, p.name_ar"
+        " ORDER BY SUM(l.line_total) DESC, p.sku"
+    ), params).mappings()]
+
+    return {
+        "totals": totals,
+        "by_territory": by_territory,
+        "by_rep": by_rep,
+        "by_product": by_product,
+    }
+
+
 def insert_invoice(db, values):
     return db.execute(text("""
         INSERT INTO sales.sales_invoice

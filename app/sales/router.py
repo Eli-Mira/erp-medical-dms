@@ -17,7 +17,14 @@ from app.db import get_db
 from app.inventory.service import InsufficientStock
 from app.sales import repo, service
 from app.sales.calc import invoice_totals, line_calc
-from app.sales.schemas import DraftIn, DraftUpdate, InvoiceListOut, InvoiceOut, VoidIn
+from app.sales.schemas import (
+    DraftIn,
+    DraftUpdate,
+    InvoiceListOut,
+    InvoiceOut,
+    InvoiceReportOut,
+    VoidIn,
+)
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 Db = Annotated[Session, Depends(get_db)]
@@ -363,7 +370,46 @@ def list_invoices_view(
         created_by=created_by,
         posted_only=posted_only,
     )
-    return InvoiceListOut(items=[InvoiceOut.model_validate(r) for r in items], total=total)
+    return InvoiceListOut(
+        items=[InvoiceOut.model_validate(r) for r in items], total=total
+    )
+
+
+@router.get("/report")
+def invoice_report_view(
+    db: Db,
+    current: CurrentUser,
+    date_from: date | None = None,
+    date_to: date | None = None,
+) -> InvoiceReportOut:
+    """Posted-only sales performance: totals + territory/rep/product roll-ups.
+
+    Drafts never enter financial reports; scoping mirrors GET /invoices
+    grants (territory grants for non-owners, own-created for medical reps).
+    """
+    role = _role(current)
+    territories = created_by = None
+    if role != "owner":
+        territories = [
+            row[0]
+            for row in db.execute(
+                text(
+                    "SELECT territory_id FROM platform.user_territory WHERE user_id=:uid"
+                ),
+                {"uid": current["id"]},
+            ).fetchall()
+        ]
+        if role == "medical_rep":
+            created_by = current["id"]
+    return InvoiceReportOut.model_validate(
+        repo.report_invoices(
+            db,
+            date_from=date_from,
+            date_to=date_to,
+            territories=territories,
+            created_by=created_by,
+        )
+    )
 
 
 @router.get("/{invoice_id}")

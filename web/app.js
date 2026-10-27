@@ -228,10 +228,11 @@
 
   async function loadMaster() {
     var requestToken = state.token;
+    var canReadReferences = roleAllowed("invoice");
     var results = await Promise.all([
-      api("/master/branches"),
-      api("/master/customers"),
-      api("/master/products"),
+      canReadReferences ? api("/master/branches") : Promise.resolve([]),
+      canReadReferences ? api("/master/customers") : Promise.resolve([]),
+      canReadReferences ? api("/master/products") : Promise.resolve([]),
     ]);
     if (state.token !== requestToken) return;
     state.branches = results[0];
@@ -246,9 +247,12 @@
   }
 
   async function loadWarehouses(branchId) {
+    var requestToken = state.token;
     var path = "/master/warehouses";
     if (branchId) path += "?branch_id=" + encodeURIComponent(branchId);
-    state.warehouses = await api(path);
+    var warehouses = await api(path);
+    if (state.token !== requestToken) return;
+    state.warehouses = warehouses;
     rememberWarehouseLabels(state.warehouses);
     refreshWarehouseSelects();
   }
@@ -286,11 +290,11 @@
   // =========================================================================
   var REAL_VIEWS = {
     home: "home-view", invoice: "invoice-view", inventory: "inventory-view",
-    ledger: "ledger-view", invoicelist: "invoicelist-view", balances: "balances-view", collections: "collections-view",
+    ledger: "ledger-view", invoicelist: "invoicelist-view", salesreport: "salesreport-view", balances: "balances-view", collections: "collections-view",
     customers: "customers-view", products: "products-view", warehouses: "warehouses-view",
     suppliers: "suppliers-view", accounts: "accounts-view", doctors: "doctors-view",
     visits: "visits-view", targets: "targets-view", batches: "batches-view",
-    cover: "cover-view", audit: "audit-view", transfers: "transfers-view",
+    cover: "cover-view", inventoryalerts: "inventoryalerts-view", mgmtsummary: "mgmtsummary-view", audit: "audit-view", transfers: "transfers-view",
     returns: "returns-view", marketing: "marketing-view",
     privateaccounts: "private-view",
   };
@@ -301,6 +305,7 @@
     inventory: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
     ledger: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
     invoicelist: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
+    salesreport: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
     balances: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
     collections: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
     customers: ["*"],
@@ -320,6 +325,8 @@
     returns: ["owner", "medical_rep", "sales_manager"],
     targets: ["owner", "medical_rep", "sales_manager", "finance"],
     cover: ["owner", "finance", "sales_manager"], overstock: ["owner", "finance", "sales_manager"],
+    inventoryalerts: ["owner", "finance", "sales_manager", "district_manager", "warehouse_staff", "read_only_auditor"],
+    mgmtsummary: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
     cash: ["owner", "finance"], expenses: ["owner", "finance"], pnl: ["owner", "finance"],
     payroll: ["owner", "finance"], brandspend: ["owner", "finance"],
     privateaccounts: ["owner"],
@@ -370,12 +377,12 @@
     });
   }
 
-  var ALL_SECTIONS = [
-    "login-view", "home-view", "invoice-view", "draft-view", "inventory-view",
-    "ledger-view", "balances-view", "collections-view", "customers-view",
-    "products-view", "warehouses-view", "suppliers-view", "accounts-view",
-    "doctors-view", "visits-view", "module-view",
-  ];
+  // Every real section comes from REAL_VIEWS so new screens cannot be
+  // forgotten here again; the remaining containers are the login form, the
+  // saved-draft editor and the labelled prototype preview.
+  var ALL_SECTIONS = Object.keys(REAL_VIEWS).map(function (key) {
+    return REAL_VIEWS[key];
+  }).concat(["login-view", "draft-view", "module-view"]);
 
   function hideAllSections() {
     ALL_SECTIONS.forEach(function (id) {
@@ -412,9 +419,12 @@
       else if (name === "inventory") loadInventory();
       else if (name === "ledger") loadLedger();
       else if (name === "invoicelist") loadInvoiceList();
+      else if (name === "salesreport") loadSalesReport();
       else if (name === "targets") loadTargets();
       else if (name === "batches") loadBatches();
       else if (name === "cover") loadCover();
+      else if (name === "inventoryalerts") loadInventoryAlerts();
+      else if (name === "mgmtsummary") loadManagementSummary();
       else if (name === "audit") loadAudit();
       else if (name === "transfers") loadTransfers();
       else if (name === "returns") loadReturns();
@@ -1584,6 +1594,69 @@
     }).catch(function (error) { showError(el.invoicelistError, messageFor(error)); });
   }
 
+  var salesReportSeq = 0;
+
+  function loadSalesReport() {
+    var requestToken = state.token;
+    var seq = ++salesReportSeq;
+    clearError(el.srError);
+    var qs = "";
+    if (el.srFrom.value) qs += (qs ? "&" : "?") + "date_from=" + el.srFrom.value;
+    if (el.srTo.value) qs += (qs ? "&" : "?") + "date_to=" + el.srTo.value;
+    [el.srTotalsRows, el.srTerritoryRows, el.srRepRows, el.srProductRows].forEach(function (body) {
+      body.innerHTML = "";
+    });
+    return api("/invoices/report" + qs).then(function (report) {
+      if (!state.user || state.token !== requestToken || seq !== salesReportSeq) return;
+      var totals = report.totals;
+      var labels = {
+        count: t("invoices_count"), net: t("total_net"), vat: t("vat_amount"),
+        grand: t("grand_total"), qty: t("quantity"), line: t("line_total"),
+      };
+      var totalsRow = document.createElement("tr");
+      totalsRow.appendChild(cell(labels.count, String(totals.invoice_count), true));
+      totalsRow.appendChild(cell(labels.net, fmt(totals.total_net), true));
+      totalsRow.appendChild(cell(labels.vat, fmt(totals.vat_amount), true));
+      totalsRow.appendChild(cell(labels.grand, fmt(totals.grand_total), true));
+      el.srTotalsRows.appendChild(totalsRow);
+      if (!totals.invoice_count) {
+        emptyRow(el.srTerritoryRows, 5, "sr_empty");
+        emptyRow(el.srRepRows, 5, "sr_empty");
+        emptyRow(el.srProductRows, 4, "sr_empty");
+        return;
+      }
+      renderRows(el.srTerritoryRows, report.by_territory, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell(t("territory"), row.name_ar + " (" + row.code + ")", false, true));
+        tr.appendChild(cell(labels.count, String(row.invoice_count), true));
+        tr.appendChild(cell(labels.net, fmt(row.total_net), true));
+        tr.appendChild(cell(labels.vat, fmt(row.vat_amount), true));
+        tr.appendChild(cell(labels.grand, fmt(row.grand_total), true));
+        return tr;
+      });
+      renderRows(el.srRepRows, report.by_rep, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell(t("rep"), row.username, false, true));
+        tr.appendChild(cell(labels.count, String(row.invoice_count), true));
+        tr.appendChild(cell(labels.net, fmt(row.total_net), true));
+        tr.appendChild(cell(labels.vat, fmt(row.vat_amount), true));
+        tr.appendChild(cell(labels.grand, fmt(row.grand_total), true));
+        return tr;
+      });
+      renderRows(el.srProductRows, report.by_product, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell(t("product"), row.name_ar + " (" + row.sku + ")", false, true));
+        tr.appendChild(cell(labels.qty, fmtQty(row.quantity), true));
+        tr.appendChild(cell(labels.line, fmt(row.line_total), true));
+        tr.appendChild(cell(labels.vat, fmt(row.vat_amount), true));
+        return tr;
+      });
+    }).catch(function (error) {
+      if (state.token !== requestToken || seq !== salesReportSeq) return;
+      showError(el.srError, messageFor(error));
+    });
+  }
+
   function loadTargets() {
     clearError(el.targetsError);
     el.targetRows.innerHTML = "";
@@ -1675,6 +1748,188 @@
         return tr;
       });
     }).catch(function (error) { showError(el.coverError, messageFor(error)); });
+  }
+
+  // Inventory alerts: the approved overstock rule plus cover days as the
+  // replenishment indicator. Rows come from GET /inventory/cover; the policy
+  // line from GET /settings/inventory-policy (absent for roles that may read
+  // cover but not settings, e.g. warehouse staff).
+  var invalertsData = [];
+  var invalertsSeq = 0;
+  var invalertsPolicyData = null;
+
+  function renderInvalertsPolicyText() {
+    if (!invalertsPolicyData) {
+      el.invalertsPolicy.classList.add("hidden");
+      return;
+    }
+    el.invalertsPolicy.textContent =
+      t("invalerts_policy_window") + " " + invalertsPolicyData.stock_cover_window_days +
+      " · " + t("invalerts_policy_threshold") + " " + invalertsPolicyData.overstock_threshold_days;
+    el.invalertsPolicy.classList.remove("hidden");
+  }
+
+  function loadInventoryAlerts() {
+    var requestToken = state.token;
+    clearError(el.invalertsError);
+    var seq = ++invalertsSeq;
+    el.invalertsRows.innerHTML = "";
+    var loading = document.createElement("tr");
+    var tdLoad = document.createElement("td");
+    tdLoad.colSpan = 7; tdLoad.className = "muted"; tdLoad.textContent = "…";
+    loading.appendChild(tdLoad);
+    el.invalertsRows.appendChild(loading);
+    el.invalertsPolicy.classList.add("hidden");
+    return Promise.all([
+      api("/inventory/cover"),
+      api("/settings/inventory-policy").catch(function () { return null; }),
+    ]).then(function (results) {
+      if (state.token !== requestToken || seq !== invalertsSeq) return; // a newer refresh owns the table
+      invalertsData = results[0] || [];
+      invalertsPolicyData = results[1];
+      renderInvalertsPolicyText();
+      renderInventoryAlerts();
+    }).catch(function (error) {
+      if (state.token !== requestToken || seq !== invalertsSeq) return;
+      invalertsData = [];
+      invalertsPolicyData = null;
+      renderInvalertsPolicyText();
+      renderInventoryAlerts();
+      showError(el.invalertsError, messageFor(error));
+    });
+  }
+
+  function invalertsStatusLabel(status) {
+    if (status === "overstock") return t("invalerts_st_overstock", "overstock");
+    if (status === "no_sales_history") return t("invalerts_st_nohist", "no sales history");
+    return t("invalerts_st_ok", "ok");
+  }
+
+  function invalertsBadgeClass(status) {
+    if (status === "overstock") return "draft";   // amber warning
+    if (status === "no_sales_history") return "info";
+    return "posted";
+  }
+
+  function renderInventoryAlerts() {
+    var labels = {
+      product: t("product"), warehouse: t("warehouse"), onhand: t("on_hand"),
+      sold: t("sold_in_window"), avg: t("invalerts_avg_daily"),
+      cover: t("cover_days"), status: t("status"),
+    };
+    var statusFilter = el.invalertsStatus.value;
+    var query = el.invalertsSearch.value.trim().toLowerCase();
+    var sort = el.invalertsSort.value;
+    var rows = invalertsData.filter(function (row) {
+      if (statusFilter !== "all" && row.status !== statusFilter) return false;
+      if (query) {
+        var hay = (productLineLabel(row.product_id) + " " + warehouseLabel(row.warehouse_id)).toLowerCase();
+        if (hay.indexOf(query) === -1) return false;
+      }
+      return true;
+    });
+    rows.sort(function (a, b) {
+      if (sort === "onhand_desc") return Number(b.on_hand) - Number(a.on_hand);
+      var ca = a.cover_days == null ? null : Number(a.cover_days);
+      var cb = b.cover_days == null ? null : Number(b.cover_days);
+      // Rows without a computable cover (no sales history) sort last either way.
+      if (ca == null && cb == null) return 0;
+      if (ca == null) return 1;
+      if (cb == null) return -1;
+      return sort === "cover_asc" ? ca - cb : cb - ca;
+    });
+    el.invalertsRows.innerHTML = "";
+    if (!rows.length) { emptyRow(el.invalertsRows, 7, "invalerts_empty"); return; }
+    renderRows(el.invalertsRows, rows, function (row) {
+      var tr = document.createElement("tr");
+      tr.appendChild(cell(labels.product, productLineLabel(row.product_id), false, true));
+      tr.appendChild(cell(labels.warehouse, warehouseLabel(row.warehouse_id)));
+      tr.appendChild(cell(labels.onhand, fmtQty(row.on_hand), true));
+      tr.appendChild(cell(labels.sold, row.sold_in_window == null ? "—" : fmtQty(row.sold_in_window), true));
+      tr.appendChild(cell(labels.avg, row.avg_daily_sales == null ? "—" : fmtQty(row.avg_daily_sales), true));
+      tr.appendChild(cell(labels.cover, row.cover_days == null ? "—" : fmtQty(row.cover_days), true));
+      var td = document.createElement("td");
+      td.setAttribute("data-label", labels.status);
+      td.appendChild(Object.assign(document.createElement("span"), {
+        className: "badge " + invalertsBadgeClass(row.status),
+        textContent: invalertsStatusLabel(row.status),
+      }));
+      tr.appendChild(td);
+      return tr;
+    });
+  }
+
+  // Management summary: posted-only sales / collections / receivables /
+  // inventory-alert counts straight from the ledgers (GET
+  // /reports/management-summary); replaces manual Excel consolidation.
+  var mgmtSeq = 0;
+
+  function loadManagementSummary() {
+    var requestToken = state.token;
+    clearError(el.msError);
+    var seq = ++mgmtSeq;
+    var qs = el.msDate.value ? "?as_of=" + el.msDate.value : "";
+    el.msRows.innerHTML = "";
+    var loading = document.createElement("tr");
+    var tdLoad = document.createElement("td");
+    tdLoad.colSpan = 3; tdLoad.className = "muted"; tdLoad.textContent = "…";
+    loading.appendChild(tdLoad);
+    el.msRows.appendChild(loading);
+    el.msAlerts.textContent = "";
+    [el.msKpiSales, el.msKpiCollections, el.msKpiAr, el.msKpiOverstock].forEach(function (node) {
+      node.textContent = "—";
+    });
+    [el.msKpiSalesSub, el.msKpiCollectionsSub, el.msKpiArSub, el.msKpiOverstockSub]
+      .forEach(function (node) { node.textContent = ""; });
+    return api("/reports/management-summary" + qs).then(function (data) {
+      if (state.token !== requestToken || seq !== mgmtSeq) return; // a newer refresh owns the table
+      el.msAsof.textContent = t("mgmtsummary_asof") + " " + fmtDate(data.as_of);
+      el.msKpiSales.textContent = fmt(data.sales.grand_total_mtd);
+      el.msKpiSalesSub.textContent =
+        data.sales.invoices_mtd + " " + t("ms_kpi_invoices_sub");
+      el.msKpiCollections.textContent = fmt(data.collections.amount_mtd);
+      el.msKpiCollectionsSub.textContent =
+        data.collections.receipts_mtd + " " + t("ms_kpi_receipts_sub");
+      el.msKpiAr.textContent = fmt(data.receivables.outstanding_total);
+      el.msKpiArSub.textContent =
+        data.receivables.customers_with_balance + " " + t("ms_customers");
+      el.msKpiOverstock.textContent = fmtQty(data.inventory_alerts.overstock_count);
+      el.msKpiOverstockSub.textContent =
+        data.inventory_alerts.no_sales_history_count + " " + t("ms_kpi_nohistory_sub");
+      var rows = [
+        ["ms_invoices", String(data.sales.invoices_today), String(data.sales.invoices_mtd)],
+        ["ms_sales_total", fmt(data.sales.grand_total_today), fmt(data.sales.grand_total_mtd)],
+        ["ms_net", fmt(data.sales.net_today), fmt(data.sales.net_mtd)],
+        ["ms_vat", fmt(data.sales.vat_today), fmt(data.sales.vat_mtd)],
+        ["ms_receipts", String(data.collections.receipts_today), String(data.collections.receipts_mtd)],
+        ["ms_collections", fmt(data.collections.amount_today), fmt(data.collections.amount_mtd)],
+      ];
+      el.msRows.innerHTML = "";
+      renderRows(el.msRows, rows, function (row) {
+        var tr = document.createElement("tr");
+        tr.appendChild(cell(t("ms_indicator"), t(row[0]), false, true));
+        tr.appendChild(cell(t("ms_today"), row[1], true));
+        tr.appendChild(cell(t("ms_mtd"), row[2], true));
+        return tr;
+      });
+      el.msAlerts.textContent =
+        t("ms_outstanding") + " " + fmt(data.receivables.outstanding_total) +
+        " (" + t("ms_customers") + " " + data.receivables.customers_with_balance + ") · " +
+        t("ms_overstock") + " " + data.inventory_alerts.overstock_count + " · " +
+        t("ms_nohistory") + " " + data.inventory_alerts.no_sales_history_count +
+        " (" + t("invalerts_policy_window") + " " + data.inventory_alerts.window_days +
+        " · " + t("invalerts_policy_threshold") + " " + data.inventory_alerts.threshold_days + ")";
+    }).catch(function (error) {
+      if (state.token !== requestToken || seq !== mgmtSeq) return;
+      el.msRows.innerHTML = "";
+      el.msAlerts.textContent = "";
+      [el.msKpiSales, el.msKpiCollections, el.msKpiAr, el.msKpiOverstock].forEach(function (node) {
+        node.textContent = "—";
+      });
+      [el.msKpiSalesSub, el.msKpiCollectionsSub, el.msKpiArSub, el.msKpiOverstockSub]
+        .forEach(function (node) { node.textContent = ""; });
+      showError(el.msError, messageFor(error));
+    });
   }
 
   function loadAudit() {
@@ -2658,7 +2913,29 @@
     state.user = null;
     state.entries = null;
     state.balancesCache = [];
+    ++salesReportSeq;
+    ++invalertsSeq;
+    ++mgmtSeq;
+    invalertsData = [];
+    invalertsPolicyData = null;
+    [el.srTotalsRows, el.srTerritoryRows, el.srRepRows, el.srProductRows,
+      el.invalertsRows, el.msRows].forEach(function (body) { body.replaceChildren(); });
+    [el.srError, el.invalertsError, el.msError].forEach(clearError);
+    el.invalertsPolicy.textContent = "";
+    el.invalertsPolicy.classList.add("hidden");
+    el.msAsof.textContent = "";
+    el.msAlerts.textContent = "";
+    [el.msKpiSales, el.msKpiCollections, el.msKpiAr, el.msKpiOverstock]
+      .forEach(function (item) { item.textContent = "—"; });
+    [el.msKpiSalesSub, el.msKpiCollectionsSub, el.msKpiArSub, el.msKpiOverstockSub]
+      .forEach(function (item) { item.textContent = ""; });
     state.customers = [];
+    state.branches = [];
+    state.products = [];
+    state.warehouses = [];
+    warehouseLabels = {};
+    refreshProductSelects();
+    refreshWarehouseSelects();
     customerDirectoryRows = [];
     customerTerritories = [];
     customerEditingRow = null;
@@ -2726,6 +3003,25 @@
     el.batchRows = $("batch-rows");
     el.coverError = $("cover-error");
     el.coverRows = $("cover-rows");
+    el.invalertsError = $("invalerts-error");
+    el.invalertsPolicy = $("invalerts-policy");
+    el.invalertsStatus = $("invalerts-status");
+    el.invalertsSort = $("invalerts-sort");
+    el.invalertsSearch = $("invalerts-search");
+    el.invalertsRows = $("invalerts-rows");
+    el.msError = $("mgmtsummary-error");
+    el.msDate = $("ms-date");
+    el.msAsof = $("mgmtsummary-asof");
+    el.msRows = $("mgmtsummary-rows");
+    el.msAlerts = $("ms-alerts");
+    el.msKpiSales = $("ms-kpi-sales");
+    el.msKpiSalesSub = $("ms-kpi-sales-sub");
+    el.msKpiCollections = $("ms-kpi-collections");
+    el.msKpiCollectionsSub = $("ms-kpi-collections-sub");
+    el.msKpiAr = $("ms-kpi-ar");
+    el.msKpiArSub = $("ms-kpi-ar-sub");
+    el.msKpiOverstock = $("ms-kpi-overstock");
+    el.msKpiOverstockSub = $("ms-kpi-overstock-sub");
     el.auditError = $("audit-error");
     el.auditRows = $("audit-rows");
     el.transfersError = $("transfers-error");
@@ -2743,6 +3039,13 @@
     el.ilFrom = $("il-from");
     el.ilTo = $("il-to");
     el.invoiceRows = $("invoice-rows");
+    el.srError = $("salesreport-error");
+    el.srFrom = $("sr-from");
+    el.srTo = $("sr-to");
+    el.srTotalsRows = $("sr-totals-rows");
+    el.srTerritoryRows = $("sr-territory-rows");
+    el.srRepRows = $("sr-rep-rows");
+    el.srProductRows = $("sr-product-rows");
     el.customersError = $("customers-error");
     el.productsError = $("products-error");
     el.warehousesError = $("warehouses-error");
@@ -2895,6 +3198,11 @@
     [el.ilStatus, el.ilFrom, el.ilTo].forEach(function (n) {
       n.addEventListener("change", function () { loadInvoiceList(); });
     });
+    [el.invalertsStatus, el.invalertsSort].forEach(function (n) {
+      n.addEventListener("change", function () { renderInventoryAlerts(); });
+    });
+    el.invalertsSearch.addEventListener("input", function () { renderInventoryAlerts(); });
+    el.msDate.addEventListener("change", function () { loadManagementSummary(); });
 
     el.menuToggle.addEventListener("click", function () { setDrawer(!drawerOpen); });
     el.scrim.addEventListener("click", function () { setDrawer(false); });
@@ -2941,6 +3249,12 @@
           if (currentSection === "module-view") {
             var key = (moduleKey() || "analytics");
             openPreview(key);
+          }
+          // Composed labels (policy line, status badges) re-render in the
+          // new language instead of keeping fetch-time text.
+          if (currentSection === "inventoryalerts-view") {
+            renderInvalertsPolicyText();
+            renderInventoryAlerts();
           }
         }
       });

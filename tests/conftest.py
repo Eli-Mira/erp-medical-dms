@@ -41,7 +41,10 @@ def isolated_financial_database(request):
         "test_inventory_batches",
         "test_inventory_cover",
         "test_sales_targets",
+        "test_sales_report",
         "test_settings_policy",
+        "test_management_summary",
+        "test_i1_reports",
     }:
         return
     assert os.environ.get("APP_ENV") == "test", "Use scripts/verify_invoice_cycle.py"

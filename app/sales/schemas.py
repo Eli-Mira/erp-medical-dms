@@ -1,4 +1,5 @@
 """Validated draft inputs and exact-decimal public invoice snapshots."""
+
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Literal
@@ -6,9 +7,15 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-Money = Annotated[Decimal, Field(ge=0, max_digits=12, decimal_places=2, allow_inf_nan=False)]
-Percent = Annotated[Decimal, Field(ge=0, le=100, max_digits=5, decimal_places=2, allow_inf_nan=False)]
-Quantity = Annotated[Decimal, Field(gt=0, max_digits=12, decimal_places=3, allow_inf_nan=False)]
+Money = Annotated[
+    Decimal, Field(ge=0, max_digits=12, decimal_places=2, allow_inf_nan=False)
+]
+Percent = Annotated[
+    Decimal, Field(ge=0, le=100, max_digits=5, decimal_places=2, allow_inf_nan=False)
+]
+Quantity = Annotated[
+    Decimal, Field(gt=0, max_digits=12, decimal_places=3, allow_inf_nan=False)
+]
 
 
 class InputModel(BaseModel):
@@ -20,7 +27,7 @@ class LineIn(InputModel):
     batch_id: UUID | None = None
     quantity: Quantity
     unit_price: Money | None = None
-    discount_pct: Percent = Decimal("0")
+    discount_pct: Percent = Decimal(0)
     notes: Annotated[str, Field(max_length=2000)] | None = None
 
 
@@ -91,6 +98,52 @@ class InvoiceListOut(BaseModel):
 
     total: int
     items: list[InvoiceOut]
+
+
+class ReportTotalsOut(BaseModel):
+    invoice_count: int
+    total_before_discount: Decimal
+    total_discount: Decimal
+    total_net: Decimal
+    vat_amount: Decimal
+    grand_total: Decimal
+
+
+class ReportTerritoryRow(BaseModel):
+    territory_id: UUID
+    code: str
+    name_ar: str
+    invoice_count: int
+    total_net: Decimal
+    vat_amount: Decimal
+    grand_total: Decimal
+
+
+class ReportRepRow(BaseModel):
+    user_id: UUID
+    username: str
+    invoice_count: int
+    total_net: Decimal
+    vat_amount: Decimal
+    grand_total: Decimal
+
+
+class ReportProductRow(BaseModel):
+    product_id: UUID
+    sku: str
+    name_ar: str
+    quantity: Decimal
+    line_total: Decimal
+    vat_amount: Decimal
+
+
+class InvoiceReportOut(BaseModel):
+    """Posted-only sales performance aggregates; drafts never appear (PRD)."""
+
+    totals: ReportTotalsOut
+    by_territory: list[ReportTerritoryRow]
+    by_rep: list[ReportRepRow]
+    by_product: list[ReportProductRow]
 
 
 class TargetIn(BaseModel):
