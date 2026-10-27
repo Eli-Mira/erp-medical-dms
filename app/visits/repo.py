@@ -25,6 +25,10 @@ def create_visit(db, *, customer_id, rep_id, visit_date, notes, lines, actor_id)
     Returns the visit row with its lines attached. The sell-through CHECK on
     the table rejects any line whose arithmetic disagrees with the formula, so
     the caller cannot persist a fudged figure.
+
+    Also updates sales.customer_held_stock with the closing balance from the
+    visit (quantity_current), so the customer-held stock (sell-through) is
+    persisted per V2 §2B.9.
     """
     visit_id = db.execute(
         text(
@@ -64,6 +68,26 @@ def create_visit(db, *, customer_id, rep_id, visit_date, notes, lines, actor_id)
                 "nt": line["notes"],
             },
         )
+        # Update customer-held stock balance (sell-through persistence)
+        if line["quantity_current"] >= 0:
+            db.execute(
+                text(
+                    "INSERT INTO sales.customer_held_stock "
+                    "(customer_id, product_id, batch_id, quantity_on_hand, last_visit_id, updated_at) "
+                    "VALUES (:c, :p, :b, :q, :v, now()) "
+                    "ON CONFLICT (customer_id, product_id, batch_id) DO UPDATE SET "
+                    "quantity_on_hand = EXCLUDED.quantity_on_hand, "
+                    "last_visit_id = EXCLUDED.last_visit_id, "
+                    "updated_at = now()"
+                ),
+                {
+                    "c": customer_id,
+                    "p": line["product_id"],
+                    "b": line["batch_id"],
+                    "q": line["quantity_current"],
+                    "v": visit_id,
+                },
+            )
     return list_visits(db, visit_id=visit_id)[0]
 
 
@@ -120,3 +144,30 @@ def fetch_visit(db, visit_id):
 
 def visits_for_customer(db, customer_id, limit=50):
     return list_visits(db, customer_id=customer_id, limit=limit)
+
+
+def list_held_stock(db, *, customer_id=None, product_id=None, batch_id=None,
+                    limit=100, offset=0):
+    """List customer-held stock (sell-through) balances per V2 §2B.9."""
+    conditions, params = [], {"limit": limit, "offset": offset}
+    if customer_id is not None:
+        conditions.append("chs.customer_id = :c")
+        params["c"] = customer_id
+    if product_id is not None:
+        conditions.append("chs.product_id = :p")
+        params["p"] = product_id
+    if batch_id is not None:
+        conditions.append("chs.batch_id = :b")
+        params["b"] = batch_id
+    where = (" WHERE " + " AND ".join(conditions)) if conditions else ""
+    rows = db.execute(
+        text(
+            "SELECT chs.id, chs.customer_id, chs.product_id, chs.batch_id, "
+            "chs.quantity_on_hand, chs.last_visit_id, chs.updated_at "
+            "FROM sales.customer_held_stock chs"
+            f"{where} ORDER BY chs.customer_id, chs.product_id, chs.batch_id "
+            "LIMIT :limit OFFSET :offset"
+        ),
+        params,
+    ).mappings()
+    return [dict(r) for r in rows]

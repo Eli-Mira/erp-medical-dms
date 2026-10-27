@@ -68,3 +68,18 @@ class VisitOut(BaseModel):
 class VisitListOut(BaseModel):
     total: int
     items: list[VisitOut]
+
+
+class HeldStockLineOut(BaseModel):
+    id: UUID
+    customer_id: UUID
+    product_id: UUID
+    batch_id: Optional[UUID]
+    quantity_on_hand: Decimal
+    last_visit_id: Optional[UUID]
+    updated_at: datetime
+
+
+class HeldStockListOut(BaseModel):
+    total: int
+    items: list[HeldStockLineOut]

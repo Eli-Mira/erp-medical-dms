@@ -66,3 +66,38 @@ def test_visit_deletion_audited(invoice_env):
         {"id": visit_id},
     ).scalar()
     assert audit == "deleted"
+
+
+def test_held_stock_persisted_from_visit(invoice_env):
+    client, db, ids, _payload, headers = invoice_env
+    customer_id = ids["customer"]
+    product_id = ids["product"]
+
+    # Create a visit with quantity_current = 12
+    payload = {
+        "customer_id": str(customer_id),
+        "visit_date": date.today().isoformat(),
+        "lines": [{
+            "product_id": str(product_id),
+            "quantity_prev": "10",
+            "quantity_delivered": "5",
+            "quantity_returned": "1",
+            "quantity_current": "12",
+        }],
+    }
+    res = client.post("/visits", headers=headers("owner"), json=payload)
+    assert res.status_code == 201, res.text
+
+    # Held stock should now show 12 for this customer/product
+    held = client.get("/visits/held-stock", headers=headers("owner"),
+                      params={"customer_id": str(customer_id), "product_id": str(product_id)})
+    assert held.status_code == 200, held.text
+    data = held.json()
+    assert data["total"] >= 1
+    found = False
+    for item in data["items"]:
+        if str(item["customer_id"]) == str(customer_id) and str(item["product_id"]) == str(product_id):
+            assert item["quantity_on_hand"] == "12.000"
+            found = True
+            break
+    assert found, "held stock not updated from visit"
