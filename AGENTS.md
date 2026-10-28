@@ -46,7 +46,7 @@ Build a simple, reliable Arabic web/PWA application that preserves the company's
 3. **Never write the 7 source Excel workbooks** (`*.xlsx` in the project root). They are read-only reconciliation inputs with a frozen SHA-256 baseline (`docs/SOURCE_HASHES.txt`).
 4. **Never edit** `.env`, `.env.dev`, `app/db.py`, `app/config.py`, `docker-compose.yml`, `Dockerfile`, `requirements.txt` as part of feature work. These are protected files whose hashes are checked by the test runner.
 5. **Never merge into `master`.** Work on a named branch.
-6. **Never push to GitHub or create a remote.** Publication is blocked pending credential/confidential-data cleanup (see `docs/AGENT_HANDOFF.md` §7).
+- HARD SAFETY RULE 6 (amended 2026-10-28): remote now exists — `origin` → `https://github.com/Eli-Mira/erp-medical-dms.git` (private). Push `integration/erp-i1-20261026` to it at task closure (not main, no merge). Never create a second remote or push to `master`.
 7. **Never perform database recovery writes** on `medical_dms` without explicit owner approval. No downgrade, stamp reset, schema drop or business-row mutation.
 8. **Never modify or delete existing evidence** under `docs/evidence/`. Append new evidence; do not rewrite history.
 9. **Never invent business rules.** If the workbooks/spec do not prove a rule, add it to `docs/OPEN_QUESTIONS.md` — do not guess (D29).
@@ -147,6 +147,6 @@ Do **not** run bare `pytest tests/` against the default database.
 - Report concisely: what the user can now do, source requirement, changed files/commit, actual verification and remaining limitations.
 - Distinguish implemented, tested, untested, deferred and blocked.
 - Complete authorized work instead of stopping after a plan or repeatedly waiting for a go-ahead.
-- **Task closure sequence:** at the end of every task, update `docs/PROGRESS_CHECKLIST.md` with what was done and verified, and commit it with the work. Then back up and push: (1) create a git bundle of the repo outside the project folder, (2) check whether a remote exists — if it does, push `integration/erp-i1-20261026` to it (not main, no merge), (3) if no remote exists, don't invent one — report the exact steps needed to create a private repo. This amends HARD SAFETY RULE 6: an existing remote may receive the integration branch, but never create a remote or push to `master`.
+- **Task closure sequence:** at the end of every task, update `docs/PROGRESS_CHECKLIST.md` with what was done and verified, and commit it with the work. Then back up and push: (1) create a git bundle of the repo outside the project folder, (2) remote `origin` → `https://github.com/Eli-Mira/erp-medical-dms.git` exists — push `integration/erp-i1-20261026` to it (not main, no merge), (3) if the push fails, report the error and give exact fix steps. Never create a second remote or push to `master`.
 EOF
 echo "written"
