@@ -1,0 +1,17 @@
+# Phase 0 - Immutable Source Baseline (SHA-256)
+
+Generated (UTC): 2026-10-11T18:26:15.547962+00:00
+Source root: C:\Desktop\Huge system
+
+Do not modify these files. Any working copy must preserve these hashes.
+
+| File | Bytes | SHA-256 |
+|---|---|---|
+| الميزانية العمومية 2026.xlsx | 90021 | d4a64fb777ceaa0e4f1398cdf057e3548e1771baac36daa930cc93623f48b884 |
+| حسابات خاصه.xlsx | 223297 | 37dac95c617ed6c69e2bd89eb944fd4681ff7d4a2945814ec9c8b7c985f19c37 |
+| مبيعات 6 اكتوبر 2026.xlsx | 12319748 | abf2b8163d33cae49d1a86572c593041faf59a166322cf5c8cf9b3f67b64cb7f |
+| مبيعات الدقهليه 2026.xlsx | 9222783 | 497f382926f18d5688346c2cf2b4d74fd9f2def379f143550385ca04d16277ca |
+| مبيعات الشرقية 2026.xlsx | 2710910 | 06a0fbf918215b1aefed4735085ceceeedcc487256aa2dd5e4e2fad4aa8b735d |
+| مبيعات الغربية  2026.xlsx | 8424314 | 57a14aaa84a401025d7e605a2c24a5ade4452dce49f1da021668a6886ea2945c |
+| مبيعات الفيوم 2026.xlsx | 10492091 | 9824a300452c85030cbe17fa14964bcef11ecddf40bad962aff29055b5f94b08 |
+| Medical_Company_System_Planning_Workbook.pdf | 415789 | 2885e5ad067b87bb727222f96f80df924c559f5a8c94dc8678d1c50a9bdd1452 |

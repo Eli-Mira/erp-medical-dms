@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "decision_record": "C:/Desktop/Huge system/docs/DECISION_LOG.md#2026-10-28--draft-finance-build-defaults",
+  "decision_id": "D47",
+  "status": "DRAFT_NOT_ACCOUNTANT_APPROVED",
+  "owner_confirmed_for_build": true,
+  "accountant_approved": false,
+  "configurable": true,
+  "purpose": "Configurable build proposal for C6/C7/C8, not active runtime configuration. Wire into the existing configuration mechanism only within an authorized, reviewed card.",
+  "currency": "EGP",
+  "activation": {
+    "live_use_enabled": false,
+    "posting_enabled": false,
+    "automatic_account_seeding_enabled": false,
+    "requires_owner_confirmation_after_accountant_review": true
+  },
+  "chart_of_accounts": {
+    "status": "DRAFT_NOT_ACCOUNTANT_APPROVED",
+    "account_codes": null,
+    "scope": "Proposed account roles/names only; no statutory numbering, real account mappings or business rows are created.",
+    "accounts": [
+      {"key": "cash", "name": "Cash"},
+      {"key": "bank", "name": "Bank"},
+      {"key": "accounts_receivable", "name": "Accounts receivable"},
+      {"key": "inventory", "name": "Inventory"},
+      {"key": "quarantine_inventory", "name": "Quarantine inventory"},
+      {"key": "customer_credit_liability", "name": "Customer-credit liability"},
+      {"key": "refunds_payable", "name": "Refunds payable"},
+      {"key": "output_vat", "name": "Output VAT"},
+      {"key": "sales", "name": "Sales"},
+      {"key": "sales_returns", "name": "Sales returns"},
+      {"key": "cost_of_goods_sold", "name": "COGS"},
+      {"key": "returned_goods_loss", "name": "Returned-goods loss"},
+      {"key": "retained_earnings", "name": "Retained earnings"}
+    ]
+  },
+  "stock_costing": {
+    "basis": "BATCH_COST",
+    "requires_verified_cost": true,
+    "selling_price_fallback_allowed": false,
+    "legacy_cost_backfill_allowed": false,
+    "missing_or_ambiguous_cost": "COST_UNVERIFIED_NO_GUESSED_VALUATION"
+  },
+  "vat": {
+    "rate_source": "ORIGINAL_INVOICE_LINE",
+    "exemption_source": "ORIGINAL_INVOICE_LINE",
+    "fallback_rate": null,
+    "missing_snapshot": "BLOCK_TAX_SENSITIVE_OPERATION"
+  },
+  "approvals": {
+    "return_requires_approval": true,
+    "refund_requires_approval": true,
+    "eligible_roles": ["owner", "finance"],
+    "per_transaction": true
+  },
+  "periods": {
+    "closed_period_edits_allowed": false,
+    "correction_method": "COMPENSATING_ENTRIES"
+  },
+  "opening_balances": {
+    "mode": "FRESH_START",
+    "legacy_opening_balance_import_enabled": false,
+    "reset_existing_data_authorized": false,
+    "live_cutover_date": null
+  }
+}
