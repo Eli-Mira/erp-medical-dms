@@ -8,13 +8,13 @@
 
 ## 1. Current state (verified)
 
-- **Implemented:** auth/sessions/RBAC, audit (write+read), PWA shell (RTL, i18n), invoice desk (draft), invoice list/search, inventory (stock/movements/batches/cover/overstock), AR balances/collections/ledger, transfers, returns, targets, marketing spend/objectives, settings (inventory policy), master data (branches/customers/products/warehouses/suppliers/COA/doctors), synthetic demo DB (`medical_demo`), real-browser Playwright verification (desktop 1440×900 + mobile 390×844 emulation).
-- **Partial:** PWA screens for transfers/returns/marketing (REAL, consume live endpoints); print/PDF (browser print only); visits (PROTO); master reps/UOM/credit (PROTO, hidden from nav).
-- **Missing:** reconciliation/import engine (V1 §12), HQ rollups, cross-workbook consolidation, BS/P&L/cash/expenses/assets reports, private accounts module (D40), global search (P2.10), reason codes (P2.9), dev fixture loader (P2.11), server-side PDF (D45).
+- **Implemented:** auth/sessions/RBAC, audit (write+read), PWA shell (RTL, i18n), invoice desk (draft), invoice list/search, inventory (stock/movements/batches/cover/overstock/expiry warnings), AR balances/collections/ledger, transfers (batch-preserving), returns (basic API — stock increase only; NOT full accounting treatment), targets, marketing spend/objectives, settings (inventory policy), master data (branches/customers/products/warehouses/suppliers/COA/doctors), private accounts (D40), global search (P2.10), reason codes (P2.9), visits/sell-through (S7/S8 — backend + PWA persistence), synthetic demo DB (`medical_demo`), real-browser Playwright verification (desktop 1440×900 + mobile 390×844 emulation), management summary report (posted sales/collections/AR/alert counts).
+- **Partial:** PWA screens for transfers/returns/marketing (REAL, consume live endpoints); print/PDF (browser print only); master reps/UOM/credit (PROTO, hidden from nav); import dry-run (5 branches + 15 products only — NOT full import engine); expiry warning UI (API exists, no dedicated staff screen).
+- **Missing / NOT DONE:** returns full accounting (2B.12 — revenue/VAT/COGS reversal, credit notes); finance reports — BS/P&L/cash/expenses/assets (only management summary exists); import engine (only dry-run, no full reconciliation/import); marketing 2B.18 (partial — spend/objectives done, full module gap remains); HQ rollups; cross-workbook consolidation; dev fixture loader (P2.11); server-side PDF (D45).
 - **Deferred (discovery-gated):** payroll depth, purchasing/PO/GRN, budgeting, UOM, credit terms (UQ-5/6/9).
 - **Unapproved (Phase-4 scope decision):** cash/bank, expenses, P&L, payroll, POs beyond workbook evidence.
 - **Gates:** `POSTING_ENABLED=False` (hard rule 1). `medical_dms` quarantined (hard rule 2). Source workbooks read-only (hard rule 3). Independent review held (NO_VERDICT) on invoice cycle.
-- **Tests:** 383 passed via approved runner on disposable `dms_cycle_test_*` DBs; 1 inherited warning; ruff clean on changed files.
+- **Tests:** 803+ passed via approved runner on disposable `dms_cycle_test_*` DBs (S7 final gate: 803 passed / 0 failed; 13 skipped, 1 deselected); 1 inherited warning; ruff clean on changed files. S7 backend verification complete (34206e1). S8 (7cfc14f) verified complete — visits PWA persists stock-visit observations.
 
 ## 2. Phase plan
 
@@ -90,7 +90,13 @@ Outcome: complete approved additions without generic ERP expansion.
 - **Unapproved:** Phase-4 scope decision (cash/bank, expenses, P&L, payroll, POs beyond evidence).
 
 ## 4. Immediate next task
-**B1 — Import dry run: master data (branches/territories/warehouses/customers/products)** against a disposable `dms_cycle_test_*` DB, using the workbook as read-only source. Acceptance: row counts match workbook; source hashes unchanged; no writes to `*.xlsx`.
+**4 remaining NOT DONE gaps (priority order):**
+1. **Returns 2B.12** — full accounting treatment (revenue/VAT/COGS reversal, credit notes). Basic API exists (stock increase only).
+2. **Finance reports** — BS/P&L/cash/expenses/assets. Only management summary exists (posted sales/collections/AR/alert counts).
+3. **Import engine** — full reconciliation/import. Only dry-run exists (5 branches + 15 products).
+4. **Marketing 2B.18** — full module. Spend/objectives exist (2B.16-17), 2B.18 gap remains.
+
+All other verified work (S7/S8 visits, private accounts, search, reason codes, expiry warnings, transfers, targets, marketing spend) is complete.
 
 ## 5. Essential owner questions (only)
 1. **Independent review:** commission an authorized reviewer for the held invoice-cycle commit? (Rule: focused independent review for money/stock/migrations/auth.)
