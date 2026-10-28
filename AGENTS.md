@@ -147,5 +147,6 @@ Do **not** run bare `pytest tests/` against the default database.
 - Report concisely: what the user can now do, source requirement, changed files/commit, actual verification and remaining limitations.
 - Distinguish implemented, tested, untested, deferred and blocked.
 - Complete authorized work instead of stopping after a plan or repeatedly waiting for a go-ahead.
+- **Task closure sequence:** at the end of every task, update `docs/PROGRESS_CHECKLIST.md` with what was done and verified, and commit it with the work. Then back up and push: (1) create a git bundle of the repo outside the project folder, (2) check whether a remote exists — if it does, push `integration/erp-i1-20261026` to it (not main, no merge), (3) if no remote exists, don't invent one — report the exact steps needed to create a private repo. This amends HARD SAFETY RULE 6: an existing remote may receive the integration branch, but never create a remote or push to `master`.
 EOF
 echo "written"
