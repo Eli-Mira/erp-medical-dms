@@ -143,19 +143,18 @@ Legend: ⬜ todo · 🔄 in progress · ✅ done · ⛔ blocked · ⏭️ gated/
 - [✅] P2.6 Audit logger: immutable audit_log + log_audit(); login/logout audited. psql \dt audit.* → audit_log,reason_code; 2 rows (login+logout) verified (438205b). repo.log_audit; alembic 0002_audit_log
 - [✅] P2.7 PWA shell: static shell served at /app (manifest+icon+sw.js cache-first), RTL index (dir=rtl/lang=ar), ar/en i18n key parity. 10/10 tests pass. web/ + tests/test_pwa.py (React SPA deferred).
 - [⬜] P2.8 System settings scaffold (fiscal year, VAT, currency, numbering)
-- [🔄] P2.9 Reason codes: audit.reason_code scaffold created + verified (psql \dt audit.* → reason_code; 438205b). Posting-status enum + import-validation scaffold deferred to Module C (sales_invoice).
-- [⬜] P2.10 Global search scaffold
-- [⬜] P2.11 Dev fixture loader (seed data matching Excel structure)
-- [⬜] P2.12 README with local-dev setup → `README.md`
-- Gate: CI green, platform tests pass, security model implemented, backup tested locally, login with RBAC works.
+- [✅] P2.9 Reason codes: audit.reason_code scaffold created + verified (psql \\dt audit.* → reason_code; 438205b). Posting-status enum + import-validation scaffold deferred to Module C (sales_invoice). Done: ace4d84.
+- [✅] P2.10 Global search scaffold. Done: ace4d84.
+- [⬜] P2.11 Dev fixture loader (seed data matching Excel structure) — NOT DONE.
+- [✅] P2.12 README with local-dev setup → `README.md` (committed in c5feebb).
 
 ## Phase 3 — Business Modules A→H  [gate: 🔒 per-module]
 - [⬜] Module A — Platform (continued): finalize cross-cutting concerns
-- [⬜] Module B — Master Data (~2w): Customers, suppliers, employees(min), products, warehouses/branches, UOM(gated), agents, partners, COA, territories. Reconciliation vs source counts.
-- [⬘] Module C — Sales (~3w): invoices/sell-in/VAT, HQ rollup (الرئيسية), sold balances (رصيد الارصدة المباعة), price lists (كامل الكمية), under-disposal (تحت التصريف), returns, credit. Net price `E=C×(1-D)` test. Pilot: Dakahlia branch.
-- [⬜] Module D — Inventory (~2w): stock by warehouse, movements, batch+expiry, transfers. Reconcile per-warehouse stock.
-- [⬜] Module E — Finance (~3w): Cash(النقديه), AR(العملاء 47×747), AP, GL, P&L(الارباح والخسائر), BS(الميزانيه/الموازنه العامه), assets. AR total 2,200,000 test.
-- [⬜] Module F — Marketing (~1–2w): KOL/doctor spend, product/brand spend, objective/KPI, sales targets, overstock alerts.
+- [⬘] Module B — Master Data (~2w): Customers, suppliers, employees(min), products, warehouses/branches, UOM(gated), agents, partners, COA, territories. Reconciliation vs source counts. Done: branches, customers, products, warehouses, suppliers, COA, doctors. NOT DONE: reps/UOM/credit (PROTO, hidden from nav), import reconciliation.
+- [⬘] Module C — Sales (~3w): invoices/sell-in/VAT, HQ rollup (الرئيسية), sold balances (رصيد الارصدة المباعة), price lists (كامل الكمية), under-disposal (تحت التصريف), returns, credit. Net price `E=C×(1-D)` test. Pilot: Dakahlia branch. Done: invoices, AR, collections, transfers, sell-through, targets, expiry warnings. NOT DONE: returns 2B.12 full accounting (revenue/VAT/COGS reversal, credit notes), marketing 2B.18 full module.
+- [⬘] Module D — Inventory (~2w): stock by warehouse, movements, batch+expiry, transfers. Reconcile per-warehouse stock. Done: stock, movements, batches, cover, overstock, expiry warnings API. NOT DONE: expiry warning UI (API exists, no dedicated staff screen).
+- [⬘] Module E — Finance (~3w): Cash(النقديه), AR(العملاء 47×747), AP, GL, P&L(الارباح والخسائر), BS(الميزانيه/الموازنه العامه), assets. AR total 2,200,000 test. Done: AR balances, collections, ledger, management summary. NOT DONE: BS/P&L/cash/expenses/assets (2B.12 returns accounting, finance reports).
+- [⬘] Module F — Marketing (~1–2w): KOL/doctor spend, product/brand spend, objective/KPI, sales targets, overstock alerts. Done: marketing spend/objectives, sales targets. NOT DONE: marketing 2B.18 full module.
 - [⬘] Module G — Purchasing (~2w, discovery-gated): suppliers, PO/GRN; no MRP/BOM until D11 confirmed.
 - [⬜] Module H — Analytics + Telegram (~3w): executive KPIs + Telegram bot (read-only first, whitelist). Pilot branch only.
 

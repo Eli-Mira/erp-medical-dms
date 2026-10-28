@@ -35,14 +35,14 @@ Outcome: master data and historical transactions imported from workbooks into a 
 
 | # | Task | Priority | User outcome | Source / approved | Gap | Smallest change / deps | Acceptance check |
 |---|---|---|---|---|---|---|---|
-| B1 | Import dry run: branches/territories/warehouses/customers/products (P2) | P1 | Real master data in system | V1 §12 P2; workbooks (read-only) | No importer yet | Build read-only importer against `dms_cycle_test_*` only | Row counts match workbook; no source file writes |
+| B1 | Import dry run: branches/territories/warehouses/customers/products (P2) | P1 | Real master data in system | V1 §12 P2; workbooks (read-only) | Dry-run importer exists (5 branches + 15 products); full import engine NOT DONE | Build read-only importer against `dms_cycle_test_*` only | Row counts match workbook; no source file writes |
 | B2 | Import dry run: stock balances + movements | P1 | Stock matches Excel | V1 §12 P4 | No importer | Add opening movements with batch/expiry | Balance totals match per warehouse |
 | B3 | Import dry run: posted invoices + lines (E=C*(1-D)) | P1 | Sales history | V1 §12 P4; Excel formulas | No importer | Preserve net-price formula | Header totals reconcile to lines |
 | B4 | Import dry run: AR entries + receipts | P1 | Receivables match | V1 §12 P5; 747-col AR sheet | No importer; period mapping UNVERIFIED | Map customer blocks → entries | Debit-credit sums match |
 | B5 | HQ rollup reproduction (`الرئيسية`) | P2 | Branch totals verified | V1 §12 P4 | Not implemented | Recompute from per-warehouse sheets; compare | Tolerance 0 on sampled rows |
 | B6 | Cross-workbook consolidation (`اجمالى الحسابات`) | P2 | Consolidated view | V1 §12 P6 | Blocked on missing Mansoura workbook | Flag broken link; import others | Clear error logged; others imported |
 | B7 | Sell-through import (`رصيد الارصدة المباعة`) | P2 | Sell-through visible | V2 §2B.9 | Not imported | Import customer-held stock | Formula preserved |
-| B8 | BS/P&L/cash/expenses/assets reports | P2 | Finance reports | `الميزانية العمومية 2026` sheets | Not built | Build read views from imported data | Totals reconcile to Excel samples |
+| B8 | BS/P&L/cash/expenses/assets reports | P2 | Finance reports | `الميزانية العمومية 2026` sheets | Management summary exists; full BS/P&L/cash NOT DONE | Build read views from imported data | Totals reconcile to Excel samples |
 
 ### Phase C — HQ rollups, consolidation and required reports
 Outcome: management sees branch/consolidated totals and finance reports matching Excel samples.
