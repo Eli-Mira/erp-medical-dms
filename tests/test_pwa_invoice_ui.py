@@ -60,6 +60,20 @@ def test_posting_goes_through_the_guarded_endpoint():
     # The UI calls the server's guarded /post route and surfaces its error; it
     # never sets the server flag or fabricates a status.
     assert "/post" in js
+
+
+def test_zero_quantity_lines_hidden_when_printing():
+    js = _read("app.js")
+    css = _read("styles.css")
+    # JS marks zero-quantity rows with 'zero-qty' class
+    assert "zero-qty" in js, "zero-qty class not applied in JS"
+    assert 'Number(line.quantity) === 0' in js or 'quantity) === 0' in js, "zero-qty condition missing"
+    # CSS hides zero-qty rows in print media
+    assert "@media print" in css, "@media print missing"
+    assert "zero-qty" in css, "zero-qty not referenced in CSS"
+    assert "display: none" in css, "display:none missing for print hiding"
+    # Print button triggers browser print
+    assert "window.print()" in js, "window.print() missing"
     assert "POSTING_ENABLED" not in js
     assert "posting_status" in js
 
