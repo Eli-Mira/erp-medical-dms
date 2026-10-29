@@ -44,3 +44,9 @@ Thumbs.db
 
 # Private (non-Git) working notes / exception lists (B1).
 private/
+
+# Local test/runtime residue; never stage these artifacts.
+test-*.sqlite*
+test-*.lock
+/.hermes/autonomous-development/*.lock
+/nul

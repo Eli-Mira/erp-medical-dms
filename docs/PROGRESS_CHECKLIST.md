@@ -1,5 +1,14 @@
 # Progress Checklist — Medical Company System
 
+## Remaining product gaps — 2026-10-29
+
+The four gaps reconciled in `2bb2dcd` and restated in `docs/IMPLEMENTATION_PLAN.md` §4. All four are product gaps; none is a verification gap and none is accepted work.
+
+- [ ] Returns 2B.12 — full accounting treatment: revenue/VAT/COGS reversal and credit notes. Basic return API exists (stock increase only).
+- [ ] Finance reports — BS/P&L/cash/expenses/assets. Only the management summary exists (posted sales/collections/AR/alert counts).
+- [ ] Import engine — full reconciliation/import. Only dry-run exists (5 branches + 15 products).
+- [ ] Marketing 2B.18 — full module. Spend/objectives exist (2B.16–17); the 2B.18 gap remains.
+
 ## S8 — visits PWA persistence — 2026-10-27
 
 - Commit `7cfc14f`: persist stock-visit observations through the shipped PWA. Verified complete — visits PWA persistence layer delivered.
@@ -92,7 +101,7 @@ The owner's latest directive is `pasted_content_2026-10-20_22-57-47-588_741e7a.t
 - [x] **B Master Data slice (local-only):** migration `alembic/versions/0011_master_data_b.py` adds the three confirmed-but-missing references — `master_data.master_supplier` (PRD B-02/G-01), `finance.coa_account` (PRD B-12/E-05, no seeded accounts), `marketing.marketing_kol` (PRD B-13, D22) — plus read-only role-gated lookups `GET /master/suppliers|accounts|doctors` (doctors branch-scoped via `platform.user_branch`). UOM stays gated (D13/D20); no CRUD/import writes; synthetic test data only. Verification: disposable DB migration up→down→up and full suite, sources unchanged, `POSTING_ENABLED` OFF. Decision record: **D39** in `docs/DECISION_LOG.md`; report + artifacts under `docs/evidence/invoice-cycle/<stage>/`.
 - [x] **Client prototype (local-only, synthetic demo):** branch `feature/client-prototype` cut from `de41f42` (the `e413f68` invoice UI ancestry was verified first). `scripts/make_demo.py` builds the isolated `medical_demo` DB — 100% synthetic, `DEMO-`-prefixed, totals via `app.sales.calc`, demo accounts `demo_owner`/`demo_rep`/`demo_finance` (`Demo-2026`). PWA gains an Arabic-RTL dashboard plus read-only المخزون / أرصدة العملاء / التحصيلات views over the existing GET APIs; `POSTING_ENABLED=false` at all times; drafts are presented as paperwork only and the posting refusal (409) is demonstrated live, never simulated. Actual browser flow verified end-to-end (login → draft save with authoritative server totals → post gate → stock/balances/collections unchanged). Fixed a latent pre-existing defect: `newDraft()` reset cleared the boot-filled invoice date (422 on every fresh save). Regression: **345 passed / 0 failed** (runner stage `client-proto-20261018`, `unchanged: true`, DB removed). Walkthrough + credentials + limitations: `docs/CLIENT_DEMO.md`; proof: `docs/evidence/invoice-cycle/client-proto-20261018/SUMMARY.md`.
 
-- [ ] **Default local `medical_dms` recovery requires approval:** worker applied an old 0010 and left stamp/schema drift. No parent recovery writes; do not run/deploy this branch against that DB. Proposed forward-only write set and confidential-backup classification: `docs/evidence/invoice-cycle/finalization-20261018/UNBLOCKING.md`. This is separate from the completed local source checkpoint; production activation remains forbidden.
+- [⛔] **Default local `medical_dms` recovery requires approval:** worker applied an old 0010 and left stamp/schema drift. No parent recovery writes; do not run/deploy this branch against that DB. Proposed forward-only write set and confidential-backup classification: `docs/evidence/invoice-cycle/finalization-20261018/UNBLOCKING.md`. This is separate from the completed local source checkpoint; production activation remains forbidden.
 - [ ] Private GitHub publication **BLOCKED**: no remote and gh CLI unauthenticated. Read-only Gitleaks/history scan covered 20 commits/223 unique historical blobs plus current milestone content (439 independent content scans); credentialed development DB URLs and tracked Excel-derived samples need cleanup/clearance before first push. No binary workbook payload found; 316 SHA-256 metadata alerts were false positives, not secrets. No source/history rewrite, repository creation or push. Scope/triage: `docs/evidence/invoice-cycle/finalization-20261018/GITHUB_GATE.md`.
 - [ ] Payroll formula remains **UNVERIFIED**; the header-structure test is not salary-formula validation. Stock thresholds and other deferred UQs stay deferred.
 
