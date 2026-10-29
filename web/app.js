@@ -1707,7 +1707,11 @@
     });
   }
 
+  var batchesSeq = 0;
   function loadBatches() {
+    var requestToken = state.token;
+    var seq = ++batchesSeq;
+    var nearExpiry = el.batchesFilter.value === "near_expiry";
     clearError(el.batchesError);
     el.batchRows.innerHTML = "";
     var loading = document.createElement("tr");
@@ -1715,18 +1719,27 @@
     tdLoad.colSpan = 5; tdLoad.className = "muted"; tdLoad.textContent = "…";
     loading.appendChild(tdLoad);
     el.batchRows.appendChild(loading);
-    return api("/inventory/batches").then(function (rows) {
-      if (!rows.length) { emptyRow(el.batchRows, 5, "empty_rows"); return; }
+    return api(nearExpiry ? "/inventory/expiry-warnings" : "/inventory/batches").then(function (rows) {
+      if (state.token !== requestToken || seq !== batchesSeq) return;
+      if (!rows.length) {
+        el.batchRows.innerHTML = "";
+        emptyRow(el.batchRows, 5, nearExpiry ? "batches_empty_near_expiry" : "empty_rows");
+        return;
+      }
       renderRows(el.batchRows, rows, function (row) {
         var tr = document.createElement("tr");
-        tr.appendChild(cell("batch", row.batch_no));
+        tr.appendChild(cell(t("batch_no"), row.batch_no));
         tr.appendChild(cell("product", productLineLabel(row.product_id)));
         tr.appendChild(cell("warehouse", warehouseLabel(row.warehouse_id)));
-        tr.appendChild(cell("expiry", fmtDate(row.expiry_date)));
+        tr.appendChild(cell(t("expiry_date"), fmtDate(row.expiry_date)));
         tr.appendChild(cell("qty", fmtQty(row.quantity), true));
         return tr;
       });
-    }).catch(function (error) { showError(el.batchesError, messageFor(error)); });
+    }).catch(function (error) {
+      if (state.token !== requestToken || seq !== batchesSeq) return;
+      el.batchRows.innerHTML = "";
+      showError(el.batchesError, messageFor(error));
+    });
   }
 
   function loadCover() {
@@ -3058,6 +3071,10 @@
     ++salesReportSeq;
     ++invalertsSeq;
     ++mgmtSeq;
+    ++batchesSeq;
+    el.batchRows.replaceChildren();
+    clearError(el.batchesError);
+    el.batchesFilter.value = "all";
     invalertsData = [];
     invalertsPolicyData = null;
     [el.srTotalsRows, el.srTerritoryRows, el.srRepRows, el.srProductRows,
@@ -3143,6 +3160,8 @@
     el.targetRows = $("target-rows");
     el.batchesError = $("batches-error");
     el.batchRows = $("batch-rows");
+    el.batchesFilter = $("batches-filter");
+    el.batchesFilter.addEventListener("change", function () { loadBatches(); });
     el.coverError = $("cover-error");
     el.coverRows = $("cover-rows");
     el.invalertsError = $("invalerts-error");
@@ -3356,6 +3375,9 @@
     });
     el.invalertsSearch.addEventListener("input", function () { renderInventoryAlerts(); });
     el.msDate.addEventListener("change", function () { loadManagementSummary(); });
+    document.querySelectorAll("#ms-kpis [data-ms-view]").forEach(function (button) {
+      button.addEventListener("click", function () { showView(button.dataset.msView); });
+    });
 
     el.menuToggle.addEventListener("click", function () { setDrawer(!drawerOpen); });
     el.scrim.addEventListener("click", function () { setDrawer(false); });

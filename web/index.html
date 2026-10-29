@@ -838,9 +838,19 @@
             <p class="desc" data-i18n="batches_desc">لقطات التشغيلات مرتبة حسب تاريخ الانتهاء (بيانات فعلية).</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <span class="badge">Beta</span>
           <button type="button" class="default" data-refresh="batches" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="batches-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="batches-filter" data-i18n="batches_filter">عرض التشغيلات</label>
+            <select id="batches-filter">
+              <option value="all" data-i18n="batches_all">كل التشغيلات</option>
+              <option value="near_expiry" data-i18n="batches_near_expiry">القريبة من انتهاء الصلاحية فقط</option>
+            </select>
+          </div>
+        </div>
         <div class="table-wrap">
           <table class="grid-table">
             <thead><tr>
@@ -886,6 +896,7 @@
         <div class="view-head">
           <div class="titles">
             <h1 id="mgmtsummary-title" data-i18n="mgmtsummary_title">الملخص الإداري</h1>
+            <span class="badge">Beta</span>
             <p class="desc" data-i18n="mgmtsummary_desc">مبيعات وتحصيلات وذمم من الدفاتر الفعلية — بديل التجميع اليدوي في إكسل.</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
@@ -903,21 +914,25 @@
             <span class="stat-label" data-i18n="ms_kpi_sales">مبيعات الشهر (مُرحّلة)</span>
             <span class="stat-value num" id="ms-kpi-sales">—</span>
             <span class="stat-sub num" id="ms-kpi-sales-sub"></span>
+            <button type="button" class="default" data-ms-view="salesreport" data-roles="owner,finance,sales_manager,district_manager,medical_rep,read_only_auditor" data-i18n="nav_salesreport">تقرير المبيعات</button>
           </div>
           <div class="stat teal">
             <span class="stat-label" data-i18n="ms_kpi_collections">تحصيلات الشهر</span>
             <span class="stat-value num" id="ms-kpi-collections">—</span>
             <span class="stat-sub num" id="ms-kpi-collections-sub"></span>
+            <button type="button" class="default" data-ms-view="collections" data-roles="owner,finance,sales_manager,district_manager,read_only_auditor" data-i18n="nav_collections">التحصيلات (سندات القبض)</button>
           </div>
           <div class="stat navy">
             <span class="stat-label" data-i18n="ms_kpi_ar">أرصدة العملاء المستحقة</span>
             <span class="stat-value num" id="ms-kpi-ar">—</span>
             <span class="stat-sub num" id="ms-kpi-ar-sub"></span>
+            <button type="button" class="default" data-ms-view="balances" data-roles="owner,finance,sales_manager,district_manager,read_only_auditor" data-i18n="nav_balances">الذمم وكشوف العملاء</button>
           </div>
           <div class="stat amber">
             <span class="stat-label" data-i18n="ms_kpi_overstock">فائض المخزون</span>
             <span class="stat-value num" id="ms-kpi-overstock">—</span>
             <span class="stat-sub num" id="ms-kpi-overstock-sub"></span>
+            <button type="button" class="default" data-ms-view="inventoryalerts" data-roles="owner,finance,sales_manager,district_manager,warehouse_staff,read_only_auditor" data-i18n="nav_inventoryalerts">تنبيهات المخزون</button>
           </div>
         </div>
         <p id="mgmtsummary-asof" class="desc"></p>
