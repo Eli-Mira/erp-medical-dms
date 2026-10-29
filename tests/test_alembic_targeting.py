@@ -66,6 +66,22 @@ def test_medical_demo_is_allowed():
     assert make_url(url).database == "medical_demo"
 
 
+def test_medical_demo_fresh_is_allowed():
+    url = validate_target_url(
+        "postgresql+psycopg://dms:dms-dev@localhost:5432/medical_demo_fresh"
+    )
+    from sqlalchemy.engine.url import make_url
+
+    assert make_url(url).database == "medical_demo_fresh"
+
+
+def test_unknown_database_is_still_rejected():
+    with pytest.raises(TargetingError, match="not an approved migration target"):
+        validate_target_url(
+            "postgresql+psycopg://dms:dms-dev@localhost:5432/medical_demo_scratch"
+        )
+
+
 def test_connected_database_mismatch_is_rejected():
     class FakeConnection:
         def execute(self, statement):
