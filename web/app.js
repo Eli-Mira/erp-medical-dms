@@ -922,7 +922,7 @@
           ["حملة تجريبية — الدقهلية", "رفع مبيعات الصنف ب", "150 وحدة/شهر", "—" , "لم تبدأ"],
           ["زيارات تعريفية — الشرقية", "تعيين 10 أطباء", "10 أطباء", "7", "3 مواعيد متبقية"],
         ],
-        note: "نموذج توضيحي — حقول الهدف/KPI/النتيجة غير مُخزنة في الخادم بعد؛ القيم ليست بيانات فعلية.",
+        note: "الخادم يخزن الهدف/KPI/النتيجة (GET /marketing/objectives). عرض النماذج للتوضيح فقط — سيتم ربط البيانات الفعلية لاحقًا.",
       },
       en: {
         title: "Objectives & KPIs", desc: "Per marketing activity: objective, expected KPI, actual result, follow-up notes, product/brand, and doctor/KOL or activity target where applicable (2B.18).",
@@ -933,7 +933,7 @@
           ["Demo campaign — Dakahlia", "Lift product B sales", "150 units/month", "—", "Not started"],
           ["Intro visits — Sharqia", "Assign 10 doctors", "10 doctors", "7", "3 appointments left"],
         ],
-        note: "Illustrative prototype — objective/KPI/actual fields not stored on the server yet; values are not real data.",
+        note: "Server stores objective/KPI/actual (GET /marketing/objectives). Prototype display only — live data binding pending.",
       },
     },
     purchases: {
@@ -2005,17 +2005,19 @@
     el.marketingRows.innerHTML = "";
     var loading = document.createElement("tr");
     var tdLoad = document.createElement("td");
-    tdLoad.colSpan = 4; tdLoad.className = "muted"; tdLoad.textContent = "…";
+    tdLoad.colSpan = 6; tdLoad.className = "muted"; tdLoad.textContent = "…";
     loading.appendChild(tdLoad);
     el.marketingRows.appendChild(loading);
     return api("/marketing/spend").then(function (rows) {
-      if (!rows.length) { emptyRow(el.marketingRows, 4, "empty_rows"); return; }
+      if (!rows.length) { emptyRow(el.marketingRows, 6, "empty_rows"); return; }
       renderRows(el.marketingRows, rows, function (row) {
         var tr = document.createElement("tr");
         tr.appendChild(cell("date", fmtDate(row.spend_date)));
         tr.appendChild(cell("activity", row.activity_type));
         tr.appendChild(cell("amount", fmt(row.amount), true));
         tr.appendChild(cell("notes", row.notes || "—"));
+        tr.appendChild(cell("products", (row.product_ids || []).map(function (p) { return productLineLabel(p); }).join(", ") || "—"));
+        tr.appendChild(cell("kol", row.kol_id ? row.kol_id : "—"));
         return tr;
       });
     }).catch(function (error) { showError(el.marketingError, messageFor(error)); });
