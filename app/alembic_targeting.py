@@ -24,7 +24,11 @@ from sqlalchemy.engine.url import make_url
 
 PROTECTED_DATABASES = frozenset({"medical_dms"})
 PERMITTED_DISPOSABLE_RE = re.compile(r"^dms_cycle_test_[0-9a-f]{32}$")
-DEFAULT_ALLOWED_DATABASES = frozenset({"medical_demo"})
+# Routine migration targets. ``medical_demo`` is rebuilt from scratch by
+# ``scripts/make_demo.py``; ``medical_demo_fresh`` is the persistent seeded demo
+# database (``scripts/seed_demo_fresh.py``). Both are local, synthetic-only.
+# ``medical_dms`` is protected and is never a permitted target.
+DEFAULT_ALLOWED_DATABASES = frozenset({"medical_demo", "medical_demo_fresh"})
 
 EXPLICIT_URL_ENV_VARS = ("ALEMBIC_DATABASE_URL", "TARGET_DB_URL")
 EXPLICIT_NAME_ENV_VARS = ("TARGET_DB", "ALEMBIC_TARGET_DB", "ALEMBIC_TARGET_DATABASE")

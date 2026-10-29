@@ -38,7 +38,7 @@ Scope of VERIFIED here: the named local API/control and real PostgreSQL tests, n
 | 9 | Persisted sell-through tracking | MISSING | No backend sell-through storage/router found in `app/`; browser-only visit prototype is not persistence |
 | 10 | Customer stock-visit workflow | PARTIAL | Existing PWA prototype; persisted, authorized backend workflow missing |
 | 11 | Automatic sell-through calculation | PARTIAL | Existing prototype formula; server persistence/reconciliation remains missing |
-| 12 | Explicit returns | PARTIAL | `app/returns/router.py`, `tests/test_returns.py`; non-finite rejection now covered; full return-accounting policy is not invented here |
+| 12 | Explicit returns | PARTIAL | Owner-approved 1a: quarantined physical intake, no saleable restock; documented verified issue-cost snapshots and legacy `cost_unverified` flags. Native proof/receipt required by `docs/PROGRESS_CHECKLIST.md`. Approval, settlement, balanced journals and live VAT remain deferred/gated, not completed returns accounting. |
 | 13 | Sales targets | VERIFIED | `app/sales/target_router.py`, `target_repo.py`, `tests/test_sales_targets.py`; existing approved monthly/unit scope |
 | 14 | Stock cover | VERIFIED | `app/inventory/service.py::cover_report`, `tests/test_inventory_cover.py`; ledger-only computation |
 | 15 | Overstock alerts | VERIFIED | Same cover report plus approved inventory-policy settings; no invented sales history |

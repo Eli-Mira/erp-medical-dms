@@ -76,6 +76,7 @@ class MovementOut(BaseModel):
     movement_type: str
     quantity: Decimal
     unit_cost: Decimal | None
+    cost_status: Literal["cost_unverified", "cost_verified"]
     source_type: str | None
     source_id: UUID | None
     note: str | None

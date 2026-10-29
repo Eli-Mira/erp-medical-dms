@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 from app.auth.repo import log_audit
 from app.auth.router import get_current_user
 from app.db import get_db
-from app.inventory import service as inv_service
 
 router = APIRouter(prefix="/returns", tags=["returns"])
 Db = Annotated[Session, Depends(get_db)]
@@ -72,28 +71,29 @@ def create_return(payload: dict, request: Request, db: Db, current: CurrentUser)
                          {"id": invoice}).scalar()
         if not inv:
             raise HTTPException(422, "invoice not found")
-    rid = db.execute(
-        text("""INSERT INTO sales.sales_return
-            (customer_id, product_id, warehouse_id, batch_id, quantity,
-             return_date, reason, invoice_id, created_by)
-            VALUES (:c, :p, :w, :b, :q, :rd, :reason, :inv, :actor)
-            RETURNING id"""),
-        {"c": customer, "p": product, "w": warehouse, "b": batch, "q": q,
-         "rd": rdate, "reason": reason, "inv": invoice, "actor": current["id"]},
-    ).scalar()
-    # Increase warehouse stock via an explicit 'return' movement.
-    inv_service.record_movement(db, actor_id=current["id"], warehouse_id=warehouse,
-                               product_id=product, batch_id=batch,
-                               movement_type="return", quantity=q,
-                               note=reason, source_type="return", source_id=rid)
-    log_audit(db, current["id"], "created", "sales_return", rid, None,
-              {"customer": customer, "product": product, "warehouse": warehouse,
-               "quantity": str(q), "return_date": rdate},
-              ip_address=_host(request), user_agent=request.headers.get("user-agent"))
-    db.commit()
-    return {"id": str(rid), "customer_id": customer, "product_id": product,
-            "warehouse_id": warehouse, "batch_id": batch, "quantity": str(q),
-            "return_date": rdate, "reason": reason}
+    try:
+        rid = db.execute(
+            text("""INSERT INTO sales.sales_return
+                (customer_id, product_id, warehouse_id, batch_id, quantity,
+                 return_date, reason, invoice_id, created_by, status)
+                VALUES (:c, :p, :w, :b, :q, :rd, :reason, :inv, :actor, 'quarantined')
+                RETURNING id"""),
+            {"c": customer, "p": product, "w": warehouse, "b": batch, "q": q,
+             "rd": rdate, "reason": reason, "inv": invoice, "actor": current["id"]},
+        ).scalar()
+        # Intake records physical custody only; approval/release is deferred.
+        log_audit(db, current["id"], "created", "sales_return", rid, None,
+                  {"customer": customer, "product": product, "warehouse": warehouse,
+                   "quantity": str(q), "return_date": rdate, "status": "quarantined"},
+                  ip_address=_host(request), user_agent=request.headers.get("user-agent"))
+        result = {"id": str(rid), "customer_id": customer, "product_id": product,
+                "warehouse_id": warehouse, "batch_id": batch, "quantity": str(q),
+                "return_date": rdate, "reason": reason, "status": "quarantined"}
+        db.commit()
+        return result
+    except Exception:
+        db.rollback()
+        raise
 
 
 @router.get("")

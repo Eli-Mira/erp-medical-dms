@@ -45,6 +45,12 @@ class DraftUpdate(DraftIn):
     version: Annotated[int, Field(ge=1, strict=True)]
 
 
+class VerifiedCostIn(InputModel):
+    version: Annotated[int, Field(ge=1, strict=True)]
+    unit_cost: Money
+    evidence_ref: Annotated[str, Field(min_length=1, max_length=240)]
+
+
 class VoidIn(InputModel):
     version: Annotated[int, Field(ge=1, strict=True)]
     reason_id: UUID

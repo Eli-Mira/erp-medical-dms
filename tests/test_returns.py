@@ -1,4 +1,4 @@
-"""Sales returns: explicit return transaction + stock increase."""
+"""Physical return intake stays quarantined, not saleable or financially posted."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,7 +9,7 @@ from app.main import app
 pytest_plugins = ["test_invoice_api"]
 
 
-def test_return_increases_warehouse_stock(invoice_env):
+def test_return_stays_quarantined_without_increasing_saleable_stock(invoice_env):
     client, _db, ids, _payload, headers = invoice_env
     assert client.post("/inventory/movements", headers=headers("owner"),
                        json={"warehouse_id": str(ids["warehouse"]),
@@ -28,9 +28,10 @@ def test_return_increases_warehouse_stock(invoice_env):
     assert body.status_code == 201, body.text
     stock = client.get(f"/inventory/stock?warehouse_id={ids['warehouse']}",
                        headers=headers("owner")).json()
-    assert stock[0]["quantity"] == "13.000"
+    assert stock[0]["quantity"] == "10.000"
     rows = client.get("/returns", headers=headers("owner")).json()
     assert len(rows) == 1 and rows[0]["reason"] == "damaged"
+    assert rows[0]["status"] == "quarantined"
 
 
 def test_return_missing_fields(invoice_env):

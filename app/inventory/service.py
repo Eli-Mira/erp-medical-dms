@@ -66,6 +66,7 @@ def record_movement(
     note=None,
     invoice_line_id=None,
     reverses_movement_id=None,
+    cost_status="cost_unverified",
 ):
     """Append a movement and update its balance in the caller's transaction."""
     balance = _apply_balance(db, warehouse_id, product_id, batch_id, quantity)
@@ -73,8 +74,8 @@ def record_movement(
         text("""
         INSERT INTO inventory.stock_movement
             (warehouse_id, product_id, batch_id, movement_type, quantity,
-             unit_cost, source_type, source_id, note, created_by, invoice_line_id, reverses_movement_id)
-        VALUES (:w, :p, :b, :mt, :q, :uc, :st, :sid, :note, :actor, :line, :reverses)
+             unit_cost, source_type, source_id, note, created_by, invoice_line_id, reverses_movement_id, cost_status)
+        VALUES (:w, :p, :b, :mt, :q, :uc, :st, :sid, :note, :actor, :line, :reverses, :cost_status)
         RETURNING id
     """),
         {
@@ -90,6 +91,7 @@ def record_movement(
             "actor": actor_id,
             "line": invoice_line_id,
             "reverses": reverses_movement_id,
+            "cost_status": cost_status,
         },
     ).scalar_one()
     return movement_id, balance

@@ -19,14 +19,14 @@ def test_missing_configuration_is_rejected():
 def test_medical_dms_is_refused_before_connecting():
     with pytest.raises(TargetingError, match="protected"):
         resolve_target_url(
-            "postgresql+psycopg://dms:dms-dev@localhost:5432/medical_dms",
+            "postgresql+psycopg://localhost:5432/medical_dms",
             env={},
         )
 
 
 def test_explicit_disposable_target_wins():
-    env = {"ALEMBIC_DATABASE_URL": "postgresql+psycopg://dms:dms-dev@localhost:5432/dms_cycle_test_" + "a" * 32}
-    url = resolve_target_url("postgresql+psycopg://dms:dms-dev@localhost:5432/medical_dms", env=env)
+    env = {"ALEMBIC_DATABASE_URL": "postgresql+psycopg://localhost:5432/dms_cycle_test_" + "a" * 32}
+    url = resolve_target_url("postgresql+psycopg://localhost:5432/medical_dms", env=env)
     from sqlalchemy.engine.url import make_url
 
     assert make_url(url).database == "dms_cycle_test_" + "a" * 32
@@ -34,36 +34,52 @@ def test_explicit_disposable_target_wins():
 
 def test_conflicting_explicit_urls_are_rejected():
     env = {
-        "ALEMBIC_DATABASE_URL": "postgresql+psycopg://dms:dms-dev@localhost:5432/dms_cycle_test_" + "a" * 32,
-        "TARGET_DB_URL": "postgresql+psycopg://dms:dms-dev@localhost:5432/dms_cycle_test_" + "b" * 32,
+        "ALEMBIC_DATABASE_URL": "postgresql+psycopg://localhost:5432/dms_cycle_test_" + "a" * 32,
+        "TARGET_DB_URL": "postgresql+psycopg://localhost:5432/dms_cycle_test_" + "b" * 32,
     }
     with pytest.raises(TargetingError, match="conflicting"):
-        resolve_target_url("postgresql+psycopg://dms:dms-dev@localhost:5432/medical_dms", env=env)
+        resolve_target_url("postgresql+psycopg://localhost:5432/medical_dms", env=env)
 
 
 def test_target_db_name_conflicts_with_explicit_url():
     env = {
-        "ALEMBIC_DATABASE_URL": "postgresql+psycopg://dms:dms-dev@localhost:5432/dms_cycle_test_" + "a" * 32,
+        "ALEMBIC_DATABASE_URL": "postgresql+psycopg://localhost:5432/dms_cycle_test_" + "a" * 32,
         "TARGET_DB": "dms_cycle_test_" + "b" * 32,
     }
     with pytest.raises(TargetingError, match="conflicting"):
-        resolve_target_url("postgresql+psycopg://dms:dms-dev@localhost:5432/medical_dms", env=env)
+        resolve_target_url("postgresql+psycopg://localhost:5432/medical_dms", env=env)
 
 
 def test_target_db_name_derives_from_configuration():
     name = "dms_cycle_test_" + "c" * 32
     env = {"TARGET_DB": name}
-    url = resolve_target_url("postgresql+psycopg://dms:dms-dev@localhost:5432/medical_dms", env=env)
+    url = resolve_target_url("postgresql+psycopg://localhost:5432/medical_dms", env=env)
     from sqlalchemy.engine.url import make_url
 
     assert make_url(url).database == name
 
 
 def test_medical_demo_is_allowed():
-    url = validate_target_url("postgresql+psycopg://dms:dms-dev@localhost:5432/medical_demo")
+    url = validate_target_url("postgresql+psycopg://localhost:5432/medical_demo")
     from sqlalchemy.engine.url import make_url
 
     assert make_url(url).database == "medical_demo"
+
+
+def test_medical_demo_fresh_is_allowed():
+    url = validate_target_url(
+        "postgresql+psycopg://localhost:5432/medical_demo_fresh"
+    )
+    from sqlalchemy.engine.url import make_url
+
+    assert make_url(url).database == "medical_demo_fresh"
+
+
+def test_unknown_database_is_still_rejected():
+    with pytest.raises(TargetingError, match="not an approved migration target"):
+        validate_target_url(
+            "postgresql+psycopg://localhost:5432/medical_demo_scratch"
+        )
 
 
 def test_connected_database_mismatch_is_rejected():
@@ -82,7 +98,7 @@ def test_connected_database_mismatch_is_rejected():
 def test_connected_database_matches_real_disposable_database():
     db_name = "dms_cycle_test_" + "e" * 32
     base_url = os.environ.get(
-        "DATABASE_URL", "postgresql+psycopg://dms:dms-dev@localhost:5432/postgres"
+        "DATABASE_URL", "postgresql+psycopg://localhost:5432/postgres"
     )
     base = create_engine(base_url)
     admin_url = base.url.set(database="postgres")

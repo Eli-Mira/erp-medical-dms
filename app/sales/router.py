@@ -23,6 +23,7 @@ from app.sales.schemas import (
     InvoiceListOut,
     InvoiceOut,
     InvoiceReportOut,
+    VerifiedCostIn,
     VoidIn,
 )
 
@@ -442,6 +443,87 @@ def update_invoice(
         repo.insert_lines(db, invoice_id, lines)
         result = InvoiceOut.model_validate(repo.fetch_invoice(db, invoice_id))
         _audit(db, request, current, "modified", old, result)
+        db.commit()
+        return result
+    except IntegrityError as error:
+        _integrity_error(db, error)
+    except Exception:
+        db.rollback()
+        raise
+
+
+@router.post("/{invoice_id}/lines/{line_id}/verified-cost")
+def verify_line_cost(
+    invoice_id: UUID,
+    line_id: UUID,
+    payload: VerifiedCostIn,
+    request: Request,
+    db: Db,
+    current: CurrentUser,
+):
+    if _role(current) not in {"owner", "finance"}:
+        raise HTTPException(403, "Cost verification requires Owner or Finance")
+    try:
+        invoice = _invoice(db, current, invoice_id, lock=True)
+        _editable(invoice, payload.version)
+        line = next((row for row in invoice["lines"] if row["id"] == line_id), None)
+        if line is None:
+            raise HTTPException(404, "Invoice line not found")
+        old = {
+            "unit_cost": str(line["verified_unit_cost"])
+            if line["verified_unit_cost"] is not None
+            else None,
+            "evidence_ref": line["cost_evidence_ref"],
+            "verified_by": str(line["cost_verified_by"])
+            if line["cost_verified_by"]
+            else None,
+            "verified_at": line["cost_verified_at"].isoformat()
+            if line["cost_verified_at"]
+            else None,
+        }
+        verified_at = db.execute(
+            text("""
+            UPDATE sales.sales_invoice_line
+            SET verified_unit_cost=:cost, cost_evidence_ref=:ref,
+                cost_verified_by=:actor, cost_verified_at=now()
+            WHERE id=:line AND invoice_id=:invoice
+            RETURNING cost_verified_at
+        """),
+            {
+                "cost": payload.unit_cost,
+                "ref": payload.evidence_ref,
+                "actor": current["id"],
+                "line": line_id,
+                "invoice": invoice_id,
+            },
+        ).scalar_one()
+        version = db.execute(
+            text("""
+            UPDATE sales.sales_invoice SET version=version+1, updated_by=:actor, updated_at=now()
+            WHERE id=:id RETURNING version
+        """),
+            {"actor": current["id"], "id": invoice_id},
+        ).scalar_one()
+        result = {
+            "invoice_id": str(invoice_id),
+            "line_id": str(line_id),
+            "unit_cost": format(payload.unit_cost, ".2f"),
+            "evidence_ref": payload.evidence_ref,
+            "cost_status": "cost_verified",
+            "verified_by": str(current["id"]),
+            "verified_at": verified_at.isoformat(),
+            "version": version,
+        }
+        log_audit(
+            db,
+            current["id"],
+            "cost_verified",
+            "sales_invoice_line",
+            line_id,
+            old,
+            result,
+            user_agent=request.headers.get("user-agent", "")[:1000],
+        )
         db.commit()
         return result
     except IntegrityError as error:
