@@ -14,8 +14,8 @@ Updated2026-10-30. The owner accepts existing evidence for14 legacy DONE rows; a
 |---|---|
 | CORE.03 — Beta pending | The full posting cycle and default409 now pass; draft/reopen/print browser proof, visible Beta labeling and final source-bound review/commit are still open. |
 | CORE.04 — Beta pending | The partial/final collection/void/AR cycle and ordinary409 now pass; staff balance/history browser proof, Beta labeling and final review/commit remain open. |
-| 2B.7 — Beta pending | FEFO/batch and expiry-warning APIs exist, but there is no tested staff near-expiry warning/filter workflow. |
-| CORE.05 — Beta pending | A real management-summary screen already binds the API; role/date/drill-down behavior lacks end-to-end beta acceptance. |
+| 2B.7 — Beta gate verified | Real near-expiry filter, exclusions, scoped roles, reload, empty/error/recovery and Arabic/English mobile/desktop paths pass the contained browser gate. This is read-only warning/filter functionality, not an inventory write workflow or physical-device acceptance. |
+| CORE.05 — Beta gate verified | Real sales/collections/AR/stock KPIs, explicit report date, drilldowns, scope and error/recovery pass the contained browser gate. Only supported metrics are displayed; normal invoice/collection posting remains disabled. |
 | CORE.10 — Beta pending | Final canonical-seed contained/local E2E and applicable final-source reviews remain open. Public HTTPS is explicitly Phase2 step3, not a Beta prerequisite. |
 | 2B.17 — Beta pending | Persisted product links are displayed, but staff cannot create/reopen product-linked spend through a tested form. |
 | 2B.16 — Beta pending | Spend is read-only in the UI; KOL/territory selection, editing and verified scope are incomplete. |
@@ -35,6 +35,8 @@ Updated2026-10-30. The owner accepts existing evidence for14 legacy DONE rows; a
 - Hosting Beta closes with contained/local E2E plus applicable SPEC/QUALITY/SECURITY and automatic LICENSE gates. Public HTTPS, public access-gate/rate-limit checks and opening the tunnel remain Phase2 step3; the owner decides the domain. No tunnel is opened for Beta closure.
 
 ## Scope and proof limits
+
+- Expiry/dashboard receipt: orchestration evidence/speedup-20261030/ui-browser-05 (33/33 real-HTTP/PG/browser cases, Arabic/English at390/1440); ui-roles-green-01 adds15/15 contained function controls, including the unchanged backend-role boundary. Earlier failed harness attempts remain preserved. Final source-bound review/commit is tracked in the orchestration board, not inferred from this table.
 
 - Accepted Beta screens must visibly show **Beta**. The14 legacy DONE rows' existing evidence is owner-accepted; labels only, no re-reconciliation. No PARTIAL row is accepted by changing its label.
 - Browser emulation is not physical-device acceptance. Existing zero-quantity source assertions are not print-media/output proof; browser print is not server-PDF support. Online PWA evidence is not offline write/sync.

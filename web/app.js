@@ -321,7 +321,7 @@
     visits: ["owner", "medical_rep", "sales_manager", "district_manager", "read_only_auditor"],
     settings: ["owner", "finance"], audit: ["owner", "finance"],
     alerts: ["*"], import: ["owner", "finance"], pwa: ["*"],
-    reference: ["owner", "finance"], batches: ["owner", "finance"],
+    reference: ["owner", "finance"], batches: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
     representatives: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
     uom: ["owner", "finance"], credit: ["owner", "finance", "sales_manager"],
     routing: ["owner", "medical_rep", "sales_manager"],
