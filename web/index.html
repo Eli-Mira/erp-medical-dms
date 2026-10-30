@@ -100,10 +100,10 @@
         <span class="glyph" aria-hidden="true">🩺</span><span data-i18n="nav_doctors">أطباء/KOL</span>
       </button>
       <button type="button" class="nav-item sub" data-view="brandspend" data-roles="owner,finance">
-        <span class="glyph" aria-hidden="true">🏷️</span><span data-i18n="nav_brandspend">إنفاق المنتجات/العلامات</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">🏷️</span><span data-i18n="nav_brandspend">إنفاق المنتجات/العلامات</span><span class="badge">Beta</span>
       </button>
       <button type="button" class="nav-item sub" data-view="objectives" data-roles="owner,finance,sales_manager">
-        <span class="glyph" aria-hidden="true">🎯</span><span data-i18n="nav_objectives">الأهداف وKPI</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">🎯</span><span data-i18n="nav_objectives">الأهداف وKPI</span><span class="badge">Beta</span>
       </button>
       <button type="button" class="nav-item sub" data-view="suppliers" data-roles="owner,finance,read_only_auditor">
         <span class="glyph" aria-hidden="true">🚚</span><span data-i18n="nav_suppliers">المورّدون</span>
@@ -1123,13 +1123,14 @@
       <section id="marketing-view" class="hidden" aria-labelledby="marketing-title">
         <div class="view-head">
           <div class="titles">
-            <h1 id="marketing-title" data-i18n="marketing_title">التسويق</h1>
+            <h1 id="marketing-title"><span data-i18n="marketing_title">التسويق</span> <span class="badge">Beta</span></h1>
             <p class="desc" data-i18n="marketing_desc">المصروفات التسويقية والأهداف (بيانات فعلية).</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
           <button type="button" class="default" data-refresh="marketing" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="marketing-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div id="marketing-editor"></div>
         <div class="table-wrap">
           <table class="grid-table">
             <thead><tr>

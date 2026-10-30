@@ -8,6 +8,27 @@ Updated2026-10-30. The owner accepts existing evidence for14 legacy DONE rows; a
 - Beta remains alongside Excel, not accountant-approved real financial operation. Money is Decimal/EGP; no guessed VAT/cost/accounting mappings or unbalanced journals.
 - The owner seed and14 exact C1 files are integrated in local beta checkpoint54ea1e78b7eec5eb38c32d49a59a674c8709c5ec, with29 native cases, repeat-seed and clean0021 chain evidence revalidated; SPEC/QUALITY/SECURITY PASS plus automatic LICENSE PASS. Quarantine staff browser proof is still open; this checkpoint is not full-row acceptance.
 
+## Accepted legacy rows — Beta scope and limits
+
+Owner accepts these existing14 rows without re-reconciliation. Each is a Beta feature alongside Excel, not production-release approval.
+
+| Row | Beta entry / retained limit |
+|---|---|
+| 2B.1 — Beta accepted | Territory and source warehouse remain separate; existing routing evidence is owner-accepted, not re-reconciled. |
+| 2B.2 — Beta accepted | Warehouse routing never grants user access; explicit branch grants remain authoritative. |
+| 2B.4 — Beta accepted | Zero-quantity print rules retain accepted legacy evidence; physical printer and server-PDF acceptance are not implied. |
+| 2B.5 — Beta accepted | Server-calculated per-line VAT uses exact amounts; production rounding/exemption policy still needs accountant approval. |
+| 2B.6 — Beta accepted | Batch identities/expiry/metadata are preserved; physical inventory acceptance is not implied. |
+| 2B.8 — Beta accepted | Sell-in is stored separately from customer sell-through; ordinary financial posting remains OFF. |
+| 2B.9 — Beta accepted | Customer-held stock and sell-through persist online; no offline synchronization is claimed. |
+| 2B.10 — Beta accepted | Online customer stock visits are accepted; offline writes, full edit CRUD and physical-device UAT remain excluded. |
+| 2B.11 — Beta accepted | Sell-through is calculated and checked by server/database; no invented delivery or return mappings. |
+| 2B.13 — Beta accepted | Existing representative/month/product target read/upsert scope only; territory-target UI expansion is not claimed. |
+| 2B.14 — Beta accepted | Stock cover uses the configured sales window; absent sales history stays unknown, not a fabricated rate. |
+| 2B.15 — Beta accepted | On-read overstock alerts use configured policy; scheduled Telegram delivery is a separate open feature. |
+| CORE.01 — Beta accepted | Existing customer lifecycle/scoped UI is accepted; bulk Excel import remains separate and open. |
+| CORE.08 — Beta accepted | Existing browser printing is accepted at legacy scope; no server PDF or physical-printer certification. |
+
 ## Pending Beta workflows — not accepted as-is
 
 | Row | Current gap |
@@ -17,9 +38,9 @@ Updated2026-10-30. The owner accepts existing evidence for14 legacy DONE rows; a
 | 2B.7 — Beta gate verified | Real near-expiry filter, exclusions, scoped roles, reload, empty/error/recovery and Arabic/English mobile/desktop paths pass the contained browser gate. This is read-only warning/filter functionality, not an inventory write workflow or physical-device acceptance. |
 | CORE.05 — Beta gate verified | Real sales/collections/AR/stock KPIs, explicit report date, drilldowns, scope and error/recovery pass the contained browser gate. Only supported metrics are displayed; normal invoice/collection posting remains disabled. |
 | CORE.10 — Beta pending | Final canonical-seed contained/local E2E and applicable final-source reviews remain open. Public HTTPS is explicitly Phase2 step3, not a Beta prerequisite. |
-| 2B.17 — Beta pending | Persisted product links are displayed, but staff cannot create/reopen product-linked spend through a tested form. |
-| 2B.16 — Beta pending | Spend is read-only in the UI; KOL/territory selection, editing and verified scope are incomplete. |
-| 2B.18 — Beta pending | The server stores objective/KPI/result/follow-up, but the PWA lacks real list/create/update binding. |
+| 2B.17 — Beta candidate gates verified | Real UUID product links can be selected, saved and reopened; pending lookups preserve current selection. Single-browser duplicate-submit protection only; cross-client persisted idempotency is excluded. Independent corrected-source review/integration still controls acceptance. |
+| 2B.16 — Beta candidate gates verified | Current authorized owner/finance/sales-manager create/edit/reopen spend with existing scope and exact Decimal strings; finance doctor-reference denial is preserved rather than widened. Null-reference scope retains prior semantics. Actor audit is atomic. Independent corrected-source review/integration still controls acceptance. |
+| 2B.18 — Beta candidate gates verified | Real objective/KPI/result/follow-up create/edit/reopen, per-kind list/detail generation guards and session teardown are tested. Spend and objective remain separate transactions; no fabricated ROI or persisted ABA-proof revision. Independent corrected-source review/integration still controls acceptance. |
 | 2B.3 — Beta pending | The atomic, batch-preserving backend exists; the shipped PWA is a transfer read list without a verified create workflow. |
 | CORE.02 — Beta gate verified | Confirmed active owners can create with explicit exact price/VAT, edit names, search, soft deactivate/reactivate and reopen. Existing staff catalog access is unchanged; staff maintenance rights, later price/VAT editing, tax-policy expansion and physical-device acceptance are excluded. |
 | 2B.12 — Beta pending | Exact C1 source is now ported into beta WIP and the0021 chain passes; staff quarantine intake/browser proof and final combined acceptance/commit remain open. |
@@ -43,3 +64,5 @@ Updated2026-10-30. The owner accepts existing evidence for14 legacy DONE rows; a
 - Accepted Beta screens must visibly show **Beta**. The14 legacy DONE rows' existing evidence is owner-accepted; labels only, no re-reconciliation. No PARTIAL row is accepted by changing its label.
 - Browser emulation is not physical-device acceptance. Existing zero-quantity source assertions are not print-media/output proof; browser print is not server-PDF support. Online PWA evidence is not offline write/sync.
 - Dashboard Beta reuses genuine supported sales/collections/AR/stock-alert KPIs; no fabricated profit/ROI. WhatsApp, OCR/new server-PDF dependencies, deferred history cleanup and generic post-beta hardening are not silently included in the28-row milestone.
+
+- Marketing final-candidate proof:28 focused/50 neighboring real-PG controls,6 ordinary browser cases and10 genuine held-response browser regressions, all passing on source03. Failed reviews01/02, async RED02 (0/10) and12 U+0000 create/update assertion failures remain preserved. NUL input now receives422 before SQL with unchanged business/link/audit rows. This is not an integrated acceptance or full-suite claim. Arabic390/English1440 application/session tests disable service workers; no installed-PWA/offline/device acceptance. Async selection, type/open ordering, refresh/save and old-owner-success after scoped login are exercised.
