@@ -2321,23 +2321,184 @@
     }
   }
 
-  function loadProducts() {
+  var productEditing = null;
+  var productSaving = false;
+  var productLoadGeneration = 0;
+
+  function resetProductMaintenance() {
+    ++productLoadGeneration;
+    productEditing = null;
+    productSaving = false;
+    $("product-form").reset();
+    $("product-form").classList.add("hidden");
+    $("product-fields").disabled = false;
+    $("product-search").value = "";
+    $("product-maintenance").classList.add("hidden");
+    $("product-status-head").classList.add("hidden");
+    $("product-actions-head").classList.add("hidden");
+    el.productRows.replaceChildren();
     clearError(el.productsError);
-    var labels = { s: t("code"), n: t("product"), p: t("base_price"), v: t("vat_pct") };
-    return api("/master/products").then(function (rows) {
+    clearError($("products-notice"));
+  }
+
+  function openProductForm(row) {
+    if (!isOwnerUser(state.user) || productSaving) return;
+    productEditing = row || null;
+    $("product-form").reset();
+    $("product-sku").disabled = !!row;
+    $("product-sku").value = row ? row.sku : "";
+    $("product-name-ar").value = row ? row.name_ar : "";
+    $("product-name-en").value = row ? row.name_en || "" : "";
+    $("product-base-price").value = row ? String(row.base_price) : "";
+    $("product-vat-rate").value = row ? String(row.vat_rate) : "";
+    $("product-base-price").disabled = !!row;
+    $("product-vat-rate").disabled = !!row;
+    $("product-form").classList.remove("hidden");
+    clearError(el.productsError);
+    clearError($("products-notice"));
+    $(row ? "product-name-ar" : "product-sku").focus();
+  }
+
+  async function refreshProductData(saved) {
+    // A confirmed mutation must update choices even if the directory readback fails.
+    state.products = state.products.filter(function (row) { return row.id !== saved.id; });
+    if (saved.is_active) state.products.push(saved);
+    refreshProductSelects();
+    var visitSelection = el.visitProduct.value;
+    fillSelect(el.visitProduct, state.products, productLabel, "select_product");
+    el.visitProduct.value = visitSelection;
+    await loadProducts();
+  }
+
+  async function changeProductActivity(row, button) {
+    if (button.disabled || productSaving || !isOwnerUser(state.user)) return;
+    if (!window.confirm(t(row.is_active ? "product_confirm_deactivate" : "product_confirm_activate"))) return;
+    var requestToken = state.token;
+    productSaving = true;
+    button.disabled = true;
+    $("product-fields").disabled = true;
+    clearError(el.productsError);
+    try {
+      var saved = await api("/master/products/" + encodeURIComponent(row.id) + (row.is_active ? "" : "/activate"),
+        { method: row.is_active ? "DELETE" : "PATCH" });
+      if (state.token !== requestToken) return;
+      productEditing = null;
+      $("product-form").classList.add("hidden");
+      showNotice($("products-notice"), t("product_saved"), "success");
+      await refreshProductData(saved || Object.assign({}, row, { is_active: false }));
+    } catch (error) {
+      if (state.token === requestToken) showError(el.productsError, messageFor(error));
+    } finally {
+      if (state.token === requestToken) {
+        productSaving = false;
+        button.disabled = false;
+        $("product-fields").disabled = false;
+      }
+    }
+  }
+
+  async function loadProducts() {
+    var requestToken = state.token;
+    var generation = ++productLoadGeneration;
+    var owner = isOwnerUser(state.user);
+    $("product-maintenance").classList.toggle("hidden", !owner);
+    $("product-status-head").classList.toggle("hidden", !owner);
+    $("product-actions-head").classList.toggle("hidden", !owner);
+    clearError(el.productsError);
+    el.productRows.replaceChildren();
+    try {
+      var path = owner ? "/master/products-maintenance?limit=500&q=" + encodeURIComponent($("product-search").value) : "/master/products";
+      var rows = await api(path);
+      if (state.token !== requestToken || generation !== productLoadGeneration) return;
       renderRows(el.productRows, rows, function (row) {
         var tr = document.createElement("tr");
-        tr.appendChild(cell(labels.s, row.sku, false, true));
-        tr.appendChild(cell(labels.n, row.name_ar || row.name_en || row.sku));
-        tr.appendChild(cell(labels.p, fmt(row.base_price), true));
-        tr.appendChild(cell(labels.v, fmtQty(Number(row.vat_rate)) + " %", true));
+        tr.setAttribute("data-product-id", row.id);
+        tr.appendChild(cell(t("code"), row.sku, false, true));
+        tr.appendChild(cell(t("product"), row.name_ar || row.name_en || row.sku));
+        tr.appendChild(cell(t("base_price"), String(row.base_price), true));
+        tr.appendChild(cell(t("vat_pct"), String(row.vat_rate) + " %", true));
+        if (owner) {
+          tr.appendChild(cell(t("status"), t(row.is_active ? "active" : "customer_inactive")));
+          var actions = document.createElement("td");
+          actions.setAttribute("data-label", t("customer_actions"));
+          var edit = node("button", "default", t("product_edit"));
+          edit.type = "button";
+          edit.addEventListener("click", function () { openProductForm(row); });
+          var activity = node("button", "default", t(row.is_active ? "product_deactivate" : "product_activate"));
+          activity.type = "button";
+          activity.addEventListener("click", function () { changeProductActivity(row, activity); });
+          actions.appendChild(edit); actions.appendChild(activity); tr.appendChild(actions);
+        }
         return tr;
       });
-      if (!rows.length) emptyRow(el.productRows, 4, "empty_rows");
-    }).catch(function (error) {
-      renderRows(el.productRows, [], function () { return null; });
-      emptyRow(el.productRows, 4, "empty_rows");
+      if (!rows.length) emptyRow(el.productRows, owner ? 6 : 4, "empty_rows");
+    } catch (error) {
+      if (state.token !== requestToken || generation !== productLoadGeneration) return;
       showError(el.productsError, messageFor(error));
+    }
+  }
+
+  function wireProducts() {
+    var clearExistingSession = clearSession;
+    clearSession = function () {
+      resetProductMaintenance();
+      return clearExistingSession.apply(this, arguments);
+    };
+    $("product-add").addEventListener("click", function () { openProductForm(null); });
+    $("product-cancel").addEventListener("click", function () {
+      if (!productSaving) {
+        productEditing = null;
+        $("product-form").reset();
+        $("product-form").classList.add("hidden");
+        $("product-add").focus();
+      }
+    });
+    $("product-search-button").addEventListener("click", function () { if (!productSaving) loadProducts(); });
+    $("product-search").addEventListener("keydown", function (event) {
+      if (event.key === "Enter") { event.preventDefault(); if (!productSaving) loadProducts(); }
+    });
+    $("product-form").addEventListener("submit", async function (event) {
+      event.preventDefault();
+      if (productSaving || !isOwnerUser(state.user)) return;
+      var editing = productEditing;
+      var payload = { name_ar: $("product-name-ar").value.trim(), name_en: $("product-name-en").value.trim() || null };
+      if (!payload.name_ar || (!editing && !$("product-sku").value.trim())) {
+        showError(el.productsError, t("product_required")); return;
+      }
+      if (!editing) {
+        payload.sku = $("product-sku").value.trim();
+        payload.base_price = $("product-base-price").value.trim();
+        payload.vat_rate = $("product-vat-rate").value.trim();
+        if (!/^[0-9]{1,10}(\.[0-9]{1,2})?$/.test(payload.base_price) ||
+            !/^[0-9]{1,3}(\.[0-9]{1,2})?$/.test(payload.vat_rate) ||
+            Number(payload.vat_rate) > 100) {
+          showError(el.productsError, t("product_decimal_hint")); return;
+        }
+      }
+      var requestToken = state.token;
+      var path = "/master/products" + (editing ? "/" + encodeURIComponent(editing.id) : "");
+      productSaving = true;
+      ++productLoadGeneration;
+      $("product-fields").disabled = true;
+      clearError(el.productsError);
+      try {
+        var saved = await api(path, { method: editing ? "PATCH" : "POST", body: payload });
+        if (state.token !== requestToken) return;
+        productEditing = null;
+        $("product-form").reset();
+        $("product-form").classList.add("hidden");
+        showNotice($("products-notice"), t("product_saved"), "success");
+        await refreshProductData(saved);
+        if (state.token === requestToken) $("product-add").focus();
+      } catch (error) {
+        if (state.token === requestToken) showError(el.productsError,
+          error.data && error.data.detail === "Product SKU already exists" ? t("product_duplicate") : messageFor(error));
+      } finally {
+        if (state.token === requestToken) {
+          productSaving = false;
+          $("product-fields").disabled = false;
+        }
+      }
     });
   }
 
@@ -3515,6 +3676,7 @@
       el.loginDemo.classList.remove("hidden");
     }
     wire();
+    wireProducts();
     addLine();
     updateVisitCalc();
     renderVisits();

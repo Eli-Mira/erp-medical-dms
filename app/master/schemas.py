@@ -113,6 +113,65 @@ class ProductOut(BaseModel):
     vat_rate: Decimal
 
 
+class ProductIn(BaseModel):
+    """Explicit owner-entered catalog values; no inferred financial defaults."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    sku: str = Field(min_length=1, max_length=50)
+    name_ar: str = Field(min_length=1, max_length=200)
+    name_en: str | None = Field(default=None, max_length=200)
+    base_price: Decimal = Field(
+        ge=0, max_digits=12, decimal_places=2, allow_inf_nan=False
+    )
+    vat_rate: Decimal = Field(
+        ge=0, le=100, max_digits=5, decimal_places=2, allow_inf_nan=False
+    )
+
+    @field_validator("base_price", "vat_rate", mode="before")
+    @classmethod
+    def reject_inexact_inputs(cls, value):
+        if isinstance(value, (bool, float)):
+            # Pydantic converts ValueError to HTTP422; TypeError would escape validation.
+            raise ValueError("Use a decimal string or integer, not a float or boolean")  # noqa: TRY004
+        return value
+
+    @field_validator("sku", "name_ar", "name_en")
+    @classmethod
+    def reject_null_characters(cls, value):
+        if value is not None and "\x00" in value:
+            raise ValueError("Product fields cannot contain null characters")
+        return value
+
+
+class ProductPatch(BaseModel):
+    """Identity edits only; SKU, prices, VAT and activity use no ordinary patch."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    name_ar: str | None = Field(default=None, min_length=1, max_length=200)
+    name_en: str | None = Field(default=None, max_length=200)
+
+    @field_validator("name_ar", "name_en")
+    @classmethod
+    def reject_null_characters(cls, value):
+        if value is not None and "\x00" in value:
+            raise ValueError("Product fields cannot contain null characters")
+        return value
+
+    @model_validator(mode="after")
+    def validate_patch(self):
+        if not self.model_fields_set:
+            raise ValueError("At least one product field is required")
+        if "name_ar" in self.model_fields_set and self.name_ar is None:
+            raise ValueError("name_ar cannot be null")
+        return self
+
+
+class ProductMaintenanceOut(ProductOut):
+    is_active: bool
+
+
 class SupplierOut(BaseModel):
     id: UUID
     code: str
