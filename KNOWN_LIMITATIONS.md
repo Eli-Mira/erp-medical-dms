@@ -1,6 +1,6 @@
 # Known limitations — Beta
 
-Updated2026-10-30. The owner accepts existing evidence for14 legacy DONE rows; add Beta labels only, no re-reconciliation.14 PARTIAL rows retain their E2E gates. A Beta label does not turn an incomplete feature into completion. FEATURE_MATRIX.md owns closure order/evidence.
+Updated2026-10-30. The owner accepts existing evidence for14 legacy DONE rows; add Beta labels only, no re-reconciliation. Remaining incomplete rows retain their E2E gates. A Beta label does not turn an incomplete feature into completion. FEATURE_MATRIX.md owns current counts, closure order and evidence.
 
 ## Financial behavior
 
@@ -21,9 +21,9 @@ Updated2026-10-30. The owner accepts existing evidence for14 legacy DONE rows; a
 | 2B.16 — Beta pending | Spend is read-only in the UI; KOL/territory selection, editing and verified scope are incomplete. |
 | 2B.18 — Beta pending | The server stores objective/KPI/result/follow-up, but the PWA lacks real list/create/update binding. |
 | 2B.3 — Beta pending | The atomic, batch-preserving backend exists; the shipped PWA is a transfer read list without a verified create workflow. |
-| CORE.02 — Beta pending | Only catalog reads exist; authorized product create/edit/activation and a staff maintenance form are missing. |
+| CORE.02 — Beta gate verified | Confirmed active owners can create with explicit exact price/VAT, edit names, search, soft deactivate/reactivate and reopen. Existing staff catalog access is unchanged; staff maintenance rights, later price/VAT editing, tax-policy expansion and physical-device acceptance are excluded. |
 | 2B.12 — Beta pending | Exact C1 source is now ported into beta WIP and the0021 chain passes; staff quarantine intake/browser proof and final combined acceptance/commit remain open. |
-| CORE.06 — Beta pending | Role enforcement/audit reads exist, but owner user/role/scope administration has no complete staff end-to-end path. |
+| CORE.06 — Beta gate verified | Existing owner authority maintains current users' roles, activation and branch grants with atomic audit and session revocation; self-lockout/last-owner guards remain. No account provisioning, passwords, owner-flag/transfer or territory editing. Concurrent race drills remain hardening work; unchanged self-save currently signs out locally and the save notice can overstate a no-op's audit/revocation. |
 | CORE.09 — Beta pending | The 13 shallow unit tests pass, but SQL targets the wrong schema, signed group IDs are dropped, /help crashes, and role scope/read-only DB/log safety/live service proof are absent. |
 | CORE.07 — Beta pending | Reconciliation assertions are not a usable preview/import/reject/deduplicate/reconciliation workflow. |
 
@@ -37,6 +37,8 @@ Updated2026-10-30. The owner accepts existing evidence for14 legacy DONE rows; a
 ## Scope and proof limits
 
 - Expiry/dashboard receipt: orchestration evidence/speedup-20261030/ui-browser-05 (33/33 real-HTTP/PG/browser cases, Arabic/English at390/1440); ui-roles-green-01 adds15/15 contained function controls, including the unchanged backend-role boundary. Earlier failed harness attempts remain preserved. Final source-bound review/commit is tracked in the orchestration board, not inferred from this table.
+
+- Product/roles integration proof: product56 focused,75 neighboring PostgreSQL regressions and8 browser cases; roles41 focused,44 neighboring regressions and6 browser cases, all passing on the integrated Beta source. Counts are separate compositions with overlap, not one full suite. Independent product combined review and roles SPEC/QUALITY/SECURITY pass; automatic LICENSE checks pass. Evidence:orchestration evidence/speedup-20261030/products-roles-integrated-composition-01/. Dynamic product labels need refresh after a live language switch. Full Phase2/physical-device/public-hosting approval is not implied.
 
 - Accepted Beta screens must visibly show **Beta**. The14 legacy DONE rows' existing evidence is owner-accepted; labels only, no re-reconciliation. No PARTIAL row is accepted by changing its label.
 - Browser emulation is not physical-device acceptance. Existing zero-quantity source assertions are not print-media/output proof; browser print is not server-PDF support. Online PWA evidence is not offline write/sync.
