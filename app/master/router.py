@@ -45,7 +45,10 @@ from app.master.schemas import (
     CustomerOut,
     CustomerPatch,
     DoctorOut,
+    ProductIn,
+    ProductMaintenanceOut,
     ProductOut,
+    ProductPatch,
     SupplierIn,
     SupplierOut,
     SupplierPatch,
@@ -509,6 +512,177 @@ def list_products(
         params,
     ).mappings()
     return [ProductOut.model_validate(dict(row)) for row in rows]
+
+
+def _product_row(db, product_id: UUID, *, lock=False):
+    row = (
+        db.execute(
+            text(
+                "SELECT id, sku, name_ar, name_en, base_price, vat_rate, is_active "
+                "FROM master_data.master_product WHERE id=:id"
+                + (" FOR UPDATE" if lock else "")
+            ),
+            {"id": product_id},
+        )
+        .mappings()
+        .first()
+    )
+    if row is None:
+        raise HTTPException(404, "Product not found")
+    return dict(row)
+
+
+@router.get("/products-maintenance")
+def list_products_for_maintenance(
+    db: Db, current: CurrentUser, q: str | None = None, limit: int = LIMIT_DEFAULT
+) -> list[ProductMaintenanceOut]:
+    _require_owner(current)
+    params = {"limit": _limit(limit)}
+    where = ""
+    if q:
+        where = "WHERE (name_ar ILIKE :q OR name_en ILIKE :q OR sku ILIKE :q) "
+        params["q"] = like_pattern(q)
+    rows = db.execute(
+        text(
+            "SELECT id, sku, name_ar, name_en, base_price, vat_rate, is_active "
+            "FROM master_data.master_product "
+            + where
+            + "ORDER BY name_ar, id LIMIT :limit"
+        ),
+        params,
+    ).mappings()
+    return [ProductMaintenanceOut.model_validate(dict(row)) for row in rows]
+
+
+@router.post(
+    "/products",
+    status_code=201,
+    response_model=ProductMaintenanceOut,
+    responses={409: {"description": "Duplicate SKU"}},
+)
+def create_product(payload: ProductIn, db: Db, current: CurrentUser):
+    _require_owner(current)
+    values = {"id": uuid4(), **payload.model_dump()}
+    try:
+        db.execute(
+            text(
+                "INSERT INTO master_data.master_product "
+                "(id, sku, name_ar, name_en, base_price, vat_rate, is_active) "
+                "VALUES (:id, :sku, :name_ar, :name_en, :base_price, :vat_rate, true)"
+            ),
+            values,
+        )
+        response = ProductMaintenanceOut.model_validate(_product_row(db, values["id"]))
+        log_audit(
+            db,
+            current["id"],
+            "created",
+            "master_product",
+            values["id"],
+            None,
+            response.model_dump(mode="json"),
+        )
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        if (
+            error.orig.sqlstate == "23505"
+            and getattr(error.orig.diag, "constraint_name", None)
+            == "master_product_sku_key"
+        ):
+            raise HTTPException(409, "Product SKU already exists") from None
+        raise
+    except Exception:
+        db.rollback()
+        raise
+    return response
+
+
+@router.get("/products/{product_id}", response_model=ProductMaintenanceOut)
+def get_product(product_id: UUID, db: Db, current: CurrentUser):
+    _require_owner(current)
+    return ProductMaintenanceOut.model_validate(_product_row(db, product_id))
+
+
+@router.patch("/products/{product_id}", response_model=ProductMaintenanceOut)
+def update_product(
+    product_id: UUID, payload: ProductPatch, db: Db, current: CurrentUser
+):
+    _require_owner(current)
+    changes = payload.model_dump(exclude_unset=True)
+    try:
+        before = _product_row(db, product_id, lock=True)
+        changes = {key: value for key, value in changes.items() if before[key] != value}
+        if not changes:
+            response = ProductMaintenanceOut.model_validate(before)
+            db.rollback()
+            return response
+        assignments = ", ".join(
+            f"{key}=:{key}" for key in ("name_ar", "name_en") if key in changes
+        )
+        db.execute(
+            text(
+                "UPDATE master_data.master_product SET " + assignments + " WHERE id=:id"
+            ),
+            {"id": product_id, **changes},
+        )
+        response = ProductMaintenanceOut.model_validate(_product_row(db, product_id))
+        log_audit(
+            db,
+            current["id"],
+            "updated",
+            "master_product",
+            product_id,
+            ProductMaintenanceOut.model_validate(before).model_dump(mode="json"),
+            response.model_dump(mode="json"),
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return response
+
+
+def _set_product_activity(product_id, active, db, current):
+    _require_owner(current)
+    try:
+        before = _product_row(db, product_id, lock=True)
+        if before["is_active"] == active:
+            response = ProductMaintenanceOut.model_validate(before)
+            db.rollback()
+            return response
+        db.execute(
+            text(
+                "UPDATE master_data.master_product SET is_active=:active WHERE id=:id"
+            ),
+            {"id": product_id, "active": active},
+        )
+        response = ProductMaintenanceOut.model_validate(_product_row(db, product_id))
+        log_audit(
+            db,
+            current["id"],
+            "activated" if active else "deactivated",
+            "master_product",
+            product_id,
+            ProductMaintenanceOut.model_validate(before).model_dump(mode="json"),
+            response.model_dump(mode="json"),
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return response
+
+
+@router.delete("/products/{product_id}", status_code=204)
+def deactivate_product(product_id: UUID, db: Db, current: CurrentUser):
+    _set_product_activity(product_id, False, db, current)
+    return Response(status_code=204)
+
+
+@router.patch("/products/{product_id}/activate", response_model=ProductMaintenanceOut)
+def activate_product(product_id: UUID, db: Db, current: CurrentUser):
+    return _set_product_activity(product_id, True, db, current)
 
 
 @router.get("/suppliers")
