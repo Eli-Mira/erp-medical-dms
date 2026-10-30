@@ -396,6 +396,7 @@
   }
 
   function showView(name, fresh) {
+    if (name === "brandspend" || name === "objectives") name = "marketing";
     if (name === "__menu" || name === "draft") return;
     if (name === "login") {
       hideAllSections();
@@ -2000,7 +2001,221 @@
     }).catch(function (error) { showError(el.returnsError, messageFor(error)); });
   }
 
+  var marketingBusy = false;
+  var marketingEpoch = 0;
+  var marketingListSeq = 0;
+
+  function marketingText(key) { return t("mk_" + key); }
+
+  async function marketingEditor() {
+    var host = $("marketing-editor");
+    var token = state.token;
+    var epoch = ++marketingEpoch;
+    var user = state.user || {};
+    var writable = user.role === "finance" || user.role === "sales_manager" || (user.role === "owner" && user.is_owner);
+    var canDoctors = ["owner", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"].indexOf(user.role) !== -1;
+    host.replaceChildren();
+    var refs = await Promise.all([
+      api("/master/territories"),
+      canDoctors ? api("/master/doctors?limit=500") : Promise.resolve([])
+    ]);
+    if (token !== state.token || epoch !== marketingEpoch) return;
+    var current = null;
+    var kind = "spend";
+    var fields = {};
+    var listSeq = 0;
+    var detailSeq = 0;
+    var productSeq = 0;
+    var form = document.createElement("form");
+    var controls = document.createElement("fieldset");
+    var notice = document.createElement("p");
+    notice.setAttribute("role", "status");
+    var mode = document.createElement("select");
+    mode.setAttribute("aria-label", marketingText("record_type"));
+    [["spend", "spend"], ["objectives", "objective"]].forEach(function (pair) {
+      mode.add(new Option(marketingText(pair[1]), pair[0]));
+    });
+    host.append(mode, notice, form);
+    form.appendChild(controls);
+    function field(name, label, type) {
+      var wrapper = document.createElement("label");
+      wrapper.textContent = marketingText(label || name);
+      var input = document.createElement(type === "select" ? "select" : type === "textarea" ? "textarea" : "input");
+      if (input.tagName === "INPUT") input.type = type || "text";
+      input.name = name;
+      wrapper.appendChild(input);
+      controls.appendChild(wrapper);
+      fields[name] = input;
+      return input;
+    }
+    function options(input, rows, selected, multiple) {
+      input.replaceChildren();
+      if (!multiple) input.add(new Option("—", ""));
+      rows.forEach(function (row) {
+        var option = new Option((state.lang === "en" ? row.name_en || row.name_ar : row.name_ar) + " [" + (row.sku || row.code || row.id) + "]", row.id);
+        option.selected = selected.indexOf(row.id) !== -1;
+        input.add(option);
+      });
+      selected.forEach(function (id) {
+        if (!Array.from(input.options).some(function (option) { return option.value === id; })) {
+          var missing = new Option(id + " — " + marketingText("unavailable"), id, true, true);
+          input.add(missing);
+        }
+      });
+    }
+    function build(row) {
+      ++detailSeq;
+      ++productSeq;
+      current = row;
+      fields = {};
+      controls.replaceChildren();
+      var kol = field("kol_id", "kol", "select");
+      options(kol, refs[1], row && row.kol_id ? [row.kol_id] : [], false);
+      kol.disabled = !canDoctors;
+      if (!canDoctors) {
+        var restriction = document.createElement("p");
+        restriction.textContent = marketingText("kol_denied");
+        controls.appendChild(restriction);
+      }
+      options(field("territory_id", "territory", "select"), refs[0], row && row.territory_id ? [row.territory_id] : [], false);
+      if (kind === "spend") {
+        field("spend_date", "date", "date").required = true;
+        var amount = field("amount", "amount", "number");
+        amount.min = "0"; amount.max = "999999999999.99"; amount.step = "0.01"; amount.required = true;
+        var activity = field("activity_type", "activity");
+        activity.required = true; activity.maxLength = 40;
+        field("notes", "notes", "textarea");
+      } else {
+        var spend = field("spend_id", "spend", "select");
+        options(spend, marketingSpendChoices.map(function (r) { return {id: r.id, name_ar: r.spend_date + " " + r.activity_type, name_en: r.spend_date + " " + r.activity_type}; }), row && row.spend_id ? [row.spend_id] : [], false);
+        field("objective", "objective", "textarea").required = true;
+        field("expected_kpi", "kpi", "textarea");
+        field("actual_result", "actual", "textarea");
+        field("followup_notes", "followup", "textarea");
+      }
+      var search = field("product_search", "search");
+      var products = field(kind === "spend" ? "product_ids" : "product_id", "products", "select");
+      products.multiple = kind === "spend";
+      var selected = row ? (kind === "spend" ? row.product_ids || [] : row.product_id ? [row.product_id] : []) : [];
+      options(products, [], selected, products.multiple);
+      search.onchange = async function () {
+        var query = search.value;
+        var sequence = ++productSeq;
+        try {
+          var matches = await api("/master/products?limit=500&q=" + encodeURIComponent(query));
+          if (token !== state.token || epoch !== marketingEpoch || sequence !== productSeq || fields.product_search !== search || query !== search.value) return;
+          var chosen = Array.from(products.selectedOptions).map(function (o) { return o.value; }).filter(Boolean);
+          options(products, matches, chosen, products.multiple);
+        } catch (error) {
+          if (token === state.token && epoch === marketingEpoch && sequence === productSeq && fields.product_search === search) notice.textContent = messageFor(error);
+        }
+      };
+      search.onchange();
+      if (row) Object.keys(fields).forEach(function (name) {
+        if (["kol_id", "territory_id", "product_ids", "product_id", "spend_id", "product_search"].indexOf(name) === -1) fields[name].value = row[name] == null ? "" : row[name];
+      });
+      var save = document.createElement("button");
+      save.type = "submit"; save.textContent = marketingText("save");
+      controls.appendChild(save);
+      controls.disabled = !writable || marketingBusy;
+    }
+    var marketingSpendChoices = [];
+    var list = document.createElement("div");
+    host.appendChild(list);
+    var fresh = document.createElement("button");
+    fresh.type = "button"; fresh.textContent = marketingText("new");
+    fresh.onclick = function () { if (!marketingBusy) { notice.textContent = ""; build(null); } };
+    host.insertBefore(fresh, form);
+    async function loadRecords() {
+      var requestedKind = kind;
+      var sequence = ++listSeq;
+      var rows = [];
+      for (var offset = 0; ; offset += 200) {
+        var page = await api("/marketing/" + requestedKind + "?limit=200&offset=" + offset);
+        if (token !== state.token || epoch !== marketingEpoch || sequence !== listSeq || requestedKind !== kind) return;
+        rows = rows.concat(page);
+        if (page.length < 200) break;
+      }
+      if (requestedKind === "spend") marketingSpendChoices = rows;
+      list.replaceChildren();
+      rows.forEach(function (row) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.textContent = (row.objective || row.spend_date + " " + row.activity_type) + " [" + row.id + "]";
+        button.onclick = async function () {
+          if (marketingBusy || requestedKind !== kind) return;
+          var opening = ++detailSeq;
+          try {
+            var detail = await api("/marketing/" + requestedKind + "/" + row.id);
+            if (token === state.token && epoch === marketingEpoch && requestedKind === kind && opening === detailSeq) build(detail);
+          } catch (error) {
+            if (token === state.token && epoch === marketingEpoch && requestedKind === kind && opening === detailSeq) notice.textContent = messageFor(error);
+          }
+        };
+        list.appendChild(button);
+      });
+    }
+    // Keep both record types in one editor without separate competing forms.
+    mode.onchange = async function () {
+      if (marketingBusy) { mode.value = kind; return; }
+      kind = mode.value;
+      var requestedKind = kind;
+      build(null);
+      try { await loadRecords(); } catch (error) {
+        if (token === state.token && epoch === marketingEpoch && requestedKind === kind) notice.textContent = messageFor(error);
+      }
+    };
+    form.onsubmit = async function (event) {
+      event.preventDefault();
+      if (marketingBusy || !writable || token !== state.token) return;
+      var payload = {};
+      Object.keys(fields).forEach(function (name) {
+        if (name === "product_search") return;
+        payload[name] = name === "product_ids" ? Array.from(fields[name].selectedOptions).map(function (o) { return o.value; }) : fields[name].value || null;
+      });
+      if (!canDoctors) payload.kol_id = current ? current.kol_id : null;
+      if (current) payload.revision = current.revision;
+      marketingBusy = true;
+      controls.disabled = true; mode.disabled = true; fresh.disabled = true;
+      var committed = false;
+      try {
+        var saved = await api("/marketing/" + kind + (current ? "/" + current.id : ""), {method: current ? "PATCH" : "POST", body: payload});
+        committed = true;
+        if (token !== state.token || epoch !== marketingEpoch) return;
+        current = saved;
+        var reopened = await api("/marketing/" + kind + "/" + saved.id);
+        if (token !== state.token || epoch !== marketingEpoch) return;
+        build(reopened);
+        notice.textContent = marketingText("saved");
+        await loadRecords();
+      } catch (error) {
+        if (token !== state.token || epoch !== marketingEpoch) return;
+        notice.textContent = committed ? marketingText("saved_reopen") : !error.status || error.status >= 500 ? marketingText("uncertain") : messageFor(error);
+        if (committed || !error.status || error.status >= 500) {
+          // shortcut: UI-only retry protection; cross-client idempotency requires an approved persisted key.
+          writable = false;
+        }
+      } finally {
+        if (token === state.token && epoch === marketingEpoch) {
+          marketingBusy = false;
+          controls.disabled = !writable; mode.disabled = false; fresh.disabled = false;
+        }
+      }
+    };
+    var initialDetail = detailSeq;
+    await loadRecords();
+    if (token !== state.token || epoch !== marketingEpoch || detailSeq !== initialDetail) return;
+    build(null);
+    if (!writable) notice.textContent = t("read_only_role");
+  }
+
   function loadMarketing() {
+    if (marketingBusy) return Promise.resolve();
+    var token = state.token;
+    var sequence = ++marketingListSeq;
+    marketingEditor().catch(function (error) {
+      if (token === state.token && sequence === marketingListSeq) showError(el.marketingError, messageFor(error));
+    });
     clearError(el.marketingError);
     el.marketingRows.innerHTML = "";
     var loading = document.createElement("tr");
@@ -2009,6 +2224,7 @@
     loading.appendChild(tdLoad);
     el.marketingRows.appendChild(loading);
     return api("/marketing/spend").then(function (rows) {
+      if (token !== state.token || sequence !== marketingListSeq) return;
       if (!rows.length) { emptyRow(el.marketingRows, 6, "empty_rows"); return; }
       renderRows(el.marketingRows, rows, function (row) {
         var tr = document.createElement("tr");
@@ -2020,7 +2236,9 @@
         tr.appendChild(cell("kol", row.kol_id ? row.kol_id : "—"));
         return tr;
       });
-    }).catch(function (error) { showError(el.marketingError, messageFor(error)); });
+    }).catch(function (error) {
+      if (token === state.token && sequence === marketingListSeq) showError(el.marketingError, messageFor(error));
+    });
   }
 
   function exportBalancesCsv() {
@@ -3053,6 +3271,12 @@
     state.token = null;
     state.user = null;
     state.entries = null;
+    ++marketingEpoch;
+    ++marketingListSeq;
+    marketingBusy = false;
+    el.marketingRows.replaceChildren();
+    $("marketing-editor").replaceChildren();
+    clearError(el.marketingError);
     resetVisits();
     state.balancesCache = [];
     ++salesReportSeq;
