@@ -14,12 +14,100 @@ from ..db import SessionLocal
 SESSION_TTL = datetime.timedelta(hours=24)
 
 
-def get_user_by_username(db, username):
+def lock_user_administration(db, actor_id, target_id):
+    # Serialize owner invariants without a migration; row locks also fence login.
+    db.execute(text("LOCK TABLE platform.platform_user IN SHARE ROW EXCLUSIVE MODE"))
+    db.execute(
+        text(
+            "SELECT id FROM platform.platform_user "
+            "WHERE id IN (:actor, :target) ORDER BY id FOR UPDATE"
+        ),
+        {"actor": str(actor_id), "target": str(target_id)},
+    ).fetchall()
+
+
+def administration_users(db, user_id=None):
+    rows = (
+        db.execute(
+            text(
+                "SELECT u.id, u.username, u.role, u.is_owner, u.is_active, "
+                "ARRAY(SELECT ub.branch_id FROM platform.user_branch ub "
+                "WHERE ub.user_id=u.id ORDER BY ub.branch_id) AS branch_ids "
+                "FROM platform.platform_user u "
+                + ("WHERE u.id=:uid " if user_id is not None else "")
+                + "ORDER BY u.username, u.id"
+            ),
+            {"uid": str(user_id)} if user_id is not None else {},
+        )
+        .mappings()
+        .all()
+    )
+    return [
+        {
+            "id": str(row["id"]),
+            "username": row["username"],
+            "role": row["role"],
+            "is_owner": bool(row["is_owner"]),
+            "is_active": bool(row["is_active"]),
+            "branch_ids": [str(value) for value in row["branch_ids"]],
+        }
+        for row in rows
+    ]
+
+
+def administration_branches(db, branch_ids):
+    return {
+        str(row[0])
+        for row in db.execute(
+            text(
+                "SELECT id FROM master_data.master_branch "
+                "WHERE id=ANY(CAST(:ids AS uuid[])) FOR KEY SHARE"
+            ),
+            {"ids": branch_ids},
+        ).fetchall()
+    }
+
+
+def active_owner_count(db):
+    return db.execute(
+        text("SELECT count(*) FROM platform.platform_user WHERE is_owner AND is_active")
+    ).scalar_one()
+
+
+def write_user_administration(db, user_id, role, is_active, branch_ids):
+    params = {"uid": str(user_id), "role": role, "active": is_active}
+    db.execute(
+        text(
+            "UPDATE platform.platform_user SET role=:role, is_active=:active, "
+            "updated_at=now() WHERE id=:uid"
+        ),
+        params,
+    )
+    db.execute(
+        text("DELETE FROM platform.user_branch WHERE user_id=:uid"),
+        {"uid": str(user_id)},
+    )
+    for branch_id in branch_ids:
+        db.execute(
+            text(
+                "INSERT INTO platform.user_branch (user_id, branch_id) "
+                "VALUES (:uid, :bid)"
+            ),
+            {"uid": str(user_id), "bid": branch_id},
+        )
+    # Roles have no approved ordering: revoke on every effective access change.
+    db.execute(
+        text("DELETE FROM platform.platform_session WHERE user_id=:uid"),
+        {"uid": str(user_id)},
+    )
+
+
+def get_user_by_username(db, username, *, lock=False):
     row = db.execute(
         text(
             "SELECT id, username, password_hash, first_name, last_name, "
             "role, is_owner, is_active FROM platform.platform_user "
-            "WHERE username = :u"
+            "WHERE username = :u" + (" FOR UPDATE" if lock else "")
         ),
         {"u": username},
     ).fetchone()
