@@ -87,6 +87,7 @@
       error.status = response.status;
       error.data = data;
       if (response.status === 401 && requestToken && state.token === requestToken) {
+        clearUsersScreen();
         clearSession();
         showError(el.loginError, messageFor(error));
       }
@@ -299,7 +300,7 @@
     suppliers: "suppliers-view", accounts: "accounts-view", doctors: "doctors-view",
     visits: "visits-view", targets: "targets-view", batches: "batches-view",
     cover: "cover-view", inventoryalerts: "inventoryalerts-view", mgmtsummary: "mgmtsummary-view", audit: "audit-view", transfers: "transfers-view",
-    returns: "returns-view", marketing: "marketing-view",
+    returns: "returns-view", marketing: "marketing-view", users: "users-view",
     privateaccounts: "private-view",
   };
 
@@ -339,6 +340,7 @@
   };
 
   function roleAllowed(view) {
+    if (view === "users") return !!(state.user && state.user.is_owner === true);
     var allowed = ROLE_OK[view] || ["*"];
     if (allowed.indexOf("*") >= 0) return true;
     return state.user && allowed.indexOf(state.user.role) >= 0;
@@ -355,6 +357,7 @@
       }
       var allowed = node.dataset.roles === "*" ? ["*"] : node.dataset.roles.split(",");
       var ok = allowed.indexOf("*") >= 0 || (role && allowed.indexOf(role) >= 0);
+      if (node.dataset.view === "users") ok = roleAllowed("users");
       if (node.classList.contains("bnav-btn")) {
         node.style.display = ok ? "" : "none";
       } else {
@@ -430,6 +433,7 @@
       else if (name === "inventoryalerts") loadInventoryAlerts();
       else if (name === "mgmtsummary") loadManagementSummary();
       else if (name === "audit") loadAudit();
+      else if (name === "users") loadUsers();
       else if (name === "transfers") loadTransfers();
       else if (name === "returns") loadReturns();
       else if (name === "marketing") loadMarketing();
@@ -2540,6 +2544,116 @@
 
   function isOwnerUser(user) { return !!(user && user.role === "owner" && user.is_owner === true); }
 
+  function clearUsersScreen() {
+    if (!$("users-list")) return;
+    $("users-list").replaceChildren();
+    $("users-editor").replaceChildren();
+    $("users-message").textContent = "";
+  }
+
+  async function loadUsers() {
+    clearUsersScreen();
+    if (!roleAllowed("users")) return;
+    var token = state.token;
+    var message = $("users-message");
+    message.textContent = "…";
+    try {
+      var results = await Promise.all([api("/auth/users"), api("/auth/users/options")]);
+      if (token !== state.token || !roleAllowed("users")) return;
+      message.textContent = "";
+      results[0].forEach(function (user) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "default";
+        button.textContent = user.username;
+        button.addEventListener("click", function () {
+          if (token === state.token && roleAllowed("users")) editAdministrationUser(user, results[1], token);
+        });
+        $("users-list").appendChild(button);
+      });
+      if (!results[0].length) message.textContent = t("empty_rows");
+    } catch (error) {
+      if (token === state.token) message.textContent = messageFor(error);
+    }
+  }
+
+  function editAdministrationUser(user, options, token) {
+    var editor = $("users-editor");
+    editor.replaceChildren();
+    var title = document.createElement("h2");
+    title.textContent = user.username;
+    editor.appendChild(title);
+    var form = document.createElement("form");
+    function field(labelText, control) {
+      var label = document.createElement("label");
+      label.className = "field";
+      var text = document.createElement("span");
+      text.textContent = labelText;
+      label.append(text, control);
+      form.appendChild(label);
+    }
+    var role = document.createElement("select");
+    options.roles.forEach(function (value) {
+      var option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      option.selected = value === user.role;
+      option.disabled = value === "owner" && !user.is_owner;
+      role.appendChild(option);
+    });
+    field(t("users_role"), role);
+    var active = document.createElement("input");
+    active.type = "checkbox";
+    active.checked = user.is_active;
+    field(t("active"), active);
+    var branches = document.createElement("select");
+    branches.multiple = true;
+    branches.size = 6;
+    options.branches.forEach(function (branch) {
+      var option = document.createElement("option");
+      option.value = branch.id;
+      option.textContent = branch.code + " — " + (state.lang === "ar" ? branch.name_ar : (branch.name_en || branch.name_ar));
+      option.selected = user.branch_ids.indexOf(branch.id) >= 0;
+      branches.appendChild(option);
+    });
+    field(t("users_branches"), branches);
+    var save = document.createElement("button");
+    save.type = "submit";
+    save.className = "primary";
+    save.textContent = t("customer_save");
+    form.appendChild(save);
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      if (token !== state.token || !roleAllowed("users")) return;
+      if (!window.confirm(t("users_confirm"))) return;
+      save.disabled = true;
+      $("users-message").textContent = "";
+      try {
+        await api("/auth/users/" + encodeURIComponent(user.id), {
+          method: "PUT",
+          body: {
+            role: role.value,
+            is_active: active.checked,
+            branch_ids: Array.from(branches.selectedOptions, function (option) { return option.value; }),
+          },
+        });
+        if (token !== state.token) return;
+        if (user.id === state.user.id) {
+          clearUsersScreen();
+          clearSession();
+          return;
+        }
+        await loadUsers();
+        if (token === state.token) $("users-message").textContent = t("users_saved");
+      } catch (error) {
+        if (token === state.token) $("users-message").textContent = messageFor(error);
+      } finally {
+        save.disabled = false;
+      }
+    });
+    editor.appendChild(form);
+  }
+
   function loadSuppliers() {
     clearError(el.suppliersError);
     if (el.supplierAdd) el.supplierAdd.classList.toggle("hidden", !isOwnerUser(state.user));
@@ -3219,6 +3333,7 @@
 
   async function logout() {
     var pending = api("/auth/logout", { method: "POST" });
+    clearUsersScreen();
     clearSession();
     try { await pending; } catch (_e) { /* Local teardown must not wait for the network. */ }
   }
@@ -3669,6 +3784,7 @@
   }
 
   async function init() {
+    $("users-refresh").addEventListener("click", loadUsers);
     cacheElements();
     await loadI18n(localStorage.getItem("lang") || "ar");
     var meta = await fetchMeta();

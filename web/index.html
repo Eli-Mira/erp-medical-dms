@@ -175,6 +175,9 @@
         <span class="glyph" aria-hidden="true">✈️</span><span data-i18n="nav_telegram">تكامل تليجرام</span><span class="proto-dot">نموذج</span>
       </button>
       <div class="sidebar-group-title">الإدارة والتقني</div>
+      <button type="button" class="nav-item sub hidden" data-view="users" data-roles="*">
+        <span class="glyph" aria-hidden="true">👥</span><span data-i18n="users_title">إدارة المستخدمين</span><span class="badge">Beta</span>
+      </button>
       <button type="button" class="nav-item sub" data-view="alerts">
         <span class="glyph" aria-hidden="true">🔔</span><span data-i18n="nav_alerts">التنبيهات</span><span class="proto-dot">نموذج</span>
       </button>
@@ -1031,7 +1034,20 @@
       </section>
 
       <!-- ---------- Audit (real) ---------- -->
-      <section id="audit-view" class="hidden" aria-labelledby="audit-title">
+      <section id="users-view" class="hidden" aria-labelledby="users-title">
+        <div class="view-head">
+          <div class="titles">
+            <h1 id="users-title" data-i18n="users_title">إدارة المستخدمين</h1>
+            <p class="desc" data-i18n="users_desc">للمالك فقط: تعديل المستخدمين الحاليين والأدوار والتفعيل والفروع. لا إنشاء حسابات ولا تغيير كلمات مرور.</p>
+          </div>
+          <span class="proto-chip-row"><span class="badge">Beta</span><button id="users-refresh" type="button" class="default" data-i18n="refresh">تحديث</button></span>
+        </div>
+        <p data-i18n="users_session_note">أي تغيير فعلي يلغي جميع جلسات المستخدم. لا يمكن تغيير صفة المالك أو تعيين المناطق هنا.</p>
+        <p id="users-message" role="status" aria-live="polite"></p>
+        <div id="users-list" class="card" role="group" aria-labelledby="users-title"></div>
+        <div id="users-editor" class="card"></div>
+      </section>
+<section id="audit-view" class="hidden" aria-labelledby="audit-title">
         <div class="view-head">
           <div class="titles">
             <h1 id="audit-title" data-i18n="audit_title">سجل التدقيق</h1>
