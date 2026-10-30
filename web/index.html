@@ -1074,13 +1074,46 @@
       <section id="transfers-view" class="hidden" aria-labelledby="transfers-title">
         <div class="view-head">
           <div class="titles">
-            <h1 id="transfers-title" data-i18n="transfers_title">التحويلات</h1>
+            <h1 id="transfers-title"><span data-i18n="transfers_title">التحويلات</span> <span class="badge real">Beta</span></h1>
             <p class="desc" data-i18n="transfers_desc">تحويلات المخزون بين المستودعات (بيانات فعلية).</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
           <button type="button" class="default" data-refresh="transfers" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="transfers-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <form id="transfer-form" class="card" novalidate>
+          <p class="desc" data-i18n="transfer_note">حركة مخزون فقط؛ لا تنشئ مبيعات أو ذممًا. لا يغيّر النموذج بيانات التشغيلة.</p>
+          <fieldset id="transfer-fields" disabled>
+            <legend data-i18n="transfer_create">تسجيل تحويل</legend>
+            <label for="transfer-source" data-i18n="source_warehouse">المصدر</label>
+            <select id="transfer-source" required></select>
+            <label for="transfer-destination" data-i18n="transfer_destination">الوجهة</label>
+            <select id="transfer-destination" required></select>
+            <label for="transfer-product" data-i18n="product">الصنف</label>
+            <select id="transfer-product" required></select>
+            <label for="transfer-batch" data-i18n="batch_no">رقم التشغيلة</label>
+            <select id="transfer-batch"></select>
+            <label for="transfer-quantity" data-i18n="quantity">الكمية</label>
+            <input id="transfer-quantity" type="text" inputmode="decimal" dir="ltr" required>
+            <label for="transfer-note" data-i18n="notes">ملاحظات</label>
+            <textarea id="transfer-note"></textarea>
+            <button type="submit" id="transfer-save" data-i18n="transfer_create">تسجيل تحويل</button>
+          </fieldset>
+        </form>
+        <p id="transfer-status" role="status" aria-live="polite"></p>
+        <h2 data-i18n="transfer_balances">أرصدة الصنف في المصدر والوجهة</h2>
+        <div id="transfer-balance-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <div class="table-wrap">
+          <table class="grid-table">
+            <thead><tr>
+              <th data-i18n="warehouse">المخزن</th>
+              <th data-i18n="batch_no">رقم التشغيلة</th>
+              <th class="num" data-i18n="quantity">الكمية</th>
+            </tr></thead>
+            <tbody id="transfer-balance-rows"></tbody>
+          </table>
+        </div>
+        <h2 data-i18n="transfer_history">التحويلات المحفوظة — المصدر والصنف والكمية</h2>
         <div class="table-wrap">
           <table class="grid-table">
             <thead><tr>

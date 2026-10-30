@@ -1975,25 +1975,286 @@
     }).catch(function (error) { showError(el.auditError, messageFor(error)); });
   }
 
-  function loadTransfers() {
-    clearError(el.transfersError);
-    el.transferRows.innerHTML = "";
-    var loading = document.createElement("tr");
-    var tdLoad = document.createElement("td");
-    tdLoad.colSpan = 4; tdLoad.className = "muted"; tdLoad.textContent = "…";
-    loading.appendChild(tdLoad);
-    el.transferRows.appendChild(loading);
-    return api("/transfers").then(function (rows) {
-      if (!rows.length) { emptyRow(el.transferRows, 4, "empty_rows"); return; }
-      renderRows(el.transferRows, rows, function (row) {
+  var transferUI = {
+    token: null, generation: 0, balanceGeneration: 0,
+    warehouses: [], products: [], batches: [], ready: false,
+    busy: false, uncertain: false,
+  };
+
+  function transferCurrent(token, generation) {
+    return state.token === token && transferUI.generation === generation;
+  }
+
+  function transferLock(locked) {
+    try {
+      if (locked) sessionStorage.setItem("transfer-pending", "1");
+      else sessionStorage.removeItem("transfer-pending");
+      transferUI.uncertain = locked;
+    } catch (_error) {
+      transferUI.uncertain = true;
+    }
+    return !transferUI.uncertain;
+  }
+
+  function transferReferenceLabel(row) {
+    return (state.lang === "en" ? row.name_en || row.name_ar : row.name_ar || row.name_en) +
+      " — " + (row.code || row.sku || row.id);
+  }
+
+  function transferBatchLabel(batch) {
+    return batch.batch_no + " | " + batch.id + " | " +
+      t("transfer_manufactured") + ": " + (batch.manufacture_date || "—") + " | " +
+      t("expiry_date") + ": " + batch.expiry_date + " | " +
+      t("quantity") + ": " + batch.quantity;
+  }
+
+  function transferBatchName(id) {
+    if (id === null) return t("transfer_no_batch");
+    var batch = transferUI.batches.find(function (row) { return row.id === id; });
+    return batch ? transferBatchLabel(batch) : id;
+  }
+
+  function refreshTransferBatches() {
+    var select = $("transfer-batch");
+    var previous = select.value;
+    select.innerHTML = "";
+    var none = document.createElement("option");
+    none.value = "";
+    none.textContent = t("transfer_no_batch");
+    select.appendChild(none);
+    transferUI.batches.filter(function (batch) {
+      return batch.warehouse_id === $("transfer-source").value &&
+        batch.product_id === $("transfer-product").value;
+    }).forEach(function (batch) {
+      var option = document.createElement("option");
+      option.value = batch.id;
+      option.textContent = transferBatchLabel(batch);
+      select.appendChild(option);
+    });
+    select.value = Array.from(select.options).some(function (option) {
+      return option.value === previous;
+    }) ? previous : "";
+  }
+
+  function transferPayload() {
+    if (!transferUI.ready || transferUI.token !== state.token || !state.user ||
+        ["owner", "finance"].indexOf(state.user.role) === -1 ||
+        (state.user.role === "owner" && !state.user.is_owner)) {
+      throw new Error(t(state.user && state.user.role === "warehouse_staff" ?
+        "transfer_staff_blocked" : "transfer_references_failed"));
+    }
+    var source = $("transfer-source").value;
+    var destination = $("transfer-destination").value;
+    var product = $("transfer-product").value;
+    var batch = $("transfer-batch").value;
+    var quantity = $("transfer-quantity").value.trim();
+    var warehouseExists = function (id) {
+      return transferUI.warehouses.some(function (row) { return row.id === id && row.is_active; });
+    };
+    if (!warehouseExists(source) || !warehouseExists(destination) || source === destination ||
+        !transferUI.products.some(function (row) { return row.id === product; })) {
+      throw new Error(t("transfer_invalid_references"));
+    }
+    var decimal = /^\+?((?:\d+(?:\.\d*)?|\.\d+))(?:[eE][+-]?\d+)?$/.exec(quantity);
+    // Check the coefficient, not a binary float: Decimal owns exponent, scale and range handling.
+    if (!decimal || !/[1-9]/.test(decimal[1])) {
+      throw new Error(t("transfer_invalid_quantity"));
+    }
+    if (batch && !transferUI.batches.some(function (row) {
+      return row.id === batch && row.warehouse_id === source && row.product_id === product;
+    })) throw new Error(t("transfer_invalid_references"));
+    return {
+      source_warehouse_id: source,
+      destination_warehouse_id: destination,
+      product_id: product,
+      batch_id: batch || null,
+      quantity: quantity,
+      note: $("transfer-note").value || null,
+    };
+  }
+
+  async function refreshTransferBalances() {
+    var token = state.token;
+    var generation = transferUI.generation;
+    var balanceGeneration = ++transferUI.balanceGeneration;
+    var tbody = $("transfer-balance-rows");
+    tbody.innerHTML = "";
+    clearError($("transfer-balance-error"));
+    var source = $("transfer-source").value;
+    var destination = $("transfer-destination").value;
+    var product = $("transfer-product").value;
+    if (!transferUI.ready || !source || !destination || !product) return;
+    var current = function () {
+      return transferCurrent(token, generation) && balanceGeneration === transferUI.balanceGeneration;
+    };
+    try {
+      var results = await Promise.all([source, destination].map(function (id) {
+        return api("/inventory/stock?warehouse_id=" + encodeURIComponent(id) +
+          "&product_id=" + encodeURIComponent(product));
+      }));
+      if (!current()) return;
+      var rows = results[0].concat(results[1]);
+      renderRows(tbody, rows, function (row) {
         var tr = document.createElement("tr");
-        tr.appendChild(cell("date", fmtDate(row.created_at)));
-        tr.appendChild(cell("src", warehouseLabel(row.source_warehouse_id)));
-        tr.appendChild(cell("product", productLineLabel(row.product_id)));
-        tr.appendChild(cell("qty", fmtQty(row.quantity), true));
+        var warehouse = transferUI.warehouses.find(function (item) { return item.id === row.warehouse_id; });
+        tr.appendChild(cell(t("warehouse"), warehouse ? transferReferenceLabel(warehouse) : row.warehouse_id));
+        tr.appendChild(cell(t("batch_no"), transferBatchName(row.batch_id)));
+        tr.appendChild(cell(t("quantity"), String(row.quantity), true));
         return tr;
       });
-    }).catch(function (error) { showError(el.transfersError, messageFor(error)); });
+      if (!rows.length) emptyRow(tbody, 3, "transfer_no_balances");
+    } catch (error) {
+      if (!current()) return;
+      showError($("transfer-balance-error"), messageFor(error));
+      throw error;
+    }
+  }
+
+  async function refreshTransferHistory(token, generation) {
+    var rows = await api("/transfers");
+    if (!transferCurrent(token, generation)) return;
+    renderRows(el.transferRows, rows, function (row) {
+      var tr = document.createElement("tr");
+      var warehouse = transferUI.warehouses.find(function (item) { return item.id === row.source_warehouse_id; });
+      var product = transferUI.products.find(function (item) { return item.id === row.product_id; });
+      tr.appendChild(cell(t("date"), fmtDate(row.created_at)));
+      tr.appendChild(cell(t("source_warehouse"), warehouse ? transferReferenceLabel(warehouse) : row.source_warehouse_id));
+      tr.appendChild(cell(t("product"), product ? transferReferenceLabel(product) : row.product_id));
+      tr.appendChild(cell(t("quantity"), String(row.quantity), true));
+      return tr;
+    });
+    if (!rows.length) emptyRow(el.transferRows, 4, "empty_rows");
+  }
+
+  async function submitTransfer(event) {
+    event.preventDefault();
+    if (transferUI.busy || transferUI.uncertain) return;
+    clearError(el.transfersError);
+    var payload;
+    try { payload = transferPayload(); }
+    catch (error) { showError(el.transfersError, error.message); return; }
+    var token = state.token;
+    var generation = transferUI.generation;
+    transferUI.busy = true;
+    $("transfer-fields").disabled = true;
+    $("transfer-status").textContent = "";
+    var saved = false;
+    try {
+      transferLock(true);
+      // Do not send a write unless its pending marker survives a page reload.
+      if (sessionStorage.getItem("transfer-pending") !== "1") throw new Error("pending marker unavailable");
+      await api("/transfers", { method: "POST", body: payload });
+      saved = true;
+      transferLock(false);
+      if (!transferCurrent(token, generation)) return;
+      $("transfer-quantity").value = "";
+      $("transfer-status").textContent = t("transfer_saved");
+      await Promise.all([
+        refreshTransferHistory(token, generation),
+        (async function () {
+          var batches = await api("/inventory/batches");
+          if (!transferCurrent(token, generation)) return;
+          transferUI.batches = batches;
+          refreshTransferBatches();
+          await refreshTransferBalances();
+        })(),
+      ]);
+    } catch (error) {
+      if (!saved && error.status >= 400 && error.status < 500 && error.status !== 408) {
+        transferLock(false);
+      }
+      if (!transferCurrent(token, generation)) return;
+      if (saved) {
+        showError(el.transfersError, t("transfer_saved_refresh_failed") + " " + messageFor(error));
+      } else if (transferUI.uncertain) {
+        showError(el.transfersError, t("transfer_uncertain"));
+      } else {
+        showError(el.transfersError, messageFor(error));
+      }
+    } finally {
+      transferUI.busy = false;
+      if (transferCurrent(token, generation)) {
+        $("transfer-fields").disabled = !transferUI.ready || transferUI.uncertain;
+      }
+    }
+  }
+
+  function resetTransfers() {
+    ++transferUI.generation;
+    ++transferUI.balanceGeneration;
+    transferUI.token = null;
+    transferUI.ready = false;
+    transferUI.busy = false;
+    transferUI.warehouses = [];
+    transferUI.products = [];
+    transferUI.batches = [];
+    // Keep the pending marker/uncertain lock until the original write is reconciled.
+    $("transfer-form").reset();
+    $("transfer-fields").disabled = true;
+    ["transfer-source", "transfer-destination", "transfer-product", "transfer-batch",
+      "transfer-rows", "transfer-balance-rows", "transfer-status"]
+      .forEach(function (id) { $(id).replaceChildren(); });
+    clearError(el.transfersError);
+    clearError($("transfer-balance-error"));
+  }
+
+  async function loadTransfers() {
+    if (transferUI.busy) return;
+    var token = state.token;
+    var generation = ++transferUI.generation;
+    ++transferUI.balanceGeneration;
+    transferUI.token = token;
+    transferUI.ready = false;
+    transferUI.warehouses = [];
+    transferUI.products = [];
+    transferUI.batches = [];
+    try {
+      transferUI.uncertain = transferUI.uncertain || sessionStorage.getItem("transfer-pending") === "1";
+    } catch (_error) { transferUI.uncertain = true; }
+    clearError(el.transfersError);
+    clearError($("transfer-balance-error"));
+    el.transferRows.innerHTML = "";
+    $("transfer-balance-rows").innerHTML = "";
+    $("transfer-status").textContent = "";
+    $("transfer-form").reset();
+    $("transfer-form").onsubmit = submitTransfer;
+    $("transfer-fields").disabled = true;
+    ["transfer-source", "transfer-destination", "transfer-product", "transfer-batch"].forEach(function (id) {
+      $(id).innerHTML = "";
+      $(id).onchange = function () {
+        refreshTransferBatches();
+        refreshTransferBalances().catch(function () { /* The balance panel displays the error. */ });
+      };
+    });
+    var referenceError = null;
+    var historyError = null;
+    var staff = state.user && state.user.role === "warehouse_staff";
+    try {
+      var references = await Promise.all([
+        api("/master/warehouses"), api("/master/products?limit=500"), api("/inventory/batches"),
+      ]);
+      if (!transferCurrent(token, generation)) return;
+      transferUI.warehouses = references[0];
+      transferUI.products = references[1];
+      transferUI.batches = references[2];
+      fillSelect($("transfer-source"), transferUI.warehouses, transferReferenceLabel, "select_warehouse");
+      fillSelect($("transfer-destination"), transferUI.warehouses, transferReferenceLabel, "select_warehouse");
+      fillSelect($("transfer-product"), transferUI.products, transferReferenceLabel, "select_product");
+      refreshTransferBatches();
+      transferUI.ready = !!state.user && (state.user.role === "finance" ||
+        (state.user.role === "owner" && state.user.is_owner));
+    } catch (error) { referenceError = error; }
+    if (!transferCurrent(token, generation)) return;
+    try { await refreshTransferHistory(token, generation); }
+    catch (error) { historyError = error; }
+    if (!transferCurrent(token, generation)) return;
+    $("transfer-fields").disabled = !transferUI.ready || transferUI.uncertain;
+    var notices = [];
+    if (transferUI.uncertain) notices.push(t("transfer_uncertain"));
+    if (staff) notices.push(t("transfer_staff_blocked"));
+    else if (referenceError) notices.push(t("transfer_references_failed") + " " + messageFor(referenceError));
+    if (historyError) notices.push(messageFor(historyError));
+    if (notices.length) showError(el.transfersError, notices.join(" "));
   }
 
   function loadReturns() {
@@ -3566,6 +3827,7 @@
     el.marketingRows.replaceChildren();
     $("marketing-editor").replaceChildren();
     clearError(el.marketingError);
+    resetTransfers();
     resetVisits();
     state.balancesCache = [];
     ++salesReportSeq;
