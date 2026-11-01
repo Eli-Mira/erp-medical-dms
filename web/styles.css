@@ -737,7 +737,7 @@ dialog.palette::backdrop { background: rgba(15, 23, 42, 0.45); }
 @media (max-width: 639px) {
   main { padding-inline: var(--space-4); }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-  .stat-grid, .aging-strip { grid-template-columns: 1fr 1fr; }
+  .stat-grid, .aging-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .line-head { display: none; }
   .line { grid-template-columns: 1fr 1fr; }
   .line .field.product { grid-column: 1 / -1; }

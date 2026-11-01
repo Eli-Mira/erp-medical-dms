@@ -55,7 +55,7 @@ for vp, label, mobile in [({"width": 1440, "height": 900}, "desktop", False),
     print(json.dumps(result, ensure_ascii=True))
 
 # Remove only the rows this script created, so the demo ledger stays clean.
-os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://dms:dms-dev@localhost:5432/medical_demo")
+DATABASE_URL = os.environ["DATABASE_URL"]  # Require an explicit task-owned target.
 from sqlalchemy import create_engine, text as sql_text
 engine = create_engine(os.environ["DATABASE_URL"])
 with engine.begin() as conn:

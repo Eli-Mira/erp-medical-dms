@@ -1,6 +1,6 @@
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-os.environ["DATABASE_URL"] = "postgresql+psycopg://dms:dms-dev@localhost:5432/medical_demo"
+DATABASE_URL = os.environ["DATABASE_URL"]  # Require an explicit target.
 os.environ["POSTING_ENABLED"] = "false"
 os.environ["DEMO_MODE"] = "1"
 import uvicorn

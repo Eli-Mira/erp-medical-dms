@@ -102,7 +102,7 @@ reverse proxy.
 ## Environment Variables
 
 ```
-DATABASE_URL=postgresql://user:pass@localhost:5432/medical_demo
+DATABASE_URL=<explicit verifier-only URL; supply credentials locally>
 SECRET_KEY=<generate-with-openssl-rand-hex-32>
 POSTING_ENABLED=False
 ALLOWED_ORIGINS=https://your-tunnel-domain.com

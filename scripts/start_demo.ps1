@@ -30,7 +30,7 @@ Write-Host "== Medical Company System — demo launcher (client prototype) ==" -
 Write-Host "Repo: $repo"
 
 # 1) Environment ------------------------------------------------------------
-$env:DATABASE_URL = "postgresql+psycopg://dms:dms-dev@localhost:5432/medical_demo"
+if (-not $env:DATABASE_URL) { throw "Set DATABASE_URL explicitly; no default database is selected." }
 $env:POSTING_ENABLED = "false"
 $env:DEMO_MODE = "1"
 Write-Host "DB: medical_demo (synthetic) | POSTING_ENABLED=false | DEMO_MODE=1"

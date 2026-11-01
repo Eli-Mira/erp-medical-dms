@@ -15,7 +15,7 @@ import uuid
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://dms:dms-dev@localhost:5432/postgres")
+DATABASE_URL = os.environ["DATABASE_URL"]  # Require an explicit task-owned target.
 
 from alembic.config import Config
 from sqlalchemy import create_engine, text

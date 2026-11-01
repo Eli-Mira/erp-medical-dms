@@ -88,10 +88,8 @@ class TelegramBot:
 
         is_group = self._is_group(chat_type)
 
-        # Allowlist check
-        if is_group:
-            if chat_id not in self.config.allowed_chat_ids:
-                # Leave non-allowlisted group
+        if not self._is_allowed_chat(chat_id):
+            if is_group:
                 try:
                     httpx.post(
                         self._api_url("leaveChat"),
@@ -100,12 +98,9 @@ class TelegramBot:
                     )
                 except Exception:
                     pass
-                return
-            if user_id not in self.config.allowed_user_ids:
-                return
-        else:
-            if user_id not in self.config.allowed_user_ids:
-                return
+            return
+        if not self._is_allowed_user(user_id):
+            return
 
         # Commands
         if text_input.startswith("/start"):
