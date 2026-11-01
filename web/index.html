@@ -90,7 +90,7 @@
       <button type="button" class="nav-item sub" data-view="transfers" data-roles="owner,finance,warehouse_staff">
         <span class="glyph" aria-hidden="true">🔁</span><span data-i18n="nav_transfers">التحويلات</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
       </button>
-      <button type="button" class="nav-item sub" data-view="returns" data-roles="owner,finance,warehouse_staff,sales_manager">
+      <button type="button" class="nav-item sub" data-view="returns" data-roles="owner,finance,warehouse_staff,sales_manager,district_manager,read_only_auditor">
         <span class="glyph" aria-hidden="true">↩️</span><span data-i18n="nav_returns">المرتجعات</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
       </button>
       <button type="button" class="nav-item sub" data-view="marketing" data-roles="owner,finance,sales_manager,medical_rep,read_only_auditor">
@@ -1132,12 +1132,17 @@
         <div class="view-head">
           <div class="titles">
             <h1 id="returns-title" data-i18n="returns_title">المرتجعات</h1>
+            <span class="badge info">Beta</span>
             <p class="desc" data-i18n="returns_desc">مرتجعات العملاء (بيانات فعلية).</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
           <button type="button" class="default" data-refresh="returns" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="returns-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <p data-i18n="return_scope">استلام في الحجر فقط؛ لا اعتماد أو إفراج أو تسوية مالية.</p>
+        <p class="muted small" data-i18n="return_product_limit">تظهر أول 500 صنف من الكتالوج المصرح به.</p>
+        <div id="return-editor"></div>
+        <div id="return-detail" role="region" aria-label="تفاصيل المرتجع" data-i18n-aria-label="return_detail"></div>
         <div class="table-wrap">
           <table class="grid-table">
             <thead><tr>
@@ -1146,6 +1151,8 @@
               <th data-i18n="product">المنتج</th>
               <th class="num" data-i18n="quantity">الكمية</th>
               <th data-i18n="reason">السبب</th>
+              <th data-i18n="status">الحالة</th>
+              <th data-i18n="open">فتح</th>
             </tr></thead>
             <tbody id="return-rows"></tbody>
           </table>

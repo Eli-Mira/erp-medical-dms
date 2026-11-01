@@ -14,6 +14,7 @@
   var state = {
     token: null,
     user: null,
+    sessionGeneration: 0,
     lang: "ar",
     branches: [],
     warehouses: [],
@@ -71,6 +72,7 @@
   async function api(path, opts) {
     opts = opts || {};
     var requestToken = state.token;
+    var requestSession = state.sessionGeneration;
     var headers = { "Content-Type": "application/json" };
     if (state.token) headers.Authorization = "Bearer " + state.token;
     var response = await fetch(path, {
@@ -86,7 +88,8 @@
       var error = new Error("request_failed");
       error.status = response.status;
       error.data = data;
-      if (response.status === 401 && requestToken && state.token === requestToken) {
+      if (response.status === 401 && requestToken && state.token === requestToken &&
+          state.sessionGeneration === requestSession) {
         clearUsersScreen();
         clearSession();
         showError(el.loginError, messageFor(error));
@@ -327,7 +330,7 @@
     uom: ["owner", "finance"], credit: ["owner", "finance", "sales_manager"],
     routing: ["owner", "medical_rep", "sales_manager"],
     transfers: ["owner", "finance", "sales_manager"],
-    returns: ["owner", "medical_rep", "sales_manager"],
+    returns: ["owner", "finance", "warehouse_staff", "sales_manager", "district_manager", "read_only_auditor"],
     targets: ["owner", "medical_rep", "sales_manager", "finance"],
     cover: ["owner", "finance", "sales_manager"], overstock: ["owner", "finance", "sales_manager"],
     inventoryalerts: ["owner", "finance", "sales_manager", "district_manager", "warehouse_staff", "read_only_auditor"],
@@ -2257,26 +2260,268 @@
     if (notices.length) showError(el.transfersError, notices.join(" "));
   }
 
-  function loadReturns() {
+  var returnUI = {
+    generation: 0, token: null, session: 0, ready: false, busy: false,
+    uncertain: false, customers: [], products: [], warehouses: [], batches: [], rows: [],
+  };
+
+  function returnCurrent(token, session, generation) {
+    return !!token && state.token === token && state.sessionGeneration === session &&
+      returnUI.generation === generation;
+  }
+
+  function canCreateReturn() {
+    var user = state.user;
+    return !!(user && user.is_active !== false &&
+      (user.role === "finance" || user.role === "sales_manager" || isOwnerUser(user)));
+  }
+
+  function resetReturns() {
+    ++returnUI.generation;
+    returnUI.token = null;
+    returnUI.ready = false;
+    returnUI.busy = false;
+    returnUI.customers = []; returnUI.products = [];
+    returnUI.warehouses = []; returnUI.batches = []; returnUI.rows = [];
+    // An unresolved write stays locked across logout and page reload.
+    $("return-editor").replaceChildren();
+    $("return-detail").replaceChildren();
+    el.returnRows.replaceChildren();
     clearError(el.returnsError);
-    el.returnRows.innerHTML = "";
-    var loading = document.createElement("tr");
-    var tdLoad = document.createElement("td");
-    tdLoad.colSpan = 5; tdLoad.className = "muted"; tdLoad.textContent = "…";
-    loading.appendChild(tdLoad);
-    el.returnRows.appendChild(loading);
-    return api("/returns").then(function (rows) {
-      if (!rows.length) { emptyRow(el.returnRows, 5, "empty_rows"); return; }
-      renderRows(el.returnRows, rows, function (row) {
-        var tr = document.createElement("tr");
-        tr.appendChild(cell("date", fmtDate(row.return_date)));
-        tr.appendChild(cell("customer", customerName(row.customer_id)));
-        tr.appendChild(cell("product", productLineLabel(row.product_id)));
-        tr.appendChild(cell("qty", fmtQty(row.quantity), true));
-        tr.appendChild(cell("reason", row.reason || "—"));
-        return tr;
-      });
-    }).catch(function (error) { showError(el.returnsError, messageFor(error)); });
+  }
+
+  function returnReference(rows, id) {
+    var row = rows.find(function (item) { return item.id === id; });
+    return row ? referenceName(row) + " [" + (row.code || row.sku || row.id) + "]" : id || "—";
+  }
+
+  function refreshReturnBatches() {
+    var select = $("return-batch");
+    var previous = select.value;
+    fillSelect(select, returnUI.batches.filter(function (row) {
+      return row.product_id === $("return-product").value &&
+        row.warehouse_id === $("return-warehouse").value;
+    }), function (row) {
+      return row.batch_no + " [" + row.id + "] — " + t("expiry_date") + ": " + row.expiry_date;
+    }, "transfer_no_batch");
+    select.value = Array.from(select.options).some(function (option) {
+      return option.value === previous;
+    }) ? previous : "";
+  }
+
+  function returnPayload() {
+    if (!returnUI.ready || !canCreateReturn() ||
+        returnUI.token !== state.token || returnUI.session !== state.sessionGeneration) {
+      throw new Error(t("return_references_failed"));
+    }
+    var customer = $("return-customer").value;
+    var product = $("return-product").value;
+    var warehouse = $("return-warehouse").value;
+    var batch = $("return-batch").value;
+    var valid = function (rows, id) {
+      return rows.some(function (row) { return row.id === id && row.is_active !== false; });
+    };
+    if (!valid(returnUI.customers, customer) || !valid(returnUI.products, product) ||
+        !valid(returnUI.warehouses, warehouse) || (batch && !returnUI.batches.some(function (row) {
+          return row.id === batch && row.product_id === product && row.warehouse_id === warehouse;
+        }))) throw new Error(t("return_invalid_references"));
+    var quantity = $("return-quantity").value.trim();
+    var decimal = /^\+?((?:\d+(?:\.\d*)?|\.\d+))(?:[eE][+-]?\d+)?$/.exec(quantity);
+    if (!decimal || !/[1-9]/.test(decimal[1])) throw new Error(t("transfer_invalid_quantity"));
+    if (!$("return-date").value || !$("return-date").checkValidity()) {
+      throw new Error(t("return_date_required"));
+    }
+    return {
+      customer_id: customer, product_id: product, warehouse_id: warehouse,
+      batch_id: batch || null, quantity: quantity, return_date: $("return-date").value,
+      reason: $("return-reason").value || null,
+    };
+  }
+
+  function buildReturnEditor() {
+    var form = node("form", "card"); form.id = "return-form";
+    var fields = node("fieldset"); fields.id = "return-fields";
+    fields.appendChild(node("legend", "", t("return_create")));
+    function field(id, key, tag) {
+      var label = node("label", "field", t(key)); label.htmlFor = id;
+      var input = node(tag || "input"); input.id = id;
+      label.appendChild(input); fields.appendChild(label);
+      return input;
+    }
+    fillSelect(field("return-customer", "customer", "select"), returnUI.customers, referenceName, "select_customer");
+    fillSelect(field("return-product", "product", "select"), returnUI.products, productLabel, "select_product");
+    fillSelect(field("return-warehouse", "warehouse", "select"), returnUI.warehouses, referenceName, "select_warehouse");
+    field("return-batch", "batch_no", "select");
+    var quantity = field("return-quantity", "quantity");
+    quantity.type = "text"; quantity.inputMode = "decimal"; quantity.dir = "ltr";
+    var date = field("return-date", "date"); date.type = "date"; date.value = todayLocal();
+    field("return-reason", "return_reason", "textarea");
+    var save = node("button", "primary", t("return_create")); save.type = "submit";
+    fields.appendChild(save); form.appendChild(fields);
+    fields.disabled = !returnUI.ready || returnUI.uncertain;
+    $("return-editor").replaceChildren(form);
+    refreshReturnBatches();
+    [$("return-product"), $("return-warehouse")].forEach(function (select) {
+      select.onchange = refreshReturnBatches;
+    });
+    var token = returnUI.token, session = returnUI.session, generation = returnUI.generation;
+    form.onsubmit = function (event) {
+      event.preventDefault();
+      if (returnCurrent(token, session, generation)) return submitReturn(event);
+    };
+  }
+
+  function renderReturnDetail(row) {
+    var host = $("return-detail"); host.replaceChildren();
+    if (!row) return;
+    var details = node("dl", "saved-grid");
+    [
+      ["return_id", row.id], ["date", row.return_date],
+      ["customer", returnReference(returnUI.customers, row.customer_id)],
+      ["product", returnReference(returnUI.products, row.product_id)],
+      ["warehouse", returnReference(returnUI.warehouses, row.warehouse_id)],
+      ["batch_no", row.batch_id || t("transfer_no_batch")],
+      ["quantity", String(row.quantity)], ["return_reason", row.reason || "—"],
+      ["status", row.status === "quarantined" ? t("return_quarantined") : row.status || "—"],
+    ].forEach(function (pair) {
+      var group = node("div");
+      group.appendChild(node("dt", "", t(pair[0])));
+      group.appendChild(node("dd", "", pair[1])); details.appendChild(group);
+    });
+    host.appendChild(details);
+  }
+
+  async function readReturnRows(token, session, generation) {
+    var rows = [];
+    for (var offset = 0; ; offset += 200) {
+      var page = await api("/returns?limit=200&offset=" + offset);
+      if (!returnCurrent(token, session, generation)) return null;
+      rows = rows.concat(page);
+      if (page.length < 200) return rows;
+    }
+  }
+
+  async function refreshReturnHistory(token, session, generation, selectedId) {
+    var rows = await readReturnRows(token, session, generation);
+    if (!rows || !returnCurrent(token, session, generation)) return;
+    returnUI.rows = rows;
+    renderRows(el.returnRows, rows, function (row) {
+      var tr = node("tr"); tr.dataset.returnId = row.id;
+      tr.appendChild(cell(t("date"), fmtDate(row.return_date)));
+      tr.appendChild(cell(t("customer"), returnReference(returnUI.customers, row.customer_id)));
+      tr.appendChild(cell(t("product"), returnReference(returnUI.products, row.product_id)));
+      tr.appendChild(cell(t("quantity"), String(row.quantity), true));
+      tr.appendChild(cell(t("reason"), row.reason || "—"));
+      tr.appendChild(cell(t("status"), row.status === "quarantined" ? t("return_quarantined") : row.status || "—"));
+      var action = cell(t("open"), "");
+      var open = node("button", "default", t("open")); open.type = "button";
+      open.onclick = async function () {
+        if (!returnCurrent(token, session, generation) || returnUI.busy) return;
+        renderReturnDetail(null); clearError(el.returnsError);
+        try { await refreshReturnHistory(token, session, generation, row.id); }
+        catch (error) {
+          if (returnCurrent(token, session, generation)) showError(el.returnsError, messageFor(error));
+        }
+      };
+      action.appendChild(open); tr.appendChild(action); return tr;
+    });
+    if (!rows.length) emptyRow(el.returnRows, 7, "empty_rows");
+    if (selectedId) {
+      var selected = rows.find(function (row) { return row.id === selectedId; });
+      renderReturnDetail(selected);
+      if (!selected) throw new Error(t("return_not_found"));
+    }
+  }
+
+  async function submitReturn(event) {
+    event.preventDefault();
+    if (returnUI.busy || returnUI.uncertain) return;
+    var payload;
+    clearError(el.returnsError);
+    try { payload = returnPayload(); }
+    catch (error) { showError(el.returnsError, error.message); return; }
+    var token = state.token, session = state.sessionGeneration, generation = returnUI.generation;
+    var fields = $("return-fields"); fields.disabled = true; returnUI.busy = true;
+    var marker = null;
+    var saved = false, sent = false;
+    try {
+      marker = crypto.randomUUID();
+      // shortcut: same-tab reload protection, not server-side or cross-client idempotency.
+      if (sessionStorage.getItem("return-pending")) {
+        returnUI.uncertain = true;
+        throw new Error(t("return_uncertain"));
+      }
+      sessionStorage.setItem("return-pending", marker);
+      if (sessionStorage.getItem("return-pending") !== marker) throw new Error(t("return_uncertain"));
+      sent = true;
+      var result = await api("/returns", { method: "POST", body: payload });
+      saved = true;
+      if (sessionStorage.getItem("return-pending") === marker) sessionStorage.removeItem("return-pending");
+      if (!returnCurrent(token, session, generation)) return;
+      $("return-quantity").value = "";
+      await refreshReturnHistory(token, session, generation, result.id);
+      if (returnCurrent(token, session, generation)) {
+        showNotice(el.returnsError, t("return_saved"), "success");
+      }
+    } catch (error) {
+      var rejected = sent && error.status >= 400 && error.status < 500 && error.status !== 408;
+      if (rejected) {
+        try {
+          if (sessionStorage.getItem("return-pending") === marker) sessionStorage.removeItem("return-pending");
+        } catch (_error) { /* A storage failure keeps creation locked. */ }
+      }
+      if (!returnCurrent(token, session, generation)) return;
+      try { returnUI.uncertain = !!sessionStorage.getItem("return-pending"); }
+      catch (_error) { returnUI.uncertain = true; }
+      if (!sent) returnUI.uncertain = true;
+      showError(el.returnsError, saved ? t("return_saved_refresh_failed") :
+        returnUI.uncertain ? t("return_uncertain") : messageFor(error));
+    } finally {
+      if (returnCurrent(token, session, generation)) {
+        returnUI.busy = false;
+        fields.disabled = !returnUI.ready || returnUI.uncertain;
+      }
+    }
+  }
+
+  async function loadReturns() {
+    if (returnUI.busy) return;
+    resetReturns();
+    var token = state.token, session = state.sessionGeneration, generation = returnUI.generation;
+    if (!token || !state.user || !roleAllowed("returns")) return;
+    returnUI.token = token; returnUI.session = session;
+    try { returnUI.uncertain = !!sessionStorage.getItem("return-pending"); }
+    catch (_error) { returnUI.uncertain = true; }
+    var notices = [];
+    if (state.user.role === "warehouse_staff") {
+      // The committed master lookups deny this role; never substitute typed UUIDs or new grants.
+      notices.push(t("return_staff_blocked"));
+    } else if (canCreateReturn()) {
+      try {
+        var refs = await Promise.all([
+          api("/master/customers"), api("/master/products?limit=500"),
+          api("/master/warehouses"), api("/inventory/batches"),
+        ]);
+        if (!returnCurrent(token, session, generation)) return;
+        returnUI.customers = refs[0]; returnUI.products = refs[1];
+        returnUI.warehouses = refs[2]; returnUI.batches = refs[3];
+        returnUI.ready = true;
+        buildReturnEditor();
+      } catch (error) {
+        if (!returnCurrent(token, session, generation)) return;
+        notices.push(t("return_references_failed") + " " + messageFor(error));
+      }
+    }
+    if (!returnCurrent(token, session, generation)) return;
+    if (returnUI.uncertain) notices.push(t("return_uncertain"));
+    try { await refreshReturnHistory(token, session, generation); }
+    catch (error) {
+      if (!returnCurrent(token, session, generation)) return;
+      notices.push(messageFor(error));
+    }
+    if (returnCurrent(token, session, generation) && notices.length) {
+      showError(el.returnsError, notices.join(" "));
+    }
   }
 
   var marketingBusy = false;
@@ -3818,6 +4063,8 @@
   }
 
   function clearSession() {
+    ++state.sessionGeneration;
+    resetReturns();
     state.token = null;
     state.user = null;
     state.entries = null;
