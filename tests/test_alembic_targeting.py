@@ -1,4 +1,5 @@
 import os
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import create_engine
@@ -25,7 +26,10 @@ def test_medical_dms_is_refused_before_connecting():
 
 
 def test_explicit_disposable_target_wins():
-    env = {"ALEMBIC_DATABASE_URL": "postgresql+psycopg://localhost:5432/dms_cycle_test_" + "a" * 32}
+    env = {
+        "ALEMBIC_DATABASE_URL": "postgresql+psycopg://localhost:5432/dms_cycle_test_"
+        + "a" * 32
+    }
     url = resolve_target_url("postgresql+psycopg://localhost:5432/medical_dms", env=env)
     from sqlalchemy.engine.url import make_url
 
@@ -34,8 +38,10 @@ def test_explicit_disposable_target_wins():
 
 def test_conflicting_explicit_urls_are_rejected():
     env = {
-        "ALEMBIC_DATABASE_URL": "postgresql+psycopg://localhost:5432/dms_cycle_test_" + "a" * 32,
-        "TARGET_DB_URL": "postgresql+psycopg://localhost:5432/dms_cycle_test_" + "b" * 32,
+        "ALEMBIC_DATABASE_URL": "postgresql+psycopg://localhost:5432/dms_cycle_test_"
+        + "a" * 32,
+        "TARGET_DB_URL": "postgresql+psycopg://localhost:5432/dms_cycle_test_"
+        + "b" * 32,
     }
     with pytest.raises(TargetingError, match="conflicting"):
         resolve_target_url("postgresql+psycopg://localhost:5432/medical_dms", env=env)
@@ -43,7 +49,8 @@ def test_conflicting_explicit_urls_are_rejected():
 
 def test_target_db_name_conflicts_with_explicit_url():
     env = {
-        "ALEMBIC_DATABASE_URL": "postgresql+psycopg://localhost:5432/dms_cycle_test_" + "a" * 32,
+        "ALEMBIC_DATABASE_URL": "postgresql+psycopg://localhost:5432/dms_cycle_test_"
+        + "a" * 32,
         "TARGET_DB": "dms_cycle_test_" + "b" * 32,
     }
     with pytest.raises(TargetingError, match="conflicting"):
@@ -67,9 +74,7 @@ def test_medical_demo_is_allowed():
 
 
 def test_medical_demo_fresh_is_allowed():
-    url = validate_target_url(
-        "postgresql+psycopg://localhost:5432/medical_demo_fresh"
-    )
+    url = validate_target_url("postgresql+psycopg://localhost:5432/medical_demo_fresh")
     from sqlalchemy.engine.url import make_url
 
     assert make_url(url).database == "medical_demo_fresh"
@@ -77,9 +82,7 @@ def test_medical_demo_fresh_is_allowed():
 
 def test_unknown_database_is_still_rejected():
     with pytest.raises(TargetingError, match="not an approved migration target"):
-        validate_target_url(
-            "postgresql+psycopg://localhost:5432/medical_demo_scratch"
-        )
+        validate_target_url("postgresql+psycopg://localhost:5432/medical_demo_scratch")
 
 
 def test_connected_database_mismatch_is_rejected():
@@ -96,7 +99,7 @@ def test_connected_database_mismatch_is_rejected():
 
 
 def test_connected_database_matches_real_disposable_database():
-    db_name = "dms_cycle_test_" + "e" * 32
+    db_name = "dms_cycle_test_" + uuid4().hex
     base_url = os.environ.get(
         "DATABASE_URL", "postgresql+psycopg://localhost:5432/postgres"
     )
