@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 Money = Annotated[
     Decimal, Field(ge=0, max_digits=12, decimal_places=2, allow_inf_nan=False)
@@ -153,19 +153,27 @@ class InvoiceReportOut(BaseModel):
 
 
 class TargetIn(BaseModel):
-    """Set-or-replace one monthly target; product omitted = rep's whole book."""
+    """One monthly representative or explicit territory target, in units."""
 
-    rep_id: UUID
+    rep_id: UUID | None = None
+    territory_id: UUID | None = None
     product_id: UUID | None = None
     period_month: date
     target_quantity: Decimal = Field(ge=0, decimal_places=3, max_digits=12)
 
+    @model_validator(mode="after")
+    def one_target_scope(self):
+        if (self.rep_id is None) == (self.territory_id is None):
+            raise ValueError("Provide exactly one of rep_id or territory_id")
+        return self
+
 
 class TargetOut(BaseModel):
-    """One target row with the actual posted sales for the same scope."""
+    """One target row with actual posted sales for its exact scope."""
 
     id: UUID
-    rep_id: UUID
+    rep_id: UUID | None
+    territory_id: UUID | None
     product_id: UUID | None
     period_month: date
     target_quantity: Decimal
