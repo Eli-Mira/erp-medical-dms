@@ -33,10 +33,10 @@
       <button type="button" id="open-palette" class="searchbtn" data-i18n-aria-label="search_aria">
         <span aria-hidden="true">🔍</span>
         <span class="search-label" data-i18n="search_placeholder">بحث (عملاء، أصناف، شاشات)…</span>
-        <kbd>Ctrl K</kbd>
+        <kbd data-i18n="keyboard_shortcut">تحكم + K</kbd>
       </button>
       <span id="offline-chip" class="offline-chip hidden" data-i18n="offline_chip">وضع عدم الاتصال</span>
-      <button type="button" id="bell" class="iconbtn hidden" data-view="alerts" data-i18n-aria-label="alerts_aria" title="التنبيهات">🔔</button>
+      <button type="button" id="bell" class="iconbtn hidden" data-view="alerts" data-i18n-aria-label="alerts_aria" data-i18n-title="alerts_aria" title="التنبيهات">🔔</button>
       <span class="who hidden" id="who">
         <span data-i18n="signed_in_as">مسجّل الدخول باسم</span>
         <span id="who-name" class="num"></span>
@@ -51,15 +51,12 @@
     <!-- ============================================================ sidebar
          The agreed APP_FLOW §1 tree, role-filtered (§10). PROTO items carry a dot;
          their pages open labelled previews; real items are wired to the API. -->
-    <aside id="sidebar" class="sidebar hidden" aria-label="الوحدات">
+    <aside id="sidebar" class="sidebar hidden" aria-label="الوحدات" data-i18n-aria-label="modules_aria">
       <button type="button" class="nav-item" data-view="home">
         <span class="glyph" aria-hidden="true">🏠</span><span data-i18n="nav_home">الرئيسية</span>
       </button>
 
-      <button type="button" class="nav-item" data-view="home">
-        <span class="glyph" aria-hidden="true">🏠</span><span data-i18n="nav_home">الرئيسية</span>
-      </button>
-      <div class="sidebar-group-title">العملاء والمبيعات</div>
+      <div class="sidebar-group-title" data-i18n="nav_group_sales">العملاء والمبيعات</div>
       <button type="button" class="nav-item sub" data-view="customers">
         <span class="glyph" aria-hidden="true">🏥</span><span data-i18n="nav_customers">العملاء</span>
       </button>
@@ -70,13 +67,13 @@
         <span class="glyph" aria-hidden="true">🏬</span><span data-i18n="nav_warehouses">الفروع والمخازن</span>
       </button>
       <button type="button" class="nav-item sub" data-view="representatives" data-roles="owner,finance,sales_manager,medical_rep">
-        <span class="glyph" aria-hidden="true">🧑‍⚕️</span><span data-i18n="nav_representatives">المندوبون والمناطق</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">🧑‍⚕️</span><span data-i18n="nav_representatives">المندوبون والمناطق</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
       <button type="button" class="nav-item sub" data-view="invoice">
         <span class="glyph" aria-hidden="true">🧮</span><span data-i18n="nav_invoice">الفواتير (مبيعات)</span>
       </button>
       <button type="button" class="nav-item sub" data-view="routing" data-roles="owner,medical_rep,sales_manager">
-        <span class="glyph" aria-hidden="true">🗺️</span><span data-i18n="nav_routing">توجيه المخازن</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">🗺️</span><span data-i18n="nav_routing">توجيه المخازن</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
       <button type="button" class="nav-item sub" data-view="balances">
         <span class="glyph" aria-hidden="true">📊</span><span data-i18n="nav_balances">الذمم وكشوف العملاء</span>
@@ -100,18 +97,18 @@
         <span class="glyph" aria-hidden="true">🩺</span><span data-i18n="nav_doctors">أطباء/KOL</span>
       </button>
       <button type="button" class="nav-item sub" data-view="brandspend" data-roles="owner,finance">
-        <span class="glyph" aria-hidden="true">🏷️</span><span data-i18n="nav_brandspend">إنفاق المنتجات/العلامات</span><span class="badge">Beta</span>
+        <span class="glyph" aria-hidden="true">🏷️</span><span data-i18n="nav_brandspend">إنفاق المنتجات/العلامات</span><span class="badge" data-i18n="beta_label">نسخة تجريبية</span>
       </button>
       <button type="button" class="nav-item sub" data-view="objectives" data-roles="owner,finance,sales_manager">
-        <span class="glyph" aria-hidden="true">🎯</span><span data-i18n="nav_objectives">الأهداف وKPI</span><span class="badge">Beta</span>
+        <span class="glyph" aria-hidden="true">🎯</span><span data-i18n="nav_objectives">الأهداف وKPI</span><span class="badge" data-i18n="beta_label">نسخة تجريبية</span>
       </button>
       <button type="button" class="nav-item sub" data-view="suppliers" data-roles="owner,finance,read_only_auditor">
         <span class="glyph" aria-hidden="true">🚚</span><span data-i18n="nav_suppliers">المورّدون</span>
       </button>
       <button type="button" class="nav-item sub" data-view="purchases" data-roles="owner,finance">
-        <span class="glyph" aria-hidden="true">🛒</span><span data-i18n="nav_purchases">أوامر الشراء</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">🛒</span><span data-i18n="nav_purchases">أوامر الشراء</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
-      <div class="sidebar-group-title">المخزون</div>
+      <div class="sidebar-group-title" data-i18n="nav_group_inventory">المخزون</div>
       <button type="button" class="nav-item sub" data-view="inventory">
         <span class="glyph" aria-hidden="true">📦</span><span data-i18n="nav_inventory">أرصدة المخزون</span>
       </button>
@@ -134,26 +131,26 @@
         <span class="glyph" aria-hidden="true">🚨</span><span data-i18n="nav_inventoryalerts">تنبيهات المخزون</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
       </button>
       <button type="button" class="nav-item sub" data-view="overstock" data-roles="owner,finance,sales_manager">
-        <span class="glyph" aria-hidden="true">📈</span><span data-i18n="nav_overstock">تنبيه فائض المخزون</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">📈</span><span data-i18n="nav_overstock">تنبيه فائض المخزون</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
-      <div class="sidebar-group-title">الحسابات</div>
+      <div class="sidebar-group-title" data-i18n="nav_group_accounts">الحسابات</div>
       <button type="button" class="nav-item sub" data-view="accounts" data-roles="owner,finance">
         <span class="glyph" aria-hidden="true">📒</span><span data-i18n="nav_accounts">دليل الحسابات</span>
       </button>
       <button type="button" class="nav-item sub" data-view="cash" data-roles="owner,finance">
-        <span class="glyph" aria-hidden="true">💰</span><span data-i18n="nav_cash">الصندوق والبنوك</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">💰</span><span data-i18n="nav_cash">الصندوق والبنوك</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
       <button type="button" class="nav-item sub" data-view="collections">
         <span class="glyph" aria-hidden="true">🧾</span><span data-i18n="nav_collections">التحصيلات (سندات القبض)</span>
       </button>
       <button type="button" class="nav-item sub" data-view="expenses" data-roles="owner,finance">
-        <span class="glyph" aria-hidden="true">🧾</span><span data-i18n="nav_expenses">المصروفات والإيرادات</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">🧾</span><span data-i18n="nav_expenses">المصروفات والإيرادات</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
       <button type="button" class="nav-item sub" data-view="pnl" data-roles="owner,finance">
-        <span class="glyph" aria-hidden="true">📈</span><span data-i18n="nav_pnl">الأرباح والخسائر</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">📈</span><span data-i18n="nav_pnl">الأرباح والخسائر</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
       <button type="button" class="nav-item sub" data-view="payroll" data-roles="owner,finance">
-        <span class="glyph" aria-hidden="true">👥</span><span data-i18n="nav_payroll">الرواتب</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">👥</span><span data-i18n="nav_payroll">الرواتب</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
       <button type="button" class="nav-item sub" data-view="privateaccounts" data-roles="owner">
         <span class="glyph" aria-hidden="true">🔐</span><span data-i18n="nav_privateaccounts">الحسابات الخاصة</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
@@ -162,9 +159,9 @@
         <span class="glyph" aria-hidden="true">📜</span><span data-i18n="nav_audit">سجل التدقيق</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
       </button>
       <button type="button" class="nav-item sub" data-view="settings" data-roles="owner,finance">
-        <span class="glyph" aria-hidden="true">⚙️</span><span data-i18n="nav_settings">الإعدادات</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">⚙️</span><span data-i18n="nav_settings">الإعدادات</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
-      <div class="sidebar-group-title">التقارير</div>
+      <div class="sidebar-group-title" data-i18n="nav_group_reports">التقارير</div>
       <button type="button" class="nav-item sub" data-view="mgmtsummary" data-roles="owner,finance,sales_manager,district_manager,read_only_auditor">
         <span class="glyph" aria-hidden="true">🧾</span><span data-i18n="nav_mgmtsummary">الملخص الإداري</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية</span>
       </button>
@@ -172,32 +169,32 @@
         <span class="glyph" aria-hidden="true">📈</span><span data-i18n="nav_analytics">لوحة عبر الوحدات</span>
       </button>
       <button type="button" class="nav-item sub" data-view="telegram">
-        <span class="glyph" aria-hidden="true">✈️</span><span data-i18n="nav_telegram">تكامل تليجرام</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">✈️</span><span data-i18n="nav_telegram">تكامل تليجرام</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
-      <div class="sidebar-group-title">الإدارة والتقني</div>
+      <div class="sidebar-group-title" data-i18n="nav_group_admin">الإدارة والتقني</div>
       <button type="button" class="nav-item sub hidden" data-view="users" data-roles="*">
-        <span class="glyph" aria-hidden="true">👥</span><span data-i18n="users_title">إدارة المستخدمين</span><span class="badge">Beta</span>
+        <span class="glyph" aria-hidden="true">👥</span><span data-i18n="users_title">إدارة المستخدمين</span><span class="badge" data-i18n="beta_label">نسخة تجريبية</span>
       </button>
       <button type="button" class="nav-item sub" data-view="alerts">
-        <span class="glyph" aria-hidden="true">🔔</span><span data-i18n="nav_alerts">التنبيهات</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">🔔</span><span data-i18n="nav_alerts">التنبيهات</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
       <button type="button" class="nav-item sub" data-view="import" data-roles="owner,finance">
-        <span class="glyph" aria-hidden="true">📥</span><span data-i18n="nav_import">الاستيراد</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">📥</span><span data-i18n="nav_import">الاستيراد</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
       <button type="button" class="nav-item sub" data-view="pwa">
         <span class="glyph" aria-hidden="true">📱</span><span data-i18n="nav_pwa">التطبيق/PWA</span>
       </button>
       <button type="button" class="nav-item sub" data-view="reference" data-roles="owner,finance">
-        <span class="glyph" aria-hidden="true">📚</span><span data-i18n="nav_reference">المجموعات المرجعية</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">📚</span><span data-i18n="nav_reference">المجموعات المرجعية</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
       <button type="button" class="nav-item sub" data-view="uom" data-roles="owner,finance">
-        <span class="glyph" aria-hidden="true">📐</span><span data-i18n="nav_uom">وحدات القياس</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">📐</span><span data-i18n="nav_uom">وحدات القياس</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
       <button type="button" class="nav-item sub" data-view="credit" data-roles="owner,finance,sales_manager">
-        <span class="glyph" aria-hidden="true">🛡️</span><span data-i18n="nav_credit">إدارة حدود الائتمان</span><span class="proto-dot">نموذج</span>
+        <span class="glyph" aria-hidden="true">🛡️</span><span data-i18n="nav_credit">إدارة حدود الائتمان</span><span class="proto-dot" data-i18n="prototype_label">نموذج</span>
       </button>
 
-      <div class="sidebar-version">PWA · v6 · النموذج التجريبي</div>
+      <div class="sidebar-version" data-i18n="sidebar_version">واجهة الويب · الإصدار ٦ · عرض تجريبي</div>
     </aside>
 
     <div class="scrim" id="scrim" aria-hidden="true"></div>
@@ -320,7 +317,7 @@
               <h1 id="new-invoice-title" data-i18n="new_invoice">فاتورة بيع جديدة (مبدئية)</h1>
               <p class="desc" data-i18n="draft_only_note">مبدئية فقط — الترحيل معطّل بوابة الأمان؛ المسودة لا تخصم المخزون ولا تغيّر الذمم.</p>
             </div>
-            <span class="badge draft" data-i18n="status_draft">مبدئية</span>
+            <span class="proto-chip-row"><span class="badge info" data-i18n="beta_label">نسخة تجريبية</span><span class="badge draft" data-i18n="status_draft">مبدئية</span></span>
           </div>
           <div id="form-error" class="alert hidden" role="alert" data-kind="error"></div>
           <form id="invoice-form" novalidate>
@@ -391,13 +388,14 @@
               <h1 id="draft-title" data-i18n="draft_saved">المسودة المحفوظة</h1>
               <p class="desc" data-i18n="draft_scope_note">المسودة لا تخصم من المخزون ولا تؤثر على الذمم؛ لا يُقيد الأثر إلا عند الترحيل.</p>
             </div>
-            <span id="draft-status" class="badge draft">—</span>
+            <span class="proto-chip-row"><span class="badge info" data-i18n="beta_label">نسخة تجريبية</span><span id="draft-status" class="badge draft">—</span></span>
           </div>
           <dl class="saved-grid">
             <div><dt data-i18n="invoice_no">رقم الفاتورة</dt><dd class="num" id="draft-no">—</dd></div>
             <div><dt data-i18n="customer">العميل</dt><dd id="draft-customer">—</dd></div>
             <div><dt data-i18n="warehouse">مخزن الصرف</dt><dd id="draft-warehouse">—</dd></div>
             <div><dt data-i18n="invoice_date">تاريخ الفاتورة</dt><dd class="num" id="draft-date">—</dd></div>
+            <div><dt data-i18n="notes">ملاحظات</dt><dd id="draft-notes">—</dd></div>
           </dl>
           <div class="table-wrap">
             <table class="grid-table">
@@ -422,6 +420,7 @@
           </div>
           <div id="draft-error" class="alert hidden" role="alert" data-kind="warn" style="margin-top: var(--space-4);"></div>
           <div style="margin-top: var(--space-4);">
+            <button type="button" id="edit-draft" class="default hidden" data-i18n="edit_draft">تعديل المسودة</button>
             <button type="button" id="post-draft" class="primary" data-i18n="post_invoice">ترحيل الفاتورة</button>
             <button type="button" id="print-invoice" class="default" data-i18n="print_invoice">طباعة / حفظ PDF</button>
             <button type="button" class="default" data-goto="invoice" data-i18n="new_draft">مسودة جديدة</button>
@@ -546,7 +545,7 @@
             <h1 id="collections-title" data-i18n="collections_title">التحصيلات (سندات القبض)</h1>
             <p class="desc" data-i18n="demo_note_receipts">سندات القبض افتتاحية تجريبية؛ بوابة الأمان تمنع إنشاء/إبطال سندات جديدة (409).</p>
           </div>
-          <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
+          <span class="proto-chip-row"><span class="badge info" data-i18n="beta_label">نسخة تجريبية</span><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
           <button type="button" class="default" data-refresh="collections" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="collections-error" class="alert hidden" role="alert" data-kind="error"></div>
@@ -674,7 +673,7 @@
         <div class="view-head">
           <div class="titles">
             <h1 id="products-title" data-i18n="products_title">الأصناف والأسعار</h1>
-            <span class="badge info">Beta</span>
+            <span class="badge info" data-i18n="beta_label">نسخة تجريبية</span>
             <p class="desc" data-i18n="products_desc">كتالوج الأصناف الفعلي مع سعر الأساس ونسبة القيمة المضافة.</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
@@ -691,9 +690,9 @@
           <p data-i18n="product_limit">تظهر أول 500 نتيجة؛ استخدم البحث للوصول إلى صنف آخر.</p>
           <form id="product-form" class="hidden" aria-labelledby="product-form-title">
             <h2 id="product-form-title" data-i18n="product_form_title">صيانة الصنف</h2>
-            <span class="badge info">Beta</span>
+            <span class="badge info" data-i18n="beta_label">نسخة تجريبية</span>
             <fieldset id="product-fields">
-              <label for="product-sku">SKU</label>
+              <label for="product-sku" data-i18n="sku_label">كود الصنف</label>
               <input id="product-sku" required maxlength="50" dir="ltr">
               <label for="product-name-ar" data-i18n="product_name_ar">اسم الصنف (عربي)</label>
               <input id="product-name-ar" required maxlength="200" dir="rtl">
@@ -842,7 +841,7 @@
         <div class="view-head">
           <div class="titles">
             <h1 id="targets-title" data-i18n="targets_title">الأهداف</h1>
-            <p class="desc" data-i18n="targets_desc">أهداف المندوبين حسب الشهر (بيانات فعلية من الخادم).</p>
+            <p class="desc" data-i18n="targets_desc">أهداف المندوبين أو المناطق حسب الشهر (بيانات فعلية من الخادم).</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
           <button type="button" class="default" data-refresh="targets" data-i18n="refresh">تحديث</button></span>
@@ -852,7 +851,7 @@
           <table class="grid-table">
             <thead>
               <tr>
-                <th data-i18n="rep">المندوب</th>
+                <th data-i18n="target_scope">المندوب / المنطقة</th>
                 <th data-i18n="product">المنتج</th>
                 <th data-i18n="period">الشهر</th>
                 <th class="num" data-i18n="target_quantity">الهدف</th>
@@ -872,7 +871,7 @@
             <p class="desc" data-i18n="batches_desc">لقطات التشغيلات مرتبة حسب تاريخ الانتهاء (بيانات فعلية).</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
-          <span class="badge">Beta</span>
+          <span class="badge" data-i18n="beta_label">نسخة تجريبية</span>
           <button type="button" class="default" data-refresh="batches" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="batches-error" class="alert hidden" role="alert" data-kind="error"></div>
@@ -930,7 +929,7 @@
         <div class="view-head">
           <div class="titles">
             <h1 id="mgmtsummary-title" data-i18n="mgmtsummary_title">الملخص الإداري</h1>
-            <span class="badge">Beta</span>
+            <span class="badge" data-i18n="beta_label">نسخة تجريبية</span>
             <p class="desc" data-i18n="mgmtsummary_desc">مبيعات وتحصيلات وذمم من الدفاتر الفعلية — بديل التجميع اليدوي في إكسل.</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
@@ -1040,7 +1039,7 @@
             <h1 id="users-title" data-i18n="users_title">إدارة المستخدمين</h1>
             <p class="desc" data-i18n="users_desc">للمالك فقط: تعديل المستخدمين الحاليين والأدوار والتفعيل والفروع. لا إنشاء حسابات ولا تغيير كلمات مرور.</p>
           </div>
-          <span class="proto-chip-row"><span class="badge">Beta</span><button id="users-refresh" type="button" class="default" data-i18n="refresh">تحديث</button></span>
+          <span class="proto-chip-row"><span class="badge" data-i18n="beta_label">نسخة تجريبية</span><button id="users-refresh" type="button" class="default" data-i18n="refresh">تحديث</button></span>
         </div>
         <p data-i18n="users_session_note">أي تغيير فعلي يلغي جميع جلسات المستخدم. لا يمكن تغيير صفة المالك أو تعيين المناطق هنا.</p>
         <p id="users-message" role="status" aria-live="polite"></p>
@@ -1074,7 +1073,7 @@
       <section id="transfers-view" class="hidden" aria-labelledby="transfers-title">
         <div class="view-head">
           <div class="titles">
-            <h1 id="transfers-title"><span data-i18n="transfers_title">التحويلات</span> <span class="badge real">Beta</span></h1>
+            <h1 id="transfers-title"><span data-i18n="transfers_title">التحويلات</span> <span class="badge real" data-i18n="beta_label">نسخة تجريبية</span></h1>
             <p class="desc" data-i18n="transfers_desc">تحويلات المخزون بين المستودعات (بيانات فعلية).</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
@@ -1132,7 +1131,7 @@
         <div class="view-head">
           <div class="titles">
             <h1 id="returns-title" data-i18n="returns_title">المرتجعات</h1>
-            <span class="badge info">Beta</span>
+            <span class="badge info" data-i18n="beta_label">نسخة تجريبية</span>
             <p class="desc" data-i18n="returns_desc">مرتجعات العملاء (بيانات فعلية).</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
@@ -1163,7 +1162,7 @@
       <section id="marketing-view" class="hidden" aria-labelledby="marketing-title">
         <div class="view-head">
           <div class="titles">
-            <h1 id="marketing-title"><span data-i18n="marketing_title">التسويق</span> <span class="badge">Beta</span></h1>
+            <h1 id="marketing-title"><span data-i18n="marketing_title">التسويق</span> <span class="badge" data-i18n="beta_label">نسخة تجريبية</span></h1>
             <p class="desc" data-i18n="marketing_desc">المصروفات التسويقية والأهداف (بيانات فعلية).</p>
           </div>
           <span class="proto-chip-row"><span class="badge real" data-i18n="badge_real_data">بيانات فعلية من الخادم</span>
@@ -1368,7 +1367,7 @@
   </div>
 
   <!-- Bottom quick navigation (phones, brief §8) -->
-  <nav id="bottomnav" class="bottom-nav hidden" aria-label="شريط التنقل السريع">
+  <nav id="bottomnav" class="bottom-nav hidden" aria-label="شريط التنقل السريع" data-i18n-aria-label="quick_navigation_aria">
     <button type="button" class="bnav-btn" data-view="home" data-roles="*">
       <span class="glyph" aria-hidden="true">🏠</span><span data-i18n="nav_home">الرئيسية</span>
     </button>

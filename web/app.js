@@ -22,6 +22,7 @@
     products: [],
     lines: [],
     draft: null,
+    editingDraft: null,
     seq: 0,
     invoiceNos: {},
     receiptNos: {},
@@ -41,7 +42,46 @@
   }
 
   // ---------------------------------------------------------------- i18n
+  function prepareControls(root) {
+    var selector = "input,select,textarea,button";
+    var nodes = Array.prototype.slice.call(root.querySelectorAll(selector));
+    if (root.matches && root.matches(selector)) nodes.unshift(root);
+    nodes.forEach(function (node) {
+      if (node.id) node.dataset.testid = node.id;
+      else if (node.name) node.dataset.testid = node.name;
+      else if (node.type === "submit" && node.form && node.form.id) node.dataset.testid = node.form.id + "-submit";
+      if (node.closest("#sidebar") && node.dataset.view) {
+        node.dataset.testid = "nav-" + node.dataset.view;
+        var label = node.querySelector("[data-i18n]");
+        if (label) node.dataset.i18nAriaLabel = label.dataset.i18n;
+      }
+      if (!node.dataset.testid) {
+        var action = Array.prototype.find.call(node.attributes, function (attribute) {
+          return attribute.name.indexOf("data-") === 0 && attribute.name.indexOf("data-i18n") !== 0;
+        });
+        if (action) node.dataset.testid = action.name.slice(5);
+      }
+      if (!node.labels || !node.labels.length) {
+        var key = node.dataset.i18nAriaLabel || node.dataset.i18nPlaceholder || node.dataset.i18n;
+        if (key) {
+          node.dataset.i18nAriaLabel = key;
+          node.setAttribute("aria-label", t(key));
+        }
+      }
+    });
+  }
+
+  function countLabel(target, key, value) {
+    target.textContent = "";
+    var label = node("span", "", t(key));
+    label.dataset.i18n = key;
+    target.appendChild(label);
+    target.appendChild(document.createTextNode(" " + value));
+  }
+
   function applyI18n() {
+    prepareControls(document);
+    if (state.user && el.whoRole) el.whoRole.textContent = t("role_" + state.user.role, state.user.role);
     document.documentElement.lang = state.lang;
     document.documentElement.dir = state.lang === "ar" ? "rtl" : "ltr";
     document.querySelectorAll("[data-i18n]").forEach(function (node) {
@@ -55,6 +95,10 @@
     document.querySelectorAll("[data-i18n-aria-label]").forEach(function (node) {
       var v = dict[node.dataset.i18nAriaLabel];
       if (v !== undefined) node.setAttribute("aria-label", v);
+    });
+    document.querySelectorAll("[data-i18n-title]").forEach(function (node) {
+      var v = dict[node.dataset.i18nTitle];
+      if (v !== undefined) node.title = v;
     });
   }
 
@@ -191,7 +235,7 @@
   function linePreview(line) {
     var product = productById(line.productId);
     if (!product) return null;
-    var price = Number(product.base_price);
+    var price = Number(line.unitPrice !== undefined ? line.unitPrice : product.base_price);
     var rate = Number(product.vat_rate);
     var disc = Number(line.discount) || 0;
     var qty = Number(line.quantity) || 0;
@@ -1071,6 +1115,7 @@
     computed.textContent = "0.00";
 
     var remove = document.createElement("button");
+    remove.id = "line-remove-" + index;
     remove.type = "button";
     remove.className = "ghost danger";
     remove.textContent = "✕";
@@ -1091,7 +1136,12 @@
     fillSelect(productSelect, state.products, productLabel, "select_product");
     if (line.productId) productSelect.value = line.productId;
     productSelect.addEventListener("change", function () {
-      var current = lineByKey(index); if (current) current.productId = productSelect.value;
+      var current = lineByKey(index);
+      if (current) {
+        current.productId = productSelect.value;
+        delete current.unitPrice;
+        delete current.batchId;
+      }
       updateLine(index); recalcPreview();
     });
     qtyInput.addEventListener("input", function () {
@@ -1136,17 +1186,23 @@
       var hasQty = line.quantity !== "" && line.quantity !== undefined && !isNaN(qty) && qty > 0;
       if (!hasProduct && (line.quantity === "" || qty === 0)) return;  // untouched blank row
       if (!hasProduct || !hasQty) { incomplete = true; return; }       // half-filled row
-      out.push({
+      var item = {
         product_id: line.productId,
         quantity: String(line.quantity),
         discount_pct: line.discount ? String(line.discount) : "0",
-      });
+      };
+      if (line.unitPrice !== undefined) item.unit_price = line.unitPrice;
+      if (line.batchId !== undefined) item.batch_id = line.batchId;
+      if (line.notes !== undefined) item.notes = line.notes;
+      out.push(item);
     });
     return { lines: out, incomplete: incomplete };
   }
 
   async function saveDraft(event) {
     event.preventDefault();
+    if (el.saveDraft.disabled) return;
+    var token = state.token, generation = state.sessionGeneration;
     clearError(el.formError);
     var customer = customerById(el.customer.value);
     if (!customer) return showError(el.formError, t("err_customer"));
@@ -1167,15 +1223,20 @@
       lines: lines,
     };
 
+    var editing = state.editingDraft;
+    if (editing) payload.version = editing.version;
     el.saveDraft.disabled = true;
     try {
-      var draft = await api("/invoices", { method: "POST", body: payload });
+      var draft = await api(editing ? "/invoices/" + editing.id : "/invoices", {
+        method: editing ? "PUT" : "POST", body: payload,
+      });
+      if (state.token !== token || state.sessionGeneration !== generation) return;
       rememberDraftLocally(draft);
       renderDraft(draft);
     } catch (error) {
-      showError(el.formError, messageFor(error));
+      if (state.token === token && state.sessionGeneration === generation) showError(el.formError, messageFor(error));
     } finally {
-      el.saveDraft.disabled = false;
+      if (state.token === token && state.sessionGeneration === generation) el.saveDraft.disabled = false;
     }
   }
 
@@ -1187,11 +1248,14 @@
 
   async function resolveInvoiceNo(id) {
     if (state.invoiceNos[id]) return state.invoiceNos[id];
+    var token = state.token, generation = state.sessionGeneration;
     try {
       var invoice = await api("/invoices/" + id);
+      if (state.token !== token || state.sessionGeneration !== generation) return "";
       state.invoiceNos[id] = invoice.invoice_no;
       return invoice.invoice_no;
     } catch (_e) {
+      if (state.token !== token || state.sessionGeneration !== generation) return "";
       state.invoiceNos[id] = shortId(id);
       return state.invoiceNos[id];
     }
@@ -1225,6 +1289,9 @@
 
   function renderDraft(draft) {
     state.draft = draft;
+    state.editingDraft = null;
+    el.editDraft.classList.toggle("hidden", draft.posting_status !== "Draft" || !roleAllowed("invoice"));
+    el.draftNotes.textContent = draft.notes || "—";
     el.draftNo.textContent = draft.invoice_no;
     el.draftCustomer.textContent = customerName(draft.customer_id);
     el.draftWarehouse.textContent = warehouseName(draft.warehouse_id);
@@ -1266,6 +1333,37 @@
     setActiveNav("invoice");
   }
 
+  async function editDraft() {
+    var draft = state.draft;
+    if (!draft || draft.posting_status !== "Draft" || !roleAllowed("invoice")) return;
+    var token = state.token, generation = state.sessionGeneration;
+    el.editDraft.disabled = true;
+    try {
+      await loadWarehouses(draft.branch_id);
+      if (state.token !== token || state.sessionGeneration !== generation || state.draft !== draft) return;
+      state.editingDraft = { id: draft.id, version: draft.version };
+      el.invoiceNo.value = draft.invoice_no;
+      el.invoiceDate.value = draft.invoice_date;
+      el.customer.value = draft.customer_id;
+      el.branchDisplay.value = branchLabel(draft.branch_id);
+      el.warehouse.value = draft.warehouse_id;
+      el.notes.value = draft.notes || "";
+      // Retain server snapshot strings and batch identity when editing other fields.
+      state.lines = draft.lines.map(function (line) {
+        return { key: state.seq++, productId: line.product_id, quantity: line.quantity,
+          discount: line.discount_pct, unitPrice: line.unit_price,
+          batchId: line.batch_id, notes: line.notes };
+      });
+      rebuildLines();
+      clearError(el.formError);
+      showView("invoice");
+    } catch (error) {
+      if (state.token === token && state.sessionGeneration === generation) showError(el.draftError, messageFor(error));
+    } finally {
+      el.editDraft.disabled = false;
+    }
+  }
+
   function warehouseName(id) {
     for (var i = 0; i < state.warehouses.length; i++) {
       if (state.warehouses[i].id === id) {
@@ -1278,25 +1376,30 @@
 
   async function postDraft() {
     if (!state.draft) return;
+    var token = state.token, generation = state.sessionGeneration;
     clearError(el.draftError);
     el.postDraft.disabled = true;
     try {
       var draft = await api("/invoices/" + state.draft.id + "/post", { method: "POST" });
+      if (state.token !== token || state.sessionGeneration !== generation) return;
       renderDraft(draft);
     } catch (error) {
       // The 409 gate is part of the demo: show it verbatim; never fake success.
-      showError(el.draftError, messageFor(error));
+      if (state.token === token && state.sessionGeneration === generation) showError(el.draftError, messageFor(error));
     } finally {
-      el.postDraft.disabled = false;
+      if (state.token === token && state.sessionGeneration === generation) el.postDraft.disabled = false;
     }
   }
 
   async function openSavedDraft(id) {
+    var token = state.token, generation = state.sessionGeneration;
     clearError(el.draftError);
     try {
       var draft = await api("/invoices/" + id);
+      if (state.token !== token || state.sessionGeneration !== generation) return;
       renderDraft(draft);
     } catch (error) {
+      if (state.token !== token || state.sessionGeneration !== generation) return;
       forgetDraftLocally(id);
       showNotice(el.homeError, messageFor(error) + " — " + t("draft_registry_cleaned"), "warn");
       showView("home");
@@ -1325,6 +1428,8 @@
   }
 
   function newDraft() {
+    state.draft = null;
+    state.editingDraft = null;
     el.invoiceForm.reset();
     // reset() also clears the boot-filled defaults — restore them, or every
     // fresh draft would save with an empty date (422 "input is too short").
@@ -1411,22 +1516,29 @@
 
   async function loadEntriesIfAllowed() {
     if (state.entries) return state.entries;
+    var token = state.token, generation = state.sessionGeneration;
     try {
-      state.entries = await api("/ar/entries");
+      var entries = await api("/ar/entries");
+      if (state.token !== token || state.sessionGeneration !== generation) return [];
+      state.entries = entries;
       return state.entries;
     } catch (_e) {
+      if (state.token !== token || state.sessionGeneration !== generation) return [];
       state.entries = [];
       return state.entries;
     }
   }
 
   async function loadReceiptsIntoCache() {
+    var token = state.token, generation = state.sessionGeneration;
     try {
       var rows = await api("/collections");
+      if (state.token !== token || state.sessionGeneration !== generation) return [];
       state.receiptNos = {};
       rows.forEach(function (r) { state.receiptNos[r.id] = r.receipt_no; });
       return rows;
     } catch (_e) {
+      if (state.token !== token || state.sessionGeneration !== generation) return [];
       state.receiptNos = {};
       return [];
     }
@@ -1464,22 +1576,24 @@
       customer: t("customer"), method: t("method"), amount: t("amount"), status: t("status"),
     };
     renderRows(el.homeReceipts, [], function () { return null; });
+    var homeToken = state.token, homeGeneration = state.sessionGeneration;
     Promise.all([
       api("/ar/balances"), api("/collections"), api("/inventory/stock").catch(function () { return []; })
     ]).then(function (results) {
+      if (state.token !== homeToken || state.sessionGeneration !== homeGeneration) return;
       state.balancesCache = results[0];
       var receipts = results[1];
       var stock = results[2];
       var open = state.balancesCache.filter(function (row) { return Number(row.balance) > 0.004; });
-      el.statArSub.textContent = t("stat_ar_sub") + " " + open.length;
+      countLabel(el.statArSub, "stat_ar_sub", open.length);
       animateCount(el.statAr, open.reduce(function (total, row) {
         return total + Number(row.balance);
       }, 0), fmt);
-      el.statStockSub.textContent = t("stat_stock_sub") + " " + String(state.products.length);
+      countLabel(el.statStockSub, "stat_stock_sub", state.products.length);
       animateCount(el.statStock, stock.reduce(function (total, row) {
         return total + Number(row.quantity);
       }, 0), fmtQty);
-      el.statReceiptsSub.textContent = t("stat_receipts_sub") + " " + receipts.length;
+      countLabel(el.statReceiptsSub, "stat_receipts_sub", receipts.length);
       animateCount(el.statReceipts, receipts.reduce(function (total, row) {
         return total + Number(row.amount);
       }, 0), fmt);
@@ -1489,13 +1603,17 @@
       return Promise.all(recent.map(function (r) {
         return state.invoiceNos[r.invoice_id] ? null : resolveInvoiceNo(r.invoice_id);
       })).then(function () {
+        if (state.token !== homeToken || state.sessionGeneration !== homeGeneration) return;
         renderRows(el.homeReceipts, recent, receiptRow(false, labels));
       });
-    }).catch(function (error) { showError(el.homeError, messageFor(error)); });
+    }).catch(function (error) {
+      if (state.token !== homeToken || state.sessionGeneration !== homeGeneration) return;
+      showError(el.homeError, messageFor(error)); });
 
     // Real-entries based widgets (role permitting) are additive: failures here
     // never block the core tiles above.
     loadReceiptsIntoCache().then(loadEntriesIfAllowed).then(function (entries) {
+      if (state.token !== homeToken || state.sessionGeneration !== homeGeneration) return;
       var win = monthWindow();
       var sales = 0, invoicesCount = 0;
       entries.forEach(function (e) {
@@ -1503,7 +1621,7 @@
         var d = new Date(e.entry_date);
         if (d >= win[0] && d <= win[1]) { sales += Number(e.debit); invoicesCount += 1; }
       });
-      el.statSalesSub.textContent = t("stat_sales_sub") + " " + invoicesCount;
+      countLabel(el.statSalesSub, "stat_sales_sub", invoicesCount);
       animateCount(el.statSales, sales, fmt);
       // AR aging strip across all customers (owner/finance).
       var buckets = [0, 0, 0, 0];
@@ -1517,7 +1635,9 @@
       [["a_0_30", 0, ""], ["a_31_60", 1, ""], ["a_61_90", 2, "warn"], ["a_90p", 3, "bad"]].forEach(function (def) {
         var cellEl = document.createElement("span");
         cellEl.className = "aging-cell" + (def[2] ? " " + def[2] : "");
-        cellEl.appendChild(node("span", "small muted", t(def[0])));
+        var caption = node("span", "small muted", t(def[0]));
+        caption.dataset.i18n = def[0];
+        cellEl.appendChild(caption);
         cellEl.appendChild(node("span", "num aging-v", fmt(buckets[def[1]])));
         strip.appendChild(cellEl);
       });
@@ -1681,7 +1801,7 @@
       if (!rows.length) { emptyRow(el.targetRows, 5, "empty_rows"); return; }
       renderRows(el.targetRows, rows, function (row) {
         var tr = document.createElement("tr");
-        tr.appendChild(cell("rep", row.rep_id));
+        tr.appendChild(cell(t("target_scope"), row.territory_id ? t("territory") + ": " + row.territory_id : row.rep_id));
         tr.appendChild(cell("product", row.product_id ? productLineLabel(row.product_id) : "—"));
         tr.appendChild(cell("period", fmtDate(row.period_month)));
         tr.appendChild(cell("target", fmtQty(row.target_quantity), true));
@@ -2554,11 +2674,13 @@
     var notice = document.createElement("p");
     notice.setAttribute("role", "status");
     var mode = document.createElement("select");
+    mode.id = "marketing-record-type";
     mode.setAttribute("aria-label", marketingText("record_type"));
     [["spend", "spend"], ["objectives", "objective"]].forEach(function (pair) {
       mode.add(new Option(marketingText(pair[1]), pair[0]));
     });
     host.append(mode, notice, form);
+    form.id = "marketing-form";
     form.appendChild(controls);
     function field(name, label, type) {
       var wrapper = document.createElement("label");
@@ -2646,6 +2768,7 @@
     var list = document.createElement("div");
     host.appendChild(list);
     var fresh = document.createElement("button");
+    fresh.id = "marketing-new";
     fresh.type = "button"; fresh.textContent = marketingText("new");
     fresh.onclick = function () { if (!marketingBusy) { notice.textContent = ""; build(null); } };
     host.insertBefore(fresh, form);
@@ -2779,10 +2902,16 @@
     document.body.removeChild(a); URL.revokeObjectURL(url);
   }
 
+  var balancesSeq = 0;
+  var ledgerSeq = 0;
+
   async function loadBalances() {
+    var token = state.token, generation = state.sessionGeneration;
+    var seq = ++balancesSeq;
     clearError(el.balancesError);
     try {
       var balances = await api("/ar/balances");
+      if (state.token !== token || state.sessionGeneration !== generation || seq !== balancesSeq) return;
       state.balancesCache = balances;
       if (el.exportBalances) el.exportBalances.onclick = function () { exportBalancesCsv(); };
       var labels = { c: t("customer"), b: t("branch"), bal: t("balance") };
@@ -2819,18 +2948,21 @@
       $("ledger-customer").value = prefill;
       renderCustomerLedger(prefill);
     } catch (error) {
-      showError(el.balancesError, messageFor(error));
+      if (state.token === token && state.sessionGeneration === generation && seq === balancesSeq) showError(el.balancesError, messageFor(error));
     }
   }
 
   async function renderCustomerLedger(customerId) {
+    var token = state.token, generation = state.sessionGeneration;
+    var seq = ++ledgerSeq;
     var tbody = el.entryRows;
     var summary = el.ledgerSummary;
     summary.innerHTML = "";
     tbody.innerHTML = "";
     if (!customerId) { emptyRow(tbody, 7, "empty_rows"); return; }
     try {
-      var entries = await loadEntriesIfAllowed();
+      var entries = await api("/ar/entries?customer_id=" + encodeURIComponent(customerId));
+      if (state.token !== token || state.sessionGeneration !== generation || seq !== ledgerSeq) return;
       var mine = entries.filter(function (e) { return e.customer_id === customerId; })
         .sort(function (a, b) { return a.entry_date.localeCompare(b.entry_date) || String(a.created_at).localeCompare(String(b.created_at)); });
       // Resolve voucher numbers first so the ledger shows real references.
@@ -2840,6 +2972,7 @@
         }
         return null;
       }));
+      if (state.token !== token || state.sessionGeneration !== generation || seq !== ledgerSeq || $("ledger-customer").value !== customerId) return;
       var balance = 0;
       var labels = { d: t("mv_date"), ty: t("entry_type"), v: t("voucher"), n: t("notes"), dr: t("debit"), cr: t("credit"), run: t("running") };
       mine.forEach(function (e) {
@@ -2872,11 +3005,14 @@
         summary.appendChild(chip);
       });
     } catch (error) {
-      showError(el.balancesError, messageFor(error));
+      if (state.token === token && state.sessionGeneration === generation && seq === ledgerSeq) showError(el.balancesError, messageFor(error));
     }
   }
 
+  var collectionsSeq = 0;
   async function loadCollections() {
+    var token = state.token, generation = state.sessionGeneration;
+    var seq = ++collectionsSeq;
     clearError(el.collectionsError);
     var labels = {
       no: t("receipt_no"), date: t("receipt_date"), invoice: t("invoice_no"),
@@ -2884,6 +3020,7 @@
     };
     try {
       var rows = await api("/collections");
+      if (state.token !== token || state.sessionGeneration !== generation || seq !== collectionsSeq) return;
       state.receiptNos = {};
       rows.forEach(function (r) { state.receiptNos[r.id] = r.receipt_no; });
       rows = rows.slice().sort(function (a, b) {
@@ -2897,10 +3034,11 @@
       await Promise.all(ids.map(function (id) {
         return state.invoiceNos[id] ? null : resolveInvoiceNo(id);
       }));
+      if (state.token !== token || state.sessionGeneration !== generation || seq !== collectionsSeq) return;
       renderRows(el.receiptRows, rows, receiptRow(true, labels));
       if (!rows.length) emptyRow(el.receiptRows, 7, "empty_rows");
     } catch (error) {
-      showError(el.collectionsError, messageFor(error));
+      if (state.token === token && state.sessionGeneration === generation && seq === collectionsSeq) showError(el.collectionsError, messageFor(error));
     }
   }
 
@@ -3308,6 +3446,7 @@
     title.textContent = user.username;
     editor.appendChild(title);
     var form = document.createElement("form");
+    form.id = "users-form";
     function field(labelText, control) {
       var label = document.createElement("label");
       label.className = "field";
@@ -3317,20 +3456,23 @@
       form.appendChild(label);
     }
     var role = document.createElement("select");
+    role.id = "users-role";
     options.roles.forEach(function (value) {
       var option = document.createElement("option");
       option.value = value;
-      option.textContent = value;
+      option.textContent = t("role_" + value, value);
       option.selected = value === user.role;
       option.disabled = value === "owner" && !user.is_owner;
       role.appendChild(option);
     });
     field(t("users_role"), role);
     var active = document.createElement("input");
+    active.id = "users-active";
     active.type = "checkbox";
     active.checked = user.is_active;
     field(t("active"), active);
     var branches = document.createElement("select");
+    branches.id = "users-branches";
     branches.multiple = true;
     branches.size = 6;
     options.branches.forEach(function (branch) {
@@ -4006,7 +4148,8 @@
     if (state.token !== requestToken) return;
     state.user = me;
     el.whoName.textContent = me.username;
-    el.whoRole.textContent = me.role;
+    el.whoRole.dataset.role = me.role;
+    el.whoRole.textContent = t("role_" + me.role, me.role);
     el.who.classList.remove("hidden");
     el.logout.classList.remove("hidden");
     el.sidebar.classList.remove("hidden");
@@ -4064,6 +4207,22 @@
 
   function clearSession() {
     ++state.sessionGeneration;
+    ++balancesSeq;
+    ++ledgerSeq;
+    ++collectionsSeq;
+    state.editingDraft = null;
+    state.draft = null;
+    if (el.draftNotes) el.draftNotes.value = "";
+    if (el.draftInvoiceNo) el.draftInvoiceNo.value = "";
+    if (el.draftCustomer) el.draftCustomer.value = "";
+    if (el.draftLines) el.draftLines.innerHTML = "";
+    if (el.editDraftNotes) el.editDraftNotes.value = "";
+    if (el.editDraftInvoiceNo) el.editDraftInvoiceNo.value = "";
+    if (el.editDraftCustomer) el.editDraftCustomer.value = "";
+    if (el.editDraftLines) el.editDraftLines.innerHTML = "";
+    el.saveDraft.disabled = false;
+    el.postDraft.disabled = false;
+    el.editDraft.disabled = false;
     resetReturns();
     state.token = null;
     state.user = null;
@@ -4077,6 +4236,11 @@
     resetTransfers();
     resetVisits();
     state.balancesCache = [];
+    state.invoiceNos = {};
+    state.receiptNos = {};
+    [el.balanceRows, el.entryRows, el.receiptRows, el.ledgerSummary]
+      .forEach(function (body) { body.replaceChildren(); });
+    [el.balancesError, el.collectionsError].forEach(clearError);
     ++salesReportSeq;
     ++invalertsSeq;
     ++mgmtSeq;
@@ -4292,6 +4456,7 @@
     el.homeDrafts = $("home-drafts");
     el.stockRows = $("stock-rows");
     el.exportBalances = $("export-balances");
+    el.balanceRows = $("balance-rows");
     el.receiptRows = $("receipt-rows");
 
     el.loginForm = $("login-form");
@@ -4322,6 +4487,7 @@
     el.prevVat = $("prev-vat");
     el.prevGrand = $("prev-grand");
     el.draftNo = $("draft-no");
+    el.draftNotes = $("draft-notes");
     el.draftDate = $("draft-date");
     el.draftStatus = $("draft-status");
     el.draftCustomer = $("draft-customer");
@@ -4334,6 +4500,7 @@
     el.draftGrand = $("draft-grand");
     el.draftError = $("draft-error");
     el.postDraft = $("post-draft");
+    el.editDraft = $("edit-draft");
     el.printInvoice = $("print-invoice");
     el.visitCustomer = $("visit-customer");
     el.visitProduct = $("visit-product");
@@ -4368,6 +4535,7 @@
     el.invoiceForm.addEventListener("submit", saveDraft);
     el.addLine.addEventListener("click", function () { addLine(); recalcPreview(); });
     el.postDraft.addEventListener("click", postDraft);
+    el.editDraft.addEventListener("click", editDraft);
     el.printInvoice.addEventListener("click", function () { window.print(); });
 
     [["", "il_all"], ["Draft", "status_draft"], ["Posted", "status_posted"], ["Voided", "status_voided"]]
@@ -4519,6 +4687,11 @@
   async function init() {
     $("users-refresh").addEventListener("click", loadUsers);
     cacheElements();
+    new MutationObserver(function (changes) {
+      changes.forEach(function (change) {
+        change.addedNodes.forEach(function (node) { if (node.nodeType === 1) prepareControls(node); });
+      });
+    }).observe(document.body, { childList: true, subtree: true });
     await loadI18n(localStorage.getItem("lang") || "ar");
     var meta = await fetchMeta();
     if (meta && meta.demo_mode && currentSection === "login-view") {
