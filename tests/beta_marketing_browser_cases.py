@@ -6,6 +6,7 @@ Called by the owned disposable-PG fixture, never against a default database.
 from urllib.parse import urlsplit
 from uuid import uuid4
 
+from browser_readiness import wait_for_held
 from playwright.sync_api import expect
 
 CASE_NAMES = (
@@ -71,7 +72,7 @@ def capture_response(page, path, method="GET", search=""):
     page.route("**/*", route_handler)
 
     def wait():
-        page.wait_for_function("window.__marketingRace.held", timeout=15000)
+        wait_for_held(page, held)
         assert len(held) == 1
         return held[0][1]
 

@@ -1,5 +1,6 @@
 """Late financial UI replies must not restore an ended authenticated session."""
 
+from browser_readiness import wait_for_held
 from playwright.sync_api import expect
 from test_customer_pwa import _browser_user
 from test_lane2_balance_history_browser import (
@@ -68,7 +69,7 @@ def test_late_saved_invoice_reply_does_not_replace_login(live_app, i1_dataset):
 
         page.route("**" + invoice_path, hold_real_authorized_reply)
         row.get_by_role("button", name="Open", exact=True).click()
-        page.wait_for_function("window.__invoiceHeld === true")
+        wait_for_held(page, held)
         assert len(held) == 1
         page.locator("#logout").click()
         expect(page.locator("#login-view")).to_be_visible()

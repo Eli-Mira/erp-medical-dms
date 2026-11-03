@@ -3,6 +3,7 @@
 from uuid import uuid4
 
 import pytest
+from browser_readiness import wait_for_held
 from playwright.sync_api import expect
 from sqlalchemy.orm import Session
 from test_customer_contact_pwa import seed_customer
@@ -40,6 +41,7 @@ def test_contact_cache_does_not_cross_authenticated_users(live_app, delivery):
                 lambda r: "/master/customers" in r.url and r.method == "GET"
             ):
                 page.locator('[data-refresh="customers"]').click()
+            wait_for_held(page, held)
             prior = held[0].fetch()
             assert prior.status == 200 and any(row["id"] == cid for row in prior.json())
         page.locator("#logout").click()
@@ -54,15 +56,19 @@ def test_contact_cache_does_not_cross_authenticated_users(live_app, delivery):
             headers={"Authorization": "Bearer " + token},
         )
         assert actual.status == 200 and actual.json() == []
-        page.route(
-            "**/master/customers*",
-            lambda route: route.fulfill(
+        observed_routes = []
+
+        def fail_route(route):
+            observed_routes.append(route)
+            return route.fulfill(
                 status=503,
                 content_type="application/json",
                 body='{"detail":"Synthetic scoped refresh failure"}',
-            ),
-        )
+            )
+
+        page.route("**/master/customers*", fail_route)
         customer_page(page, 390)
+        wait_for_held(page, observed_routes)
         expect(page.locator("#customers-error")).to_contain_text(
             "Synthetic scoped refresh failure"
         )
@@ -123,14 +129,17 @@ def test_contact_session_end_clears_directory_and_form(live_app, ending):
             if ending == "logout_pending":
                 page.route("**/auth/logout", lambda route: held.append(route))
             else:
-                page.route(
-                    "**/auth/logout",
-                    lambda route: route.fulfill(
+                observed_routes = []
+
+                def fail_route(route):
+                    observed_routes.append(route)
+                    return route.fulfill(
                         status=503,
                         content_type="application/json",
                         body='{"detail":"Synthetic logout outage"}',
-                    ),
-                )
+                    )
+
+                page.route("**/auth/logout", fail_route)
             page.locator("#logout").click()
         try:
             expect(page.locator("#login-view")).to_be_visible()
@@ -139,6 +148,10 @@ def test_contact_session_end_clears_directory_and_form(live_app, ending):
             expect(page.locator("#customer-address")).to_have_value("")
             expect(page.locator("#customer-dialog")).not_to_be_visible()
             expect(page.locator(f'#customer option[value="{cid}"]')).to_have_count(0)
+            if ending == "logout_pending":
+                wait_for_held(page, held)
+            elif ending == "logout_failure":
+                wait_for_held(page, observed_routes)
         finally:
             for route in held:
                 route.fulfill(
@@ -195,6 +208,7 @@ def test_late_boot_customer_data_cannot_cross_rapid_account_switches(
         ):
             page.reload(wait_until="domcontentloaded")
         expect(page.locator("#logout")).to_be_visible()
+        wait_for_held(page, held)
         assert len(held) == 1
         prior = held[0].fetch()
         assert prior.status == 200 and any(row["id"] == cid for row in prior.json())

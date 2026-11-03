@@ -9,6 +9,7 @@ from urllib.parse import urlsplit
 from uuid import uuid4
 
 import pytest
+from browser_readiness import wait_for_held
 from playwright.sync_api import expect
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -365,7 +366,7 @@ def test_pending_visit_single_flight_error_then_real_retry(live_app):
         page.route("**/visits", hold)
         try:
             page.locator("#visit-save").click()
-            page.wait_for_function("window.__s8Held === true")
+            wait_for_held(page, held)
             expect(page.locator("#visit-save")).to_be_disabled()
             page.locator("#visit-form").evaluate(
                 "form => form.dispatchEvent(new Event('submit', {bubbles:true,cancelable:true}))"
@@ -427,6 +428,7 @@ def test_visit_logout_clears_before_held_failed_transport(live_app):
             expect(page.locator("#visit-rows tr")).to_have_count(0)
             expect(page.locator("#visit-notes")).to_have_value("")
             expect(page.locator("#visit-prev")).to_have_value("")
+            wait_for_held(page, routes)
         finally:
             for route in routes:
                 route.fulfill(status=503, body="S8 controlled logout failure")
@@ -501,7 +503,7 @@ def test_old_visit_response_cannot_repopulate_a_restricted_session(live_app, kin
                 page.locator("#visit-save").click()
             else:
                 visits_page(page, 390)
-            page.wait_for_function("window.__s8OldHeld === true")
+            wait_for_held(page, held)
             page.locator("#logout").click()
             expect(page.locator("#login-view")).to_be_visible()
             page.locator("#login-username").fill(username)
@@ -573,7 +575,10 @@ def test_visit_history_error_is_not_reported_as_empty_and_retry_recovers(live_ap
         record = page.locator('#visit-rows tr[data-visit-id="' + row["id"] + '"]')
         expect(record).to_be_visible()
 
+        observed_routes = []
+
         def unavailable(route):
+            observed_routes.append(route)
             route.fulfill(
                 status=503,
                 content_type="application/json",
@@ -583,6 +588,7 @@ def test_visit_history_error_is_not_reported_as_empty_and_retry_recovers(live_ap
         page.route("**/visits?*", unavailable)
         try:
             page.locator("#visits-refresh").click()
+            wait_for_held(page, observed_routes)
             expect(page.locator("#visits-error")).to_contain_text(
                 "S8 history unavailable"
             )
@@ -638,6 +644,7 @@ def test_unconfirmed_save_times_out_without_fake_success(live_app):
         page.route("**/visits", hold)
         try:
             page.locator("#visit-save").click()
+            wait_for_held(page, routes)
             expect(page.locator("#visit-save")).to_be_disabled()
             expect(page.locator("#visit-warn")).to_contain_text(
                 "Save could not be confirmed.", timeout=22000
@@ -688,7 +695,7 @@ def test_stale_previous_stock_cannot_refill_after_selection_cleared(live_app):
         try:
             page.locator("#visit-customer").select_option(str(ids["customer"]))
             page.locator("#visit-product").select_option(str(ids["product"]))
-            page.wait_for_function("window.__s8StockHeld === true")
+            wait_for_held(page, held)
             page.locator("#visit-product").select_option("")
             expect(page.locator("#visit-prev")).to_have_value("")
             route, response = held.pop()

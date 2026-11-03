@@ -3,6 +3,7 @@
 from html.parser import HTMLParser
 from pathlib import Path
 
+from browser_readiness import wait_for_held
 from playwright.sync_api import expect
 from test_customer_pwa import _browser_user
 from test_lane2_balance_history_browser import (
@@ -113,7 +114,7 @@ def test_late_real_balance_reply_cannot_repopulate_logged_out_screen(
         }""")
         page.route("**/ar/balances", hold_actual_balance_reply)
         page.locator('[data-refresh="balances"]').click()
-        page.wait_for_function("window.__balanceReplyHeld === true")
+        wait_for_held(page, held)
         assert len(held) == 1
         page.locator("#logout").click()
         expect(page.locator("#login-view")).to_be_visible()

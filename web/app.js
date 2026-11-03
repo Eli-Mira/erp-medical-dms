@@ -1556,8 +1556,9 @@
       nodeEl.textContent = format(target);
       return;
     }
-    var start = null, dur = 600;
+    var generation = state.sessionGeneration, start = null, dur = 600;
     function step(ts) {
+      if (state.sessionGeneration !== generation) return;
       if (start === null) start = ts;
       var k = Math.min((ts - start) / dur, 1);
       var eased = 1 - Math.pow(1 - k, 3);
@@ -4212,14 +4213,25 @@
     ++collectionsSeq;
     state.editingDraft = null;
     state.draft = null;
-    if (el.draftNotes) el.draftNotes.value = "";
-    if (el.draftInvoiceNo) el.draftInvoiceNo.value = "";
-    if (el.draftCustomer) el.draftCustomer.value = "";
+    if (el.draftNotes) el.draftNotes.textContent = "";
     if (el.draftLines) el.draftLines.innerHTML = "";
-    if (el.editDraftNotes) el.editDraftNotes.value = "";
-    if (el.editDraftInvoiceNo) el.editDraftInvoiceNo.value = "";
-    if (el.editDraftCustomer) el.editDraftCustomer.value = "";
-    if (el.editDraftLines) el.editDraftLines.innerHTML = "";
+    if (el.draftNo) el.draftNo.textContent = "";
+    if (el.draftDate) el.draftDate.textContent = "";
+    if (el.draftStatus) el.draftStatus.textContent = "";
+    if (el.draftCustomer) el.draftCustomer.textContent = "";
+    if (el.draftWarehouse) el.draftWarehouse.textContent = "";
+    if (el.draftBefore) el.draftBefore.textContent = "";
+    if (el.draftDiscount) el.draftDiscount.textContent = "";
+    if (el.draftNet) el.draftNet.textContent = "";
+    if (el.draftVat) el.draftVat.textContent = "";
+    if (el.draftGrand) el.draftGrand.textContent = "";
+    el.draftView.classList.add("hidden");
+    el.homeDrafts.innerHTML = "";
+    try { localStorage.removeItem("medsys.drafts.v1"); } catch (_e) { }
+    if (el.invoiceForm) el.invoiceForm.reset();
+    state.lines = [];
+    el.lines.replaceChildren();
+    recalcPreview();
     el.saveDraft.disabled = false;
     el.postDraft.disabled = false;
     el.editDraft.disabled = false;
@@ -4238,6 +4250,13 @@
     state.balancesCache = [];
     state.invoiceNos = {};
     state.receiptNos = {};
+    el.homeReceipts.replaceChildren();
+    $("home-aging").replaceChildren();
+    [el.statAr, el.statStock, el.statReceipts, el.statSales]
+      .forEach(function (item) { item.textContent = "—"; });
+    [el.statArSub, el.statStockSub, el.statReceiptsSub, el.statSalesSub]
+      .forEach(function (item) { item.textContent = ""; });
+    clearError(el.homeError);
     [el.balanceRows, el.entryRows, el.receiptRows, el.ledgerSummary]
       .forEach(function (body) { body.replaceChildren(); });
     [el.balancesError, el.collectionsError].forEach(clearError);

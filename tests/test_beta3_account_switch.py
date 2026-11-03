@@ -5,6 +5,7 @@ Additional GREEN-first coverage; original logout RED/GREEN oracle is unchanged.
 
 from uuid import uuid4
 
+from browser_readiness import wait_for_held
 from playwright.sync_api import expect
 from sqlalchemy.orm import Session
 from test_customer_pwa import _browser_user
@@ -84,7 +85,7 @@ def test_late_invoice_reply_cannot_cross_to_forbidden_warehouse_account(
 
         page.route("**" + invoice_path, hold_real_authorized_reply)
         row.get_by_role("button", name="Open", exact=True).click()
-        page.wait_for_function("window.__invoiceHeld === true")
+        wait_for_held(page, held)
         assert len(held) == 1
         page.locator("#logout").click()
         expect(page.locator("#login-view")).to_be_visible()

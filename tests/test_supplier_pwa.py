@@ -13,6 +13,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+from browser_readiness import wait_for_held
 from playwright.sync_api import expect, sync_playwright
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
@@ -129,6 +130,7 @@ def test_owner_supplier_create_pwa(live_app):
                 expect(nav).to_be_visible()
                 nav.click()
                 expect(page.locator("#suppliers-view")).to_be_visible()
+                wait_for_held(page, blocked_boot)
                 assert len(blocked_boot) == 1
                 blocked_boot[0].continue_()
                 page.unroute("**/master/branches")
@@ -449,6 +451,7 @@ def test_supplier_save_is_single_flight_and_deactivation_can_be_cancelled(live_a
         )
         page.keyboard.press("Escape")
         expect(page.locator("#supplier-dialog")).to_be_visible()
+        wait_for_held(page, held)
         assert len(held) == 1
         with page.expect_response(
             lambda r: r.url.endswith("/master/suppliers") and r.request.method == "POST"

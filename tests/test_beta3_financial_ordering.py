@@ -4,6 +4,7 @@ from decimal import Decimal
 from uuid import uuid4
 
 import pytest
+from browser_readiness import wait_for_held
 from fastapi.testclient import TestClient
 from playwright.sync_api import expect
 from sqlalchemy import text
@@ -127,7 +128,7 @@ def test_older_balance_reply_cannot_overwrite_new_persisted_collection(
 
         page.route("**/ar/balances", hold_only_first_actual_balance_reply)
         page.locator('#sidebar [data-view="balances"]').click()
-        page.wait_for_function("window.__olderBalanceHeld === true")
+        wait_for_held(page, held)
         # Positive collection is restricted to this module's exact owned UUID test DB.
         assert (
             config.POSTING_ENABLED is False and payment_router.POSTING_ENABLED is False

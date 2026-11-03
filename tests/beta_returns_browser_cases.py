@@ -3,6 +3,7 @@
 from decimal import Decimal
 from urllib.parse import urlsplit
 
+from browser_readiness import wait_for_held
 from playwright.sync_api import expect
 from sqlalchemy import text
 
@@ -152,9 +153,12 @@ def run_cases(f, browser, http, owner, customer, warehouse, product, batch, base
                     };
                 }""")
                 page.locator('#returns-view [data-refresh="returns"]').click()
-                page.wait_for_function("window.__returnHeld === true")
+                wait_for_held(page, "Number(window.__returnHeld)")
+
+                failed_logouts = []
 
                 def fail_logout(route):
+                    failed_logouts.append(route)
                     route.abort("failed")
 
                 context.route("**/auth/logout", fail_logout)
@@ -164,6 +168,7 @@ def run_cases(f, browser, http, owner, customer, warehouse, product, batch, base
                     assert page.locator("#return-editor").text_content() == ""
                     assert page.locator("#return-detail").text_content() == ""
                     assert page.locator("#return-rows tr").count() == 0
+                    wait_for_held(page, failed_logouts)
                     page.locator("#login-username").fill("fresh_rep_mona")
                     page.locator("#login-password").fill(f.password)
                     page.locator("#login-submit").click()
@@ -219,8 +224,11 @@ def run_cases(f, browser, http, owner, customer, warehouse, product, batch, base
                 page.locator("#return-" + selector).select_option(value)
             page.locator("#return-quantity").fill("1.125")
 
+            aborted_creates = []
+
             def abort_create(route):
                 if route.request.method == "POST":
+                    aborted_creates.append(route)
                     route.abort("failed")
                 else:
                     route.continue_()
@@ -229,6 +237,7 @@ def run_cases(f, browser, http, owner, customer, warehouse, product, batch, base
             try:
                 page.locator("#return-form button[type=submit]").click()
                 expect(page.locator("#returns-error")).to_be_visible()
+                wait_for_held(page, aborted_creates)
                 expect(
                     page.locator("#return-form button[type=submit]")
                 ).to_be_disabled()

@@ -5,6 +5,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+from browser_readiness import wait_for_held
 from playwright.sync_api import expect, sync_playwright
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -118,18 +119,19 @@ def test_deactivation_invalidates_invoice_choice_when_refresh_fails(live_app):
         option = page.locator(f'#customer option[value="{cid}"]')
         expect(option).to_have_count(1)
         row = page.locator(f'tr[data-customer-id="{cid}"]')
-        page.route(
-            "**/master/customers*",
-            lambda route: (
-                route.fulfill(
+        observed_routes = []
+
+        def fail_route(route):
+            if route.request.method == "GET":
+                observed_routes.append(route)
+                return route.fulfill(
                     status=503,
                     content_type="application/json",
                     body='{"detail":"Synthetic refresh failure"}',
                 )
-                if route.request.method == "GET"
-                else route.continue_()
-            ),
-        )
+            return route.continue_()
+
+        page.route("**/master/customers*", fail_route)
         page.once("dialog", lambda dialog: dialog.accept())
         with page.expect_response(
             lambda r: (
@@ -143,6 +145,7 @@ def test_deactivation_invalidates_invoice_choice_when_refresh_fails(live_app):
             "Synthetic refresh failure"
         )
         expect(option).to_have_count(0)
+        wait_for_held(page, observed_routes)
         page.unroute("**/master/customers*")
         page.locator('[data-refresh="customers"]').click()
         expect(page.locator("#customers-error")).not_to_be_visible()
@@ -235,6 +238,7 @@ def test_customer_duplicate_cancel_and_single_flight(live_app, lang):
         )
         page.keyboard.press("Escape")
         expect(page.locator("#customer-dialog")).to_be_visible()
+        wait_for_held(page, held)
         assert len(held) == 1
         with page.expect_response(
             lambda r: r.url.endswith("/master/customers") and r.request.method == "POST"
@@ -269,18 +273,22 @@ def test_customer_reference_failure_is_recoverable_without_write(live_app, lang)
     with _browser_user(live_app, lang=lang) as (page, engine, _user):
         customer_page(page, 1440)
         expect(page.locator("#customer-add")).to_be_visible()
-        page.route(
-            "**/master/territories",
-            lambda route: route.fulfill(
+        observed_routes = []
+
+        def fail_route(route):
+            observed_routes.append(route)
+            return route.fulfill(
                 status=503,
                 content_type="application/json",
                 body='{"detail":"Synthetic unavailable reference"}',
-            ),
-        )
+            )
+
+        page.route("**/master/territories", fail_route)
         page.locator("#customer-add").click()
         expect(page.locator("#customer-dialog-error")).to_be_visible()
         expect(page.locator("#customer-save")).to_be_disabled()
         page.locator("#customer-cancel").click()
+        wait_for_held(page, observed_routes)
         page.unroute("**/master/territories")
         page.locator("#customer-add").click()
         fill_customer(page, branch, territory, "CANCEL-" + uuid4().hex[:12])

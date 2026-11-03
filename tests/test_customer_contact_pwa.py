@@ -3,6 +3,7 @@
 from uuid import uuid4
 
 import pytest
+from browser_readiness import wait_for_held
 from playwright.sync_api import expect
 from sqlalchemy import text
 from test_customer_pwa import _browser_user, capture, customer_page, references
@@ -187,6 +188,7 @@ def test_contact_clear_is_single_flight_and_persistent(live_app, lang):
         )
         page.keyboard.press("Escape")
         expect(page.locator("#customer-dialog")).to_be_visible()
+        wait_for_held(page, held)
         assert len(held) == 1
         assert held[0].request.post_data_json == {
             "contact_phone": None,
@@ -223,24 +225,26 @@ def test_contact_save_failure_keeps_input_and_allows_retry(live_app, lang):
         assert persisted(engine, cid) == before
         page.locator("#customer-name-ar").fill(before[0]["name_ar"])
         assert page.locator("#customer-phone").get_attribute("maxlength") == "30"
-        page.route(
-            "**/master/customers/" + cid,
-            lambda route: (
-                route.fulfill(
+        observed_routes = []
+
+        def fail_route(route):
+            if route.request.method == "PATCH":
+                observed_routes.append(route)
+                return route.fulfill(
                     status=503,
                     content_type="application/json",
                     body='{"detail":"Synthetic save failure"}',
                 )
-                if route.request.method == "PATCH"
-                else route.continue_()
-            ),
-        )
+            return route.continue_()
+
+        page.route("**/master/customers/" + cid, fail_route)
         page.locator("#customer-save").click()
         expect(page.locator("#customer-dialog-error")).to_contain_text(
             "Synthetic save failure"
         )
         expect(page.locator("#customer-phone")).to_have_value("010 9999 0000")
         assert persisted(engine, cid) == before
+        wait_for_held(page, observed_routes)
         page.unroute("**/master/customers/" + cid)
         with page.expect_response(
             lambda r: (

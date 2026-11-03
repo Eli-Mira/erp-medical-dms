@@ -2,6 +2,12 @@
 
 Updated2026-10-30. The owner accepts existing evidence for14 legacy DONE rows; add Beta labels only, no re-reconciliation. Remaining incomplete rows retain their E2E gates. A Beta label does not turn an incomplete feature into completion. FEATURE_MATRIX.md owns current counts, closure order and evidence.
 
+## Master-data import baseline — owner160695
+
+CORE.07 is limited to **master-data import baseline**: 5 branches and 12 products admitted, with 14 extraction rejects. Reject reporting contains reason categories and counts only: `NON_PRODUCT_ROW` 3; `MISSING_OR_INVALID_PRICE` 11. No default prices are invented. Evidence is retained under orchestration `evidence/beta3-owner-20261102/owner160695/import-native-01/` with the earlier disposable-verifier admission receipt.
+
+**Sales, collections and balance reconciliation are not included.** This baseline does not certify VAT policy, opening balances, customer/warehouse mapping, production migration, a general staff import UI or financial reconciliation. Original workbooks remain read-only; the fresh aggregate report ran without database or network access, and prior verifier insertion is separate saved evidence.
+
 ## Financial behavior
 
 - **Invoices cannot be posted in the normal build. POSTING_ENABLED=False stays the repo default and stays OFF in demo/hosting.** Only the owned disposable-DB test harness enables positive posting/collections/reversal for E2E evidence; actual default-config409 proof is also required. Drafts do not affect stock or AR.
@@ -46,7 +52,7 @@ Owner accepts these existing14 rows without re-reconciliation. Each is a Beta fe
 | 2B.12 — Beta quarantine intake | Owner/finance and permitted sales-manager intake creates an audited quarantined return, with typed UUID/date/exact quantity validation and no saleable-stock, invoice or AR effect. Non-global managers require assigned customer territory AND separately granted owned warehouse; global inventory roles retain their existing reads. Existing district-manager/auditor history is reachable without create access. Warehouse staff retain backend history/intake permission but the master-reference catalog still denies their PWA create form; no catalog permission is widened. No approval, release, refund or financial settlement is included. Catalog selection is limited to500 active products; history uses existing offset pagination. Unknown writes remain locked in the same tab across logout/reload until reconciled; there is no shared server/cross-client idempotency key. Final independent review and integrated acceptance are tracked by the orchestration receipt, not implied by this limitation entry. |
 | CORE.06 — Beta gate verified | Existing owner authority maintains current users' roles, activation and branch grants with atomic audit and session revocation; self-lockout/last-owner guards remain. No account provisioning, passwords, owner-flag/transfer or territory editing. Concurrent race drills remain hardening work; unchanged self-save currently signs out locally and the save notice can overstate a no-op's audit/revocation. |
 | CORE.09 — Beta pending | The 13 shallow unit tests pass, but SQL targets the wrong schema, signed group IDs are dropped, /help crashes, and role scope/read-only DB/log safety/live service proof are absent. |
-| CORE.07 — Beta pending | Reconciliation assertions are not a usable preview/import/reject/deduplicate/reconciliation workflow. |
+| CORE.07 — master-data import baseline | 5 branches and 12 products admitted; 14 rejects reported by category/count only. Sales, collections and balance reconciliation are not included; no general import UI or production/accounting approval is claimed. |
 
 ## Demo and external services
 
@@ -54,6 +60,14 @@ Owner accepts these existing14 rows without re-reconciliation. Each is a Beta fe
 - Public/demo data must be freshly synthetic. No original workbooks, company/customer data, Git history, env files or credentials enter public/model packets. C9 original-data reconciliation stays local/read-only/aggregate-only.
 - Telegram's13 original config/template tests pass in isolation, not live. Real-schema scoped UUID queries, signed group IDs, /help, a real read-only DB role, safe logging and private/group live tests remain open. Only the NEW token privately provisioned in the env file may be runtime-loaded; token values and token-bearing URLs must never reach console/logs/prompts.
 - Hosting Beta closes with contained/local E2E plus applicable SPEC/QUALITY/SECURITY and automatic LICENSE gates. Public HTTPS, public access-gate/rate-limit checks and opening the tunnel remain Phase2 step3; the owner decides the domain. No tunnel is opened for Beta closure.
+
+## Browser-test readiness — owner-authorized hardening
+
+Owner classification: "pre-existing flaky readiness race, 1 of 120 on both the pre-repair and the repaired tree, not a regression from the privacy fix; mechanism not proven."
+
+**Native count correction:** the retained 20-repetitions-per-variant comparison is **119 passed / 1 failed of 120** on pre-final-repair executable source and **120 passed / 0 failed of 120** on staged tree `124efb0c45eb1fa0eb643b9aed501405c7168034`. The earlier merged full suite separately had 1114 passes / 1 failure of 1115; it was not a 120-case run. Thus the quoted "1 of 120 on both" is not a measured result. Two callback probes each passed 120/120 without capturing the empty-list interval. This is owner-authorized defensive fixture hardening, not proof of a mechanism or a new product repair. The pre-existing failure means a regression from the privacy fix is not established.
+
+The test now waits on the actual held-route list, explicitly asserts interception, and waits for enabled controls; it uses no `networkidle` or sleeps. Existing privacy assertions, client-consumption barriers and frozen oracles remain unchanged. Evidence: orchestration `evidence/beta3-owner-20261102/owner163704-causal-sequence-01/CAUSAL_INTAKE_02.json`. A further failure parks this single test with its reason under the owner's disposition, rather than starting another causation cycle; excluded coverage must remain explicit in release receipts.
 
 ## Scope and proof limits
 

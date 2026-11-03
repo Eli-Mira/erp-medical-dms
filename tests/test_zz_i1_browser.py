@@ -8,6 +8,7 @@ from decimal import Decimal
 from uuid import uuid4
 
 import pytest
+from browser_readiness import wait_for_held
 from fastapi.testclient import TestClient
 from playwright.sync_api import expect
 from sqlalchemy import text
@@ -356,6 +357,7 @@ def test_i1_old_warehouse_labels_do_not_repopulate_new_account(
         with page.expect_request(lambda r: "/master/warehouses" in r.url):
             page.reload(wait_until="domcontentloaded")
         expect(page.locator("#home-view")).to_be_visible()
+        wait_for_held(page, held)
         assert len(held) == 1
         prior = held[0].fetch()
         assert prior.status == 200 and any(
@@ -455,14 +457,18 @@ def test_i1_late_report_cannot_cross_accounts(live_app, i1_dataset, view, delive
         )
         held = []
         page.route("**" + path + "*", lambda route: held.append(route))
+        expect(page.locator(f'[data-refresh="{view}"]')).to_be_enabled()
         with page.expect_request(lambda r: path in r.url):
             page.locator(f'[data-refresh="{view}"]').click()
+        wait_for_held(page, held)
+        assert held, "An old-account report request must actually be held"
         prior = held[0].fetch()
         assert prior.status == 200
         page.locator("#logout").click()
         expect(page.locator("#login-view")).to_be_visible()
         page.locator("#login-username").fill(username)
         page.locator("#login-password").fill(password)
+        expect(page.locator("#login-submit")).to_be_enabled()
         page.locator("#login-submit").click()
         expect(page.locator("#home-view")).to_be_visible()
         current = page.evaluate("localStorage.getItem('token')")
@@ -698,19 +704,23 @@ def test_i1_complete_employee_journey(live_app, i1_dataset, lang, width, request
             == "none"
         )
         capture_i1(page, request, "mgmtsummary", lang, width, expected)
-        page.route(
-            "**/reports/management-summary*",
-            lambda route: route.fulfill(
+        observed_routes = []
+
+        def fail_route(route):
+            observed_routes.append(route)
+            return route.fulfill(
                 status=503,
                 content_type="application/json",
                 body='{"detail":"I1 temporary report outage"}',
-            ),
-        )
+            )
+
+        page.route("**/reports/management-summary*", fail_route)
         page.locator('[data-refresh="mgmtsummary"]').click()
         expect(page.locator("#mgmtsummary-error")).to_contain_text(
             "I1 temporary report outage"
         )
         expect(page.locator("#ms-kpi-sales")).to_have_text("—")
+        wait_for_held(page, observed_routes)
         page.unroute("**/reports/management-summary*")
         page.locator('[data-refresh="mgmtsummary"]').click()
         expect(page.locator("#ms-kpi-sales")).to_have_text(
