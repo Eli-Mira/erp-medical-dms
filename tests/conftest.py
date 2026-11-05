@@ -46,10 +46,18 @@ def isolated_financial_database(request):
         "test_sales_targets",
         "test_sales_report",
                 "test_settings_policy",
-                "test_management_summary",
-                "test_i1_reports",
-                "test_visits",
-            }:
+                                "test_management_summary",
+                                "test_i1_reports",
+                                "test_visits",
+                                # r9 pre-card: admitted so the four cards begin with a real
+                                # failing test on a disposable DB. Nothing else is admitted.
+                                "test_telegram_bot",
+                                "test_telegram_dispatch_allowlists",
+                                "test_ar_ledger",
+                                "test_overnight_hostile_inputs",
+                                "test_overnight_login_rate_limit",
+                                "test_owner_warehouse_permissions",
+                            }:
                 return
     assert os.environ.get("APP_ENV") == "test", "Use scripts/verify_invoice_cycle.py"
     assert engine.url.database.startswith("dms_cycle_test_"), (
