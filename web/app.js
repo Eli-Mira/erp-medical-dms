@@ -354,7 +354,7 @@
   var ROLE_OK = {
     home: ["*"],
     invoice: ["owner", "finance", "medical_rep", "sales_manager", "district_manager", "read_only_auditor"],
-    inventory: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
+    inventory: ["owner", "finance", "sales_manager", "district_manager", "warehouse_staff", "read_only_auditor"],
     ledger: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
     invoicelist: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
     salesreport: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
@@ -1676,8 +1676,8 @@
     return api("/inventory/stock").then(function (rows) {
       renderRows(el.stockRows, rows, function (row) {
         var tr = document.createElement("tr");
-        tr.appendChild(cell(labels.wh, warehouseLabel(row.warehouse_id)));
-        tr.appendChild(cell(labels.prod, productLineLabel(row.product_id)));
+        tr.appendChild(cell(labels.wh, row.warehouse_name || warehouseLabel(row.warehouse_id)));
+        tr.appendChild(cell(labels.prod, row.product_name || productLineLabel(row.product_id)));
         tr.appendChild(cell(labels.qty, fmtQty(row.quantity), true));
         tr.appendChild(cell(labels.up, fmtDate(row.updated_at), true));
         return tr;

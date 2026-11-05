@@ -208,7 +208,7 @@ def test_invalid_quantities_rejected(stock_env, movement_type, quantity):
     assert client.post("/inventory/movements", json=body, headers=headers()).status_code == 422
 
 
-@pytest.mark.parametrize("role", ["owner", "finance", "warehouse_staff"])
+@pytest.mark.parametrize("role", ["owner", "finance"])
 def test_write_roles_can_record_movements(stock_env, role):
     client, db, ids, headers, movement = stock_env
     if role == "owner":
@@ -220,7 +220,7 @@ def test_write_roles_can_record_movements(stock_env, role):
     assert client.post("/inventory/movements", json=movement(), headers=auth).status_code == 201
 
 
-@pytest.mark.parametrize("role", ["sales_manager", "district_manager", "medical_rep", "admin", "read_only_auditor", "user"])
+@pytest.mark.parametrize("role", ["warehouse_staff", "sales_manager", "district_manager", "medical_rep", "admin", "read_only_auditor", "user"])
 def test_other_roles_cannot_record_movements(stock_env, role):
     client, db, ids, headers, movement = stock_env
     db.execute(text("UPDATE platform.platform_user SET role=:role WHERE id=:id"), {"role": role, "id": ids["other"]})
@@ -232,6 +232,10 @@ def test_other_roles_cannot_record_movements(stock_env, role):
 def test_read_roles_can_view_stock(stock_env, role):
     client, db, ids, headers, movement = stock_env
     client.post("/inventory/movements", json=movement(), headers=headers())
+    if role == "warehouse_staff":
+        db.execute(text("INSERT INTO platform.user_branch(user_id,branch_id) VALUES (:u,:b)"),
+                   {"u": ids["other"], "b": ids["branch"]})
+        db.commit()
     if role == "owner":
         auth = headers()
     else:

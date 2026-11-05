@@ -44,6 +44,8 @@ class BalanceOut(BaseModel):
     batch_id: UUID | None
     quantity: Decimal
     updated_at: datetime
+    warehouse_name: str | None = None
+    product_name: str | None = None
 
 
 class CoverOut(BaseModel):

@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 Money = Annotated[
     Decimal, Field(ge=0, max_digits=12, decimal_places=2, allow_inf_nan=False)
@@ -20,6 +20,13 @@ Quantity = Annotated[
 
 class InputModel(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    @field_validator("*", check_fields=False)
+    @classmethod
+    def reject_null_characters(cls, value):
+        if isinstance(value, str) and "\x00" in value:
+            raise ValueError("Text cannot contain null characters")
+        return value
 
 
 class LineIn(InputModel):

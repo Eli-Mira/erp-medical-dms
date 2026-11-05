@@ -3,6 +3,7 @@
 Session token == platform_session.id (UUID), stateful in DB (§2). No schema
 columns invented: the session PK carries the token. Logout deletes the row.
 """
+
 import datetime
 import uuid as uuidlib
 from typing import Annotated
@@ -14,6 +15,9 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from . import repo
+from .rate_limit import FailedLoginLimiter
+
+login_limiter = FailedLoginLimiter()
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 bearer_scheme = HTTPBearer()
@@ -93,7 +97,9 @@ def get_current_user(
     if sid is None:
         raise HTTPException(status_code=401, detail="invalid session token")
     session = repo.get_session(db, sid)
-    if not session or session["expires_at"] < datetime.datetime.now(datetime.timezone.utc):
+    if not session or session["expires_at"] < datetime.datetime.now(
+        datetime.timezone.utc
+    ):
         raise HTTPException(status_code=401, detail="session expired")
     user = repo.get_user_by_id(db, session["user_id"])
     if not user or not user["is_active"]:
@@ -103,32 +109,55 @@ def get_current_user(
 
 AdministrationUser = Annotated[dict, Depends(get_current_user)]
 AdministrationDb = Annotated[Session, Depends(get_db)]
-AdministrationPayload = Annotated[UserAdministrationIn, Depends(_administration_payload)]
-AdministrationCredentials = Annotated[HTTPAuthorizationCredentials, Depends(bearer_scheme)]
+AdministrationPayload = Annotated[
+    UserAdministrationIn, Depends(_administration_payload)
+]
+AdministrationCredentials = Annotated[
+    HTTPAuthorizationCredentials, Depends(bearer_scheme)
+]
 
 
 @router.post("/login", response_model=LoginOut)
 def login(request: Request, payload: LoginIn, db=Depends(get_db)):
-    from .security import verify_password
-
-    # Serialize session issuance with administration and session revocation.
-    user = repo.get_user_by_username(db, payload.username, lock=True)
-    if not user or not user["is_active"]:
-        raise HTTPException(status_code=401, detail="invalid credentials")
-    if not verify_password(payload.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="invalid credentials")
     import ipaddress
 
-    ip = request.client.host if request.client else None
-    if ip:
-        try:  # inet column rejects non-IP host strings (e.g. TestClient "testclient")
-            ipaddress.ip_address(ip)
-        except ValueError:
-            ip = None
-    sid = repo.create_session(db, user["id"], ip)
-    repo.log_audit(db, user["id"], "login", "platform_session", sid, None, {"ip": ip})
-    db.commit()
-    return LoginOut(access_token=str(sid))
+    from .security import verify_password
+
+    # Only the direct ASGI peer is used; forwarded headers are not identity.
+    host = request.client.host if request.client else None
+    ticket, retry = login_limiter.reserve(payload.username, host)
+    if ticket is None:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many login attempts",
+            headers={"Retry-After": str(retry)},
+        )
+    failed = False
+    try:
+        # Serialize session issuance with administration and session revocation.
+        user = repo.get_user_by_username(db, payload.username, lock=True)
+        # Unknown accounts still perform the existing 200k-iteration verifier.
+        dummy_hash = "pbkdf2_sha256$200000$" + "00" * 16 + "$" + "00" * 32
+        verified = verify_password(
+            payload.password, user["password_hash"] if user else dummy_hash
+        )
+        if not user or not user["is_active"] or not verified:
+            failed = True
+            raise HTTPException(status_code=401, detail="invalid credentials")
+        ip = host
+        if ip:
+            try:  # inet column rejects non-IP host strings (e.g. TestClient "testclient")
+                ipaddress.ip_address(ip)
+            except ValueError:
+                ip = None
+        sid = repo.create_session(db, user["id"], ip)
+        repo.log_audit(
+            db, user["id"], "login", "platform_session", sid, None, {"ip": ip}
+        )
+        db.commit()
+        return LoginOut(access_token=str(sid))
+    finally:
+        login_limiter.complete(ticket, failed=failed)
 
 
 @router.post("/logout")
@@ -139,7 +168,9 @@ def logout(
     if sid:
         session = repo.get_session(db, sid)
         if session:
-            repo.log_audit(db, session["user_id"], "logout", "platform_session", sid, None, None)
+            repo.log_audit(
+                db, session["user_id"], "logout", "platform_session", sid, None, None
+            )
             repo.delete_session(db, sid)
             db.commit()
     return {"ok": True}

@@ -14,12 +14,45 @@ from uuid import uuid4
 
 from alembic.config import Config
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import ArgumentError
 
 from alembic import command
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from app.db import DATABASE_URL
+
+
+def runner_database_url():
+    explicit_url = os.environ.get("DATABASE_URL")
+    if not explicit_url:
+        raise ValueError("An explicit disposable-verifier DATABASE_URL is required")
+    try:
+        base = make_url(explicit_url)
+        port = base.port
+    except (ArgumentError, TypeError, ValueError):
+        raise ValueError("Invalid disposable-verifier DATABASE_URL") from None
+    if (
+        base.drivername != "postgresql+psycopg"
+        or base.host not in {"localhost", "127.0.0.1", "::1"}
+        or port is None
+        or not 1 <= port <= 65535
+        or not (
+            base.database in {"postgres", "erp_verify"}
+            or re.fullmatch(r"dms_cycle_test_[0-9a-f]{32}", base.database or "")
+        )
+        or {"host", "hostaddr", "port", "dbname", "database", "service", "servicefile"}
+        & base.query.keys()
+    ):
+        raise ValueError(
+            "Verifier requires an explicit local endpoint, port and verifier database"
+        )
+    # Port 5432 is private loopback only in the approved container, never on the host.
+    if port in {5432, 5434} and not Path("/.dockerenv").is_file():
+        raise ValueError(
+            "Company host ports 5432/5434 are forbidden; use the approved contained runner"
+        )
+    return base
 
 
 def bindings():
@@ -58,23 +91,28 @@ def main():
     args = parser.parse_args()
     if not re.fullmatch(r"[a-zA-Z0-9_-]+", args.stage):
         parser.error("stage must be a simple artifact name")
+    base = runner_database_url()
     out = ROOT / "docs/evidence/invoice-cycle" / args.stage
     out.mkdir(parents=True, exist_ok=False)
     selectors = args.tests or ["tests/", "-q", "--tb=short"]
     if selectors[0] == "--":
         selectors = selectors[1:]
-    base = create_engine(DATABASE_URL).url
-    assert base.host in {"localhost", "127.0.0.1", "::1"}, (
-        "Only local disposable tests are permitted"
-    )
     # Never migrate/connect to the application database: admin is metadata/CREATE/DROP only.
     name = "dms_cycle_test_" + uuid4().hex
     assert re.fullmatch(r"dms_cycle_test_[0-9a-f]{32}", name) and name != base.database
     target = base.set(database=name)
+    connection_target = {
+        "namespace": "disposable-container" if Path("/.dockerenv").is_file() else "host",
+        "host": target.host,
+        "port": target.port,
+        "database": name,
+    }
+    print("TEST_TARGET " + json.dumps(connection_target, sort_keys=True), flush=True)
     admin = create_engine(base.set(database="postgres"), isolation_level="AUTOCOMMIT")
     engine = create_engine(target)
     record = {
         "database": name,
+        "connection_target": connection_target,
         "created": False,
         "removed": False,
         "configuration": {"APP_ENV": "test", "POSTING_ENABLED": "false"},

@@ -36,10 +36,10 @@ CurrentUser = Annotated[dict, Depends(get_current_user)]
 # Explicit user_branch grants cover owned warehouses, never fulfillment routes.
 READ_ROLES = {"owner", "finance", "warehouse_staff", "read_only_auditor",
               "sales_manager", "district_manager"}
-WRITE_ROLES = {"owner", "finance", "warehouse_staff"}
+WRITE_ROLES = {"owner", "finance"}
 
-# Roles granted access to ALL warehouses (no per-warehouse filtering).
-GLOBAL_WAREHOUSE_ROLES = {"owner", "finance", "warehouse_staff", "read_only_auditor"}
+# Warehouse staff have lookup-only access through explicit branch assignments.
+GLOBAL_WAREHOUSE_ROLES = {"owner", "finance", "read_only_auditor"}
 
 
 def _role(user, allowed):

@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.auth.repo import log_audit
 from app.auth.router import get_current_user
 from app.db import get_db
-from app.inventory.router import GLOBAL_WAREHOUSE_ROLES, _scope_warehouses
+from app.inventory.router import _scope_warehouses
 from app.returns.schemas import ReturnIn
 
 router = APIRouter(prefix="/returns", tags=["returns"])
@@ -19,6 +19,8 @@ Db = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[dict, Depends(get_current_user)]
 
 MANAGE_ROLES = {"owner", "finance", "warehouse_staff", "sales_manager"}
+# Quarantine returns do not grant access to sellable stock.
+GLOBAL_RETURN_ROLES = {"owner", "finance", "warehouse_staff", "read_only_auditor"}
 
 
 def _role(user, allowed):
@@ -47,7 +49,9 @@ def create_return(payload: ReturnIn, request: Request, db: Db, current: CurrentU
     warehouse, batch = payload.warehouse_id, payload.batch_id
     q, rdate = payload.quantity, payload.return_date.isoformat()
     reason, invoice = payload.reason, payload.invoice_id
-    scope = _scope_warehouses(db, current)
+    scope = None
+    if current["role"] not in GLOBAL_RETURN_ROLES:
+        scope = _scope_warehouses(db, current)
     if scope is not None and (
         warehouse not in scope
         or not db.execute(
@@ -167,7 +171,7 @@ def list_returns(
         raise HTTPException(422, "offset >= 0")
     _role(current, MANAGE_ROLES | {"read_only_auditor", "district_manager"})
     conditions, params = [], {"limit": limit, "offset": offset}
-    if current["role"] not in GLOBAL_WAREHOUSE_ROLES:
+    if current["role"] not in GLOBAL_RETURN_ROLES:
         scope = _scope_warehouses(db, current)
         conditions.extend(
             [

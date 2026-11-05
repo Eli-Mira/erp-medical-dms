@@ -261,8 +261,12 @@ def list_balances(
     )
     rows = db.execute(
         text(
-            "SELECT warehouse_id, product_id, batch_id, quantity, updated_at "
-            "FROM inventory.stock_balance"
+            "SELECT warehouse_id, product_id, batch_id, quantity, updated_at, "
+            "(SELECT COALESCE(w.name_ar,w.name_en,w.code) FROM master_data.master_warehouse w "
+            "WHERE w.id=b.warehouse_id) AS warehouse_name, "
+            "(SELECT COALESCE(p.name_ar,p.name_en,p.sku) FROM master_data.master_product p "
+            "WHERE p.id=b.product_id) AS product_name "
+            "FROM inventory.stock_balance b"
             + where
             + " ORDER BY warehouse_id, product_id, batch_id NULLS LAST"
         ),
