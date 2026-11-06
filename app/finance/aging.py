@@ -1,10 +1,13 @@
 """Read-only AR aging buckets by due date.
 
 Each ledger entry contributes its signed amount (debit - credit) to the bucket
-for its due_date; entries without a due_date go to 'undated'. This is a
-ledger-due-date aging, not invoice-outstanding aging: the current posting flow
+for its due_date; entries without a due_date go to 'undated'. Only entries dated
+on or before the as-of date are included.
+
+This is ledger aging, not invoice-outstanding aging: the current posting flow
 does not set ar_entry.due_date for invoices, so posted invoices appear under
-'undated' until a due date is recorded.
+'undated' until a due date is recorded. Bucket boundaries and due-date rules are
+PENDING ACCOUNTANT APPROVAL.
 """
 
 from decimal import Decimal
@@ -30,7 +33,7 @@ def bucket_for(due_date, as_of):
 
 
 def aging(db, *, as_of, customer_id=None, branches=None, territory_id=None):
-    clauses, params = [], {"as_of": as_of}
+    clauses, params = ["e.entry_date <= :as_of"], {"as_of": as_of}
     if customer_id is not None:
         clauses.append("e.customer_id = :customer_id")
         params["customer_id"] = str(customer_id)
@@ -63,6 +66,8 @@ def aging(db, *, as_of, customer_id=None, branches=None, territory_id=None):
             totals[name] += buckets[name]
         customers.append({"customer_id": key, **buckets, "total": sum(buckets.values())})
     return {
+        "label": "ledger aging",
+        "note": "Due-date bucket rules pending accountant approval.",
         "as_of": as_of,
         "customers": customers,
         "total": {**totals, "total": sum(totals.values())},

@@ -412,3 +412,24 @@ def test_aging_matches_independent_case_sql(ar_report_env):
     row = next(c for c in body["customers"] if c["customer_id"] == str(ids["customer"]))
     for name in ("current", "d1_30", "d31_60", "d61_90", "over_90", "undated"):
         assert Decimal(row[name]) == Decimal(str(independent[name]))
+
+
+def test_aging_excludes_entries_dated_after_as_of(ar_report_env):
+    """An entry dated after the as-of date must not be aged, even with an old due date."""
+    client, db, ids, headers, seed = ar_report_env
+    as_of = date(2026, 11, 6)
+    seed(entry_type="opening", debit="10.00", entry_date=as_of, due_date=as_of)
+    seed(entry_type="opening", debit="999.00", entry_date=as_of + timedelta(days=1),
+         due_date=as_of)
+    body = client.get(f"/ar/aging?as_of={as_of.isoformat()}", headers=headers()).json()
+    row = next(c for c in body["customers"] if c["customer_id"] == str(ids["customer"]))
+    assert row["current"] == "10.00"
+    assert row["total"] == "10.00"
+
+
+def test_aging_labels_output_and_marks_rules_pending(ar_report_env):
+    client, db, ids, headers, seed = ar_report_env
+    body = client.get(f"/ar/aging?as_of={date(2026, 11, 6).isoformat()}",
+                      headers=headers()).json()
+    assert body["label"] == "ledger aging"
+    assert "pending accountant approval" in body["note"].lower()

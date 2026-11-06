@@ -152,6 +152,8 @@ class AgingTotals(BaseModel):
 
 
 class AgingOut(BaseModel):
+    label: str
+    note: str
     as_of: date
     customers: list[AgingCustomer]
     total: AgingTotals

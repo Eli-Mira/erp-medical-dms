@@ -178,7 +178,7 @@ def export_aging(db: Db, current: CurrentUser, as_of: date | None = None,
         customer_id=customer_id, branches=_scope_branches(db, current),
         territory_id=territory_id)
     return exports.csv_response(
-        "ar_aging.csv", AGING_CSV_HEADERS,
+        "ar_ledger_aging.csv", AGING_CSV_HEADERS,
         [[exports.cell(customer["customer_id"])]
          + [exports.cell(customer[header]) for header in AGING_CSV_HEADERS[1:]]
          for customer in payload["customers"]])

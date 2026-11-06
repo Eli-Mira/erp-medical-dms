@@ -233,3 +233,71 @@ def test_exports_denied_for_non_read_roles(ar_report_env, role):
     assert client.get("/ar/entries/export", headers=auth).status_code == 403
     assert client.get("/ar/aging/export", headers=auth).status_code == 403
     assert client.get("/collections/export", headers=auth).status_code == 403
+
+
+def test_aging_csv_excludes_entries_dated_after_as_of(ar_report_env):
+    client, db, ids, headers, seed = ar_report_env
+    as_of = date(2026, 11, 6)
+    seed(entry_type="opening", debit="10.00", entry_date=as_of, due_date=as_of)
+    seed(entry_type="opening", debit="999.00", entry_date=as_of + timedelta(days=1),
+         due_date=as_of)
+    rows = _rows(client.get(f"/ar/aging/export?as_of={as_of.isoformat()}",
+                            headers=headers()))
+    row = next(r for r in rows[1:] if r[0] == str(ids["customer"]))
+    assert row == [str(ids["customer"]), "10.00", "0", "0", "0", "0", "0", "10.00"]
+
+
+def test_aging_csv_filename_is_labelled(ar_report_env):
+    client, db, ids, headers, seed = ar_report_env
+    response = client.get("/ar/aging/export", headers=headers())
+    assert "ar_ledger_aging.csv" in response.headers["content-disposition"]
+
+
+def test_collections_csv_export_rep_cannot_see_other_reps_receipt(ar_report_env):
+    """The CSV export applies the same own-receipt policy as the JSON list."""
+    client, db, ids, headers, seed = ar_report_env
+    rep_a = ids["other"]
+    rep_b = uuid4()
+    ids["rep_b"] = rep_b
+    invoice_id = uuid4()
+    receipt_id = uuid4()
+    warehouse_id = uuid4()
+    db.execute(text(
+        "INSERT INTO platform.platform_user (id,username,password_hash,role,is_owner) "
+        "VALUES (:id,:u,'unused','medical_rep',false)"),
+        {"id": rep_b, "u": f"ar_rep_{rep_b.hex}"})
+    db.execute(text("UPDATE platform.platform_user SET role='medical_rep' WHERE id=:id"),
+               {"id": rep_a})
+    for uid in (rep_a, rep_b):
+        db.execute(text("INSERT INTO platform.user_branch(user_id,branch_id) VALUES (:u,:b)"),
+                   {"u": uid, "b": ids["branch"]})
+        db.execute(text("INSERT INTO platform.user_territory(user_id,territory_id) "
+                       "VALUES (:u,:t)"), {"u": uid, "t": ids["territory"]})
+    db.execute(text(
+        "INSERT INTO master_data.master_warehouse (id, branch_id, code, name_ar) "
+        "VALUES (:id,:b,:code,'Store')"),
+        {"id": warehouse_id, "b": ids["branch"], "code": f"WH-{warehouse_id.hex[:12]}"})
+    db.execute(text(
+        "INSERT INTO sales.sales_invoice (id, invoice_no, branch_id, customer_id,"
+        " warehouse_id, territory_id, invoice_date, posting_status, version, created_by,"
+        " posted_at, posted_by)"
+        " VALUES (:id,:no,:b,:c,:w,:t,:d,'Posted',1,:actor,now(),:actor)"),
+        {"id": invoice_id, "no": f"INV-{invoice_id.hex[:12]}", "b": ids["branch"],
+         "c": ids["customer"], "w": warehouse_id, "t": ids["territory"],
+         "d": date(2026, 1, 1), "actor": rep_a})
+    db.execute(text(
+        "INSERT INTO finance.payment_receipt (id, invoice_id, branch_id, customer_id,"
+        " receipt_no, receipt_date, amount, method, created_by)"
+        " VALUES (:id,:inv,:b,:c,:no,:d,25.50,'cash',:actor)"),
+        {"id": receipt_id, "inv": invoice_id, "b": ids["branch"], "c": ids["customer"],
+         "no": f"RCP-{receipt_id.hex[:12]}", "d": date(2026, 1, 5), "actor": rep_a})
+    db.commit()
+
+    def visible(user):
+        rows = _rows(client.get("/collections/export", headers=headers(user)))
+        return {row[0] for row in rows[1:]}
+
+    assert str(receipt_id) in visible("other")
+    assert str(receipt_id) not in visible("rep_b")
+    listed = {row["id"] for row in client.get("/collections", headers=headers("rep_b")).json()}
+    assert str(receipt_id) not in listed

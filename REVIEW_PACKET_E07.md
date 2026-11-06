@@ -55,7 +55,7 @@ All disposable DBs were removed by the runner.
 1. Running balance vs an independent window-function SQL (`test_statement_matches_independent_window_sql`).
 2. Aging bucket edges 30/31, 60/61, 90/91 and `NULL` due dates (`test_aging_bucket_boundaries`, `test_aging_matches_independent_case_sql`).
 3. Scope: branch-scoped manager sees only their branch; out-of-scope customer returns 404, never 403/200 (`test_statement_out_of_scope_customer_404`, `test_aging_out_of_scope_customer_404`).
-4. Denied roles (`warehouse_staff`, `medical_rep`, `admin`) get 403 on every export.
+4. `warehouse_staff`/`admin` get 403 on every export. `medical_rep` **is** in collections `READ_ROLES`, so `/collections/export` returns 200 containing only that rep's own receipts — `_receipt_scope` -> `_invoice` enforces `invoice.created_by == user.id` — and 403 on the AR exports. (Corrected: an earlier revision of this packet claimed a blanket 403 for `medical_rep`.)
 5. CSV: BOM present; `=HYPERLINK(...)` neutralised; `-50.00` stays numeric; CSV totals equal the JSON statement/aging totals.
 6. `POSTING_ENABLED` guard and the conftest admission set still refuse a non-disposable DB.
 7. Confirm no endpoint leaks a customer id outside the caller's branch (404 rather than existence reveal).
