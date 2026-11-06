@@ -254,7 +254,8 @@ def test_aging_csv_filename_is_labelled(ar_report_env):
 
 
 def test_collections_csv_export_rep_cannot_see_other_reps_receipt(ar_report_env):
-    """The CSV export applies the same own-receipt policy as the JSON list."""
+    """No approved policy for representative bulk export: reps get 403 on the CSV,
+    while their scoped JSON access is preserved."""
     client, db, ids, headers, seed = ar_report_env
     rep_a = ids["other"]
     rep_b = uuid4()
@@ -293,11 +294,14 @@ def test_collections_csv_export_rep_cannot_see_other_reps_receipt(ar_report_env)
          "no": f"RCP-{receipt_id.hex[:12]}", "d": date(2026, 1, 5), "actor": rep_a})
     db.commit()
 
-    def visible(user):
-        rows = _rows(client.get("/collections/export", headers=headers(user)))
-        return {row[0] for row in rows[1:]}
-
-    assert str(receipt_id) in visible("other")
-    assert str(receipt_id) not in visible("rep_b")
-    listed = {row["id"] for row in client.get("/collections", headers=headers("rep_b")).json()}
-    assert str(receipt_id) not in listed
+    # JSON list keeps its scoped behaviour: rep A sees their own receipt, rep B does not.
+    listed_a = {row["id"] for row in client.get("/collections", headers=headers("other")).json()}
+    listed_b = {row["id"] for row in client.get("/collections", headers=headers("rep_b")).json()}
+    assert str(receipt_id) in listed_a
+    assert str(receipt_id) not in listed_b
+    # Bulk CSV export is not approved for representatives.
+    assert client.get("/collections/export", headers=headers("other")).status_code == 403
+    assert client.get("/collections/export", headers=headers("rep_b")).status_code == 403
+    # An approved role can still export.
+    rows = _rows(client.get("/collections/export", headers=headers()))
+    assert str(receipt_id) in {row[0] for row in rows[1:]}

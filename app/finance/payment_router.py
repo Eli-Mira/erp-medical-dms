@@ -37,6 +37,9 @@ READ_ROLES = {
     "read_only_auditor",
 }
 WRITE_ROLES = {"owner", "finance"}
+# BUYER_QUESTIONS.md #21 (export/download restrictions) is unanswered, so the bulk
+# receipt CSV has no approved representative access. JSON list behaviour is unchanged.
+EXPORT_ROLES = READ_ROLES - {"medical_rep"}
 
 
 def _role(user, allowed):
@@ -81,7 +84,7 @@ COLLECTION_CSV_HEADERS = ["id", "invoice_id", "branch_id", "customer_id", "recei
 def export_receipts(db: Db, current: CurrentUser, invoice_id: UUID | None = None,
                     customer_id: UUID | None = None, date_from: date | None = None,
                     date_to: date | None = None):
-    _role(current, READ_ROLES)
+    _role(current, EXPORT_ROLES)
     rows = _visible_receipts(db, current, invoice_id, customer_id, date_from, date_to)
     return exports.csv_response(
         "collections.csv", COLLECTION_CSV_HEADERS,
