@@ -18,6 +18,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
 
 from alembic import command
+from alembic.script import ScriptDirectory
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -53,6 +54,39 @@ def runner_database_url():
             "Company host ports 5432/5434 are forbidden; use the approved contained runner"
         )
     return base
+
+
+def git_metadata():
+    try:
+        head = subprocess.check_output(
+            ["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+            stderr=subprocess.STDOUT,
+            text=True,
+        ).strip()
+        tree = subprocess.check_output(
+            ["git", "-C", str(ROOT), "rev-parse", "HEAD^{tree}"],
+            stderr=subprocess.STDOUT,
+            text=True,
+        ).strip()
+        return {"head": head, "tree": tree, "source": "mounted-worktree"}
+    except Exception as error:
+        git_dir = os.environ.get("GIT_DIR") or os.environ.get("GIT_METADATA_DIR")
+        if git_dir:
+            try:
+                head = subprocess.check_output(
+                    ["git", "--git-dir", git_dir, "rev-parse", "HEAD"],
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                ).strip()
+                tree = subprocess.check_output(
+                    ["git", "--git-dir", git_dir, "rev-parse", "HEAD^{tree}"],
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                ).strip()
+                return {"head": head, "tree": tree, "source": "GIT_DIR"}
+            except Exception as inner:
+                return {"head": None, "tree": None, "error": str(inner)}
+        return {"head": None, "tree": None, "error": str(error)}
 
 
 def bindings():
@@ -110,6 +144,11 @@ def main():
     print("TEST_TARGET " + json.dumps(connection_target, sort_keys=True), flush=True)
     admin = create_engine(base.set(database="postgres"), isolation_level="AUTOCOMMIT")
     engine = create_engine(target)
+    git = git_metadata()
+    if not git.get("head") or not git.get("tree"):
+        raise RuntimeError("Git HEAD/tree could not be resolved")
+    if not Path("/.dockerenv").is_file() or os.environ.get("ERP_VERIFY_RUNTIME") != "erp-verify-runtime:20261101-003000-retry02":
+        raise RuntimeError("Approved verifier identity not established")
     record = {
         "database": name,
         "connection_target": connection_target,
@@ -117,6 +156,7 @@ def main():
         "removed": False,
         "configuration": {"APP_ENV": "test", "POSTING_ENABLED": "false"},
         "before": bindings(),
+        "git": git,
         "steps": [],
         "versions": {
             p: importlib.metadata.version(p)
@@ -136,13 +176,26 @@ def main():
             "sqlalchemy.url",
             target.render_as_string(hide_password=False).replace("%", "%%"),
         )
+        expected_revision = ScriptDirectory.from_config(cfg).get_current_head()
         command.upgrade(cfg, "head")
         with engine.connect() as db:
             assert db.exec_driver_sql("SELECT current_database()").scalar_one() == name
             revision = db.exec_driver_sql(
                 "SELECT version_num FROM alembic_version"
             ).scalar_one()
-        record["steps"].append({"action": "fresh-upgrade", "revision": revision})
+            assert revision == expected_revision, (revision, expected_revision)
+            platform_user_count = db.exec_driver_sql(
+                "SELECT count(*) FROM platform.platform_user"
+            ).scalar_one()
+            assert platform_user_count >= 0
+            record["platform_user_count"] = platform_user_count
+        record["steps"].append(
+            {
+                "action": "fresh-upgrade",
+                "revision": revision,
+                "expected_revision": expected_revision,
+            }
+        )
         if args.chain:
             command.downgrade(cfg, "-1")
             command.upgrade(cfg, "head")
