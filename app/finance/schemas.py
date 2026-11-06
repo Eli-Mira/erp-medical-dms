@@ -99,3 +99,59 @@ class ReceiptOut(BaseModel):
     created_at: datetime
     updated_by: UUID | None
     updated_at: datetime
+
+
+class StatementLine(BaseModel):
+    id: UUID
+    customer_id: UUID
+    invoice_id: UUID | None
+    entry_type: str
+    entry_date: date
+    due_date: date | None
+    debit: Decimal
+    credit: Decimal
+    balance: Decimal
+    reason_id: UUID | None
+    note: str | None
+    created_by: UUID
+    created_at: datetime
+    receipt_id: UUID | None = None
+    reverses_entry_id: UUID | None = None
+
+
+class StatementOut(BaseModel):
+    customer_id: UUID
+    date_from: date | None
+    date_to: date | None
+    opening_balance: Decimal
+    total_debit: Decimal
+    total_credit: Decimal
+    closing_balance: Decimal
+    lines: list[StatementLine]
+
+
+class AgingCustomer(BaseModel):
+    customer_id: UUID
+    current: Decimal
+    d1_30: Decimal
+    d31_60: Decimal
+    d61_90: Decimal
+    over_90: Decimal
+    undated: Decimal
+    total: Decimal
+
+
+class AgingTotals(BaseModel):
+    current: Decimal
+    d1_30: Decimal
+    d31_60: Decimal
+    d61_90: Decimal
+    over_90: Decimal
+    undated: Decimal
+    total: Decimal
+
+
+class AgingOut(BaseModel):
+    as_of: date
+    customers: list[AgingCustomer]
+    total: AgingTotals

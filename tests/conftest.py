@@ -57,6 +57,9 @@ def isolated_financial_database(request):
                                 "test_overnight_hostile_inputs",
                                 "test_overnight_login_rate_limit",
                                 "test_owner_warehouse_permissions",
+                                # finance lane: AR statements/aging/CSV exports
+                                "test_overnight_ar_reports",
+                                "test_overnight_csv_exports",
                             }:
                 return
     assert os.environ.get("APP_ENV") == "test", "Use scripts/verify_invoice_cycle.py"
