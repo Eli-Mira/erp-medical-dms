@@ -9,3 +9,5 @@ Plan:
 6. No push/tag/deploy/Telegram merge; keep trial branch.
 
 NEXT: Wait for proc_ac089e3157ca (int-finance-001 full suite). Then record commit/tree, exit, counts, sha256 per result; compare to 1291/0 baseline. If pass: ff feature/erp-integration-20261107 to trial and update INTEGRATION_READINESS.md. If fail: write INTEGRATION_FAIL_finance.md and re-run failing tests in isolation.
+
+4. int-finance-003: HUNG 50 min after Alembic, manually stopped, OOMKilled=false. Infra capacity limit, not code failure. Stopped per instruction; no ff, no Telegram merge.
