@@ -1,0 +1,4 @@
+--- a/scripts/verify_invoice_cycle.py
++++ b/scripts/verify_invoice_cycle.py
+@@ env dict @@
++            "PLAYWRIGHT_BROWSERS_PATH": "/opt/playwright",
