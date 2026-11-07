@@ -25,3 +25,10 @@ Result: PASS in isolation (int-finance-diag-002, exit 0, 3 passed, cleanup remov
 
 Merge commit under test: 1dd37e8fa0f44ae0a75d3493df06fb9102e00d33
 Merge tree: d1dd17716a658e69ced6caa00404279b8b6a8c20
+
+## Stage run result (int-finance-s01..s21)
+23 failed, 44 error, 56 skipped; 1135 passed. s15 timed out after 900s (no run.json). s20 no run.json. Failing tests include:
+- test_contact_save_failure_keeps_input_and_allows_retry[ar/en] (s06)
+- test_failed_writes_roll_back_persisted_customer_and_audit[*] (s06, 12 cases)
+- test_supplier_write_rolls_back_when_audit_fails[post/patch/delete] (s18)
+Stopped per instruction. No ff, no Telegram merge.
