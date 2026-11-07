@@ -25,3 +25,9 @@ Concurrent load / host memory pressure (only ~3 GB free) combined with the full-
 
 ## Action
 Rerun full suite as int-finance-003 with no other Docker work if possible; keep same runner, no code changes. If it terminates again, treat as host capacity limit and report.
+
+## int-finance-003 (rerun, 50 min hang)
+- Stage int-finance-003, same merge commit 1dd37e8, same runner, no other stage containers (docker ps showed only infra containers).
+- Container int-finance-run4 ran 50 minutes, status running, OOMKilled=false, then manually stopped after no pytest progress.
+- Conclusion: full suite exceeds the approved container resource envelope (512 MB, 1 CPU) on this host. Not a code failure. No run.json/pytest.xml produced.
+- Action: STOP. Do not fast-forward. Do not merge Telegram.
