@@ -20,7 +20,7 @@ from app.auth.repo import log_audit
 from app.auth.router import get_current_user
 from app.config import POSTING_ENABLED
 from app.db import get_db
-from app.finance import payments
+from app.finance import exports, payments
 from app.finance.schemas import ReceiptIn, ReceiptOut, ReceiptVoidIn
 from app.sales.router import _invoice
 
@@ -37,6 +37,9 @@ READ_ROLES = {
     "read_only_auditor",
 }
 WRITE_ROLES = {"owner", "finance"}
+# BUYER_QUESTIONS.md #21 (export/download restrictions) is unanswered, so the bulk
+# receipt CSV has no approved representative access. JSON list behaviour is unchanged.
+EXPORT_ROLES = READ_ROLES - {"medical_rep"}
 
 
 def _role(user, allowed):
@@ -71,6 +74,23 @@ def _scope_branches(db, user):
     return {r[0] for r in rows}
 
 
+COLLECTION_CSV_HEADERS = ["id", "invoice_id", "branch_id", "customer_id", "receipt_no",
+                          "receipt_date", "amount", "method", "note", "status",
+                          "voided_at", "voided_by", "void_reason_id", "version",
+                          "created_by", "created_at", "updated_by", "updated_at"]
+
+
+@router.get("/export")
+def export_receipts(db: Db, current: CurrentUser, invoice_id: UUID | None = None,
+                    customer_id: UUID | None = None, date_from: date | None = None,
+                    date_to: date | None = None):
+    _role(current, EXPORT_ROLES)
+    rows = _visible_receipts(db, current, invoice_id, customer_id, date_from, date_to)
+    return exports.csv_response(
+        "collections.csv", COLLECTION_CSV_HEADERS,
+        [[exports.cell(row.get(header)) for header in COLLECTION_CSV_HEADERS] for row in rows])
+
+
 @router.get("/{receipt_id}")
 def get_receipt(receipt_id: UUID, db: Db, current: CurrentUser) -> ReceiptOut:
     _role(current, READ_ROLES)
@@ -82,16 +102,8 @@ def get_receipt(receipt_id: UUID, db: Db, current: CurrentUser) -> ReceiptOut:
     return ReceiptOut.model_validate(receipt)
 
 
-@router.get("")
-def list_receipts(
-    db: Db,
-    current: CurrentUser,
-    invoice_id: UUID | None = None,
-    customer_id: UUID | None = None,
-    date_from: date | None = None,
-    date_to: date | None = None,
-) -> list[ReceiptOut]:
-    _role(current, READ_ROLES)
+def _visible_receipts(db, current, invoice_id=None, customer_id=None,
+                      date_from=None, date_to=None):
     rows = payments.list_receipts(
         db,
         invoice_id=invoice_id,
@@ -107,8 +119,23 @@ def list_receipts(
             if error.status_code != 404:
                 raise
             continue
-        visible.append(ReceiptOut.model_validate(receipt))
+        visible.append(receipt)
     return visible
+
+
+@router.get("")
+def list_receipts(
+    db: Db,
+    current: CurrentUser,
+    invoice_id: UUID | None = None,
+    customer_id: UUID | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+) -> list[ReceiptOut]:
+    _role(current, READ_ROLES)
+    return [ReceiptOut.model_validate(receipt)
+            for receipt in _visible_receipts(
+                db, current, invoice_id, customer_id, date_from, date_to)]
 
 
 def _receipt_scope(db, current, receipt):

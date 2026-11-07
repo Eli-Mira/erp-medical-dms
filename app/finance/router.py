@@ -9,7 +9,7 @@ their assigned branches (platform.user_branch). The 'invoice' entry type is
 reserved for the posting flow and is rejected by the API.
 """
 import ipaddress
-from datetime import date
+from datetime import UTC, date, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -21,8 +21,13 @@ from sqlalchemy.orm import Session
 from app.auth.repo import log_audit
 from app.auth.router import get_current_user
 from app.db import get_db
-from app.finance import ar
-from app.finance.schemas import EntryIn, EntryOut
+from app.finance import ar, aging, exports, statements
+from app.finance.schemas import (
+    AgingOut,
+    EntryIn,
+    EntryOut,
+    StatementOut,
+)
 
 router = APIRouter(prefix="/ar", tags=["ar"])
 Db = Annotated[Session, Depends(get_db)]
@@ -59,28 +64,24 @@ def _scope_branches(db, user):
     return {r[0] for r in rows}
 
 
+def _require_visible_customer(db, user, customer_id):
+    """404 for a missing or out-of-scope customer, never revealing existence."""
+    branches = _scope_branches(db, user)
+    customer = db.execute(
+        text("SELECT branch_id FROM master_data.master_customer WHERE id=:id"),
+        {"id": customer_id}).mappings().one_or_none()
+    if customer is None or (branches is not None and customer["branch_id"] not in branches):
+        raise HTTPException(404, "Customer not found")
+
+
 @router.get("/balances")
-def list_balances(db: Db, current: CurrentUser, customer_id: UUID | None = None) -> list[dict]:
+def list_balances(db: Db, current: CurrentUser, customer_id: UUID | None = None,
+                  territory_id: UUID | None = None) -> list[dict]:
     _role(current, READ_ROLES)
-    branches = _scope_branches(db, current)
-    if branches is not None and not branches:
-        return []  # branch-scoped but assigned nothing -> deny all
     if customer_id is not None:
-        customer = db.execute(text("SELECT branch_id FROM master_data.master_customer WHERE id=:id"),
-                              {"id": customer_id}).mappings().one_or_none()
-        if customer is None or (branches is not None and customer["branch_id"] not in branches):
-            raise HTTPException(404, "Customer not found")
-        return [{"customer_id": str(customer_id), "balance": str(ar.customer_balance(db, customer_id))}]
-    where, params = "", {}
-    if branches is not None:
-        where = "WHERE c.branch_id = ANY(CAST(:branches AS uuid[]))"
-        params["branches"] = [str(b) for b in branches]
-    rows = db.execute(text(
-        "SELECT c.id AS customer_id, COALESCE(SUM(e.debit), 0) - COALESCE(SUM(e.credit), 0) AS balance "
-        "FROM master_data.master_customer c "
-        "LEFT JOIN finance.ar_entry e ON e.customer_id = c.id " + where +
-        " GROUP BY c.id ORDER BY c.id"), params).mappings()
-    return [{"customer_id": str(r["customer_id"]), "balance": str(r["balance"])} for r in rows]
+        _require_visible_customer(db, current, customer_id)
+    return ar.balances(db, branches=_scope_branches(db, current),
+                       customer_id=customer_id, territory_id=territory_id)
 
 
 @router.get("/entries")
@@ -88,12 +89,18 @@ def list_entries(db: Db, current: CurrentUser, customer_id: UUID | None = None,
                  entry_type: str | None = None, date_from: date | None = None,
                  date_to: date | None = None) -> list[EntryOut]:
     _role(current, READ_ROLES)
-    rows = ar.list_entries(db, str(customer_id) if customer_id else None, entry_type, date_from, date_to)
+    return [EntryOut.model_validate(row)
+            for row in _visible_entries(db, current, customer_id, entry_type, date_from, date_to)]
+
+
+def _visible_entries(db, current, customer_id=None, entry_type=None, date_from=None, date_to=None):
+    rows = ar.list_entries(db, str(customer_id) if customer_id else None,
+                           entry_type, date_from, date_to)
     branches = _scope_branches(db, current)
     if branches is not None:
         allowed = _branch_customers(db, branches)
         rows = [r for r in rows if r["customer_id"] in allowed]
-    return [EntryOut.model_validate(row) for row in rows]
+    return rows
 
 
 def _branch_customers(db, branches):
@@ -102,6 +109,93 @@ def _branch_customers(db, branches):
     return {r[0] for r in db.execute(text(
         "SELECT id FROM master_data.master_customer WHERE branch_id = ANY(CAST(:b AS uuid[]))"),
         {"b": [str(b) for b in branches]}).fetchall()}
+
+
+@router.get("/statements/{customer_id}", response_model=StatementOut)
+def customer_statement(customer_id: UUID, db: Db, current: CurrentUser,
+                       date_from: date | None = None, date_to: date | None = None) -> StatementOut:
+    _role(current, READ_ROLES)
+    _require_visible_customer(db, current, customer_id)
+    return StatementOut.model_validate(statements.statement(
+        db, customer_id=customer_id, date_from=date_from, date_to=date_to))
+
+
+@router.get("/aging", response_model=AgingOut)
+def ar_aging(db: Db, current: CurrentUser, as_of: date | None = None,
+             customer_id: UUID | None = None,
+             territory_id: UUID | None = None) -> AgingOut:
+    _role(current, READ_ROLES)
+    if customer_id is not None:
+        _require_visible_customer(db, current, customer_id)
+    return AgingOut.model_validate(aging.aging(
+        db, as_of=as_of or datetime.now(UTC).astimezone().date(),
+        customer_id=customer_id, branches=_scope_branches(db, current),
+        territory_id=territory_id))
+
+
+@router.get("/balances/export")
+def export_balances(db: Db, current: CurrentUser, customer_id: UUID | None = None,
+                    territory_id: UUID | None = None):
+    _role(current, READ_ROLES)
+    if customer_id is not None:
+        _require_visible_customer(db, current, customer_id)
+    rows = ar.balances(db, branches=_scope_branches(db, current),
+                       customer_id=customer_id, territory_id=territory_id)
+    return exports.csv_response(
+        "ar_balances.csv", ["customer_id", "balance"],
+        [[exports.cell(row["customer_id"]), exports.cell(row["balance"])] for row in rows])
+
+
+ENTRY_CSV_HEADERS = ["id", "customer_id", "invoice_id", "entry_type", "entry_date",
+                     "due_date", "debit", "credit", "reason_id", "note", "created_by",
+                     "created_at", "receipt_id", "reverses_entry_id"]
+
+
+@router.get("/entries/export")
+def export_entries(db: Db, current: CurrentUser, customer_id: UUID | None = None,
+                   entry_type: str | None = None, date_from: date | None = None,
+                   date_to: date | None = None):
+    _role(current, READ_ROLES)
+    rows = _visible_entries(db, current, customer_id, entry_type, date_from, date_to)
+    return exports.csv_response(
+        "ar_entries.csv", ENTRY_CSV_HEADERS,
+        [[exports.cell(row.get(header)) for header in ENTRY_CSV_HEADERS] for row in rows])
+
+
+AGING_CSV_HEADERS = ["customer_id", "current", "d1_30", "d31_60", "d61_90",
+                     "over_90", "undated", "total"]
+
+
+@router.get("/aging/export")
+def export_aging(db: Db, current: CurrentUser, as_of: date | None = None,
+                 customer_id: UUID | None = None,
+                 territory_id: UUID | None = None):
+    _role(current, READ_ROLES)
+    if customer_id is not None:
+        _require_visible_customer(db, current, customer_id)
+    payload = aging.aging(
+        db, as_of=as_of or datetime.now(UTC).astimezone().date(),
+        customer_id=customer_id, branches=_scope_branches(db, current),
+        territory_id=territory_id)
+    return exports.csv_response(
+        "ar_ledger_aging.csv", AGING_CSV_HEADERS,
+        [[exports.cell(customer["customer_id"])]
+         + [exports.cell(customer[header]) for header in AGING_CSV_HEADERS[1:]]
+         for customer in payload["customers"]])
+
+
+@router.get("/statements/{customer_id}/export")
+def export_statement(customer_id: UUID, db: Db, current: CurrentUser,
+                     date_from: date | None = None, date_to: date | None = None):
+    _role(current, READ_ROLES)
+    _require_visible_customer(db, current, customer_id)
+    payload = statements.statement(db, customer_id=customer_id,
+                                   date_from=date_from, date_to=date_to)
+    headers = ["entry_date", "entry_type", "invoice_id", "receipt_id", "due_date",
+               "debit", "credit", "balance", "note"]
+    return exports.csv_response(
+        f"ar_statement_{customer_id}.csv", headers,
+        [[exports.cell(line.get(header)) for header in headers] for line in payload["lines"]])
 
 
 @router.post("/entries", status_code=201)

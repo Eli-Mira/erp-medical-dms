@@ -79,6 +79,31 @@ def customer_balance(db, customer_id):
     ).scalar()
 
 
+def balances(db, *, branches=None, customer_id=None, territory_id=None):
+    """Balances for one customer or every visible customer, exact strings.
+
+    branches=None means unrestricted (owner/finance/read_only_auditor); a set
+    restricts to customers in those branches. territory_id is an opt-in filter.
+    """
+    if customer_id is not None:
+        return [{"customer_id": str(customer_id),
+                 "balance": str(customer_balance(db, customer_id))}]
+    where, params = [], {}
+    if branches is not None:
+        where.append("c.branch_id = ANY(CAST(:branches AS uuid[]))")
+        params["branches"] = [str(b) for b in branches]
+    if territory_id is not None:
+        where.append("c.territory_id = :territory_id")
+        params["territory_id"] = str(territory_id)
+    where_sql = ("WHERE " + " AND ".join(where)) if where else ""
+    rows = db.execute(text(
+        "SELECT c.id AS customer_id, COALESCE(SUM(e.debit), 0) - COALESCE(SUM(e.credit), 0) AS balance "
+        "FROM master_data.master_customer c "
+        "LEFT JOIN finance.ar_entry e ON e.customer_id = c.id " + where_sql +
+        " GROUP BY c.id ORDER BY c.id"), params).mappings()
+    return [{"customer_id": str(r["customer_id"]), "balance": str(r["balance"])} for r in rows]
+
+
 def list_entries(db, customer_id=None, entry_type=None, date_from=None, date_to=None):
     """Column names are fixed literals; values are bound parameters."""
     clauses, params = [], {}
