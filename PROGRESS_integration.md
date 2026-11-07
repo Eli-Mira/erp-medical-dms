@@ -39,3 +39,17 @@ NEXT: Wait for proc_ac089e3157ca (int-finance-001 full suite). Then record commi
 | int-finance-s21 | 2 | 0 | 0 | 4 | 0 | 16 | df5a4b3e0203cb6f |
 
 Totals: passed=1135 failed=23 error=44 skipped=56. Baseline: 1291/0/0/0. Delta: -156 passed, +23 failed, +44 error, +56 skipped. New finance tests do not explain failures; s15 timed out (124, 900s), s20 no run.json (125). Stopped; no ff.
+
+## Control run on base 18c251e (ctl-s03,06,11,15,16,18,20,21)
+
+| Stage | Base exit | Base passed | Base failed | Base error | Base skipped | Duration | Base run.json sha |
+|---|---|---|---|---|---|---|---|
+| ctl-s03 | 1 | 3 | 6 | 0 | 0 | 1 | ca254b2eda07 |
+| ctl-s06 | 124 | NA | NA | NA | NA | 900 | NONE |
+| ctl-s11 | 1 | 35 | 3 | 0 | 0 | 1 | 05399aab73a3 |
+| ctl-s15 | 124 | NA | NA | NA | NA | 900 | NONE |
+| ctl-s16 | 1 | 45 | 0 | 0 | 10 | 1 | 52b0bbcfaaee |
+| ctl-s18 | 1 | 112 | 1 | 0 | 0 | 1 | 3329e04b9582 |
+| ctl-s20 | 1 | 0 | 0 | 4 | 0 | 1 | af7fbebf1155 |
+| ctl-s21 | 1 | 0 | 0 | 4 | 0 | 1 | d4d95f957198 |
+
