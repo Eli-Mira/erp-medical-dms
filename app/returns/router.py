@@ -20,7 +20,7 @@ CurrentUser = Annotated[dict, Depends(get_current_user)]
 
 MANAGE_ROLES = {"owner", "finance", "warehouse_staff", "sales_manager"}
 # Quarantine returns do not grant access to sellable stock.
-GLOBAL_RETURN_ROLES = {"owner", "finance", "warehouse_staff", "read_only_auditor"}
+GLOBAL_RETURN_ROLES = {"owner", "finance", "read_only_auditor"}
 
 
 def _role(user, allowed):
@@ -54,7 +54,8 @@ def create_return(payload: ReturnIn, request: Request, db: Db, current: CurrentU
         scope = _scope_warehouses(db, current)
     if scope is not None and (
         warehouse not in scope
-        or not db.execute(
+        or current["role"] != "warehouse_staff"
+        and not db.execute(
             text(
                 "SELECT 1 FROM master_data.master_customer c "
                 "JOIN platform.user_territory ut ON ut.territory_id=c.territory_id "
@@ -173,17 +174,15 @@ def list_returns(
     conditions, params = [], {"limit": limit, "offset": offset}
     if current["role"] not in GLOBAL_RETURN_ROLES:
         scope = _scope_warehouses(db, current)
-        conditions.extend(
-            [
-                "warehouse_id = ANY(CAST(:warehouses AS uuid[]))",
-                (
-                    "customer_id IN (SELECT c.id FROM master_data.master_customer c "
-                    "JOIN platform.user_territory ut ON ut.territory_id=c.territory_id "
-                    "WHERE ut.user_id=:uid)"
-                ),
-            ]
-        )
-        params.update(warehouses=[str(w) for w in scope], uid=current["id"])
+        conditions.append("warehouse_id = ANY(CAST(:warehouses AS uuid[]))")
+        params["warehouses"] = [str(w) for w in scope]
+        if current["role"] != "warehouse_staff":
+            conditions.append(
+                "customer_id IN (SELECT c.id FROM master_data.master_customer c "
+                "JOIN platform.user_territory ut ON ut.territory_id=c.territory_id "
+                "WHERE ut.user_id=:uid)"
+            )
+            params["uid"] = current["id"]
     if customer_id is not None:
         conditions.append("customer_id = :customer_id")
         params["customer_id"] = customer_id

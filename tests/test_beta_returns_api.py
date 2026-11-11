@@ -201,7 +201,9 @@ def test_scoped_return_history_requires_both_customer_territory_and_owned_wareho
 
 
 @pytest.mark.parametrize("role", ["finance", "warehouse_staff", "read_only_auditor"])
-def test_existing_global_return_read_roles_do_not_lose_access(invoice_env, role):
+def test_return_read_roles_require_assignment_only_for_warehouse_staff(
+    invoice_env, role
+):
     client, db, ids, _payload, headers = invoice_env
     warehouse = other_warehouse(db)
     owner = headers("owner")
@@ -220,12 +222,17 @@ def test_existing_global_return_read_roles_do_not_lose_access(invoice_env, role)
     db.commit()
     auth = headers("other")
     response = client.get("/returns", headers=auth)
-    assert response.status_code == 200, response.text
-    assert {row["id"] for row in response.json()} == {recorded.json()["id"]}
-    intake = client.post("/returns", headers=auth, json=body(ids))
-    assert intake.status_code == (403 if role == "read_only_auditor" else 201), (
-        intake.text
+    assert response.status_code == (403 if role == "warehouse_staff" else 200), (
+        response.text
     )
+    if role == "warehouse_staff":
+        assert recorded.json()["id"] not in response.text
+    else:
+        assert {row["id"] for row in response.json()} == {recorded.json()["id"]}
+    intake = client.post("/returns", headers=auth, json=body(ids))
+    assert intake.status_code == (
+        403 if role in {"read_only_auditor", "warehouse_staff"} else 201
+    ), intake.text
 
 
 def test_optional_invoice_reference_must_match_return_customer(invoice_env):

@@ -29,12 +29,13 @@ def test_returns_without_branch_grants_do_not_grant_stock_access(invoice_env):
         text("SELECT warehouse_id,product_id,quantity FROM inventory.stock_balance")
     ).all()
     movements = db.scalar(text("SELECT count(*) FROM inventory.stock_movement"))
+    returns_before = db.scalar(text("SELECT count(*) FROM sales.sales_return"))
     listed = client.get("/returns", headers=auth)
-    assert listed.status_code == 200, listed.text
-    assert {row["id"] for row in listed.json()} == {recorded.json()["id"]}
+    assert listed.status_code == 403, listed.text
+    assert recorded.json()["id"] not in listed.text
     intake = client.post("/returns", headers=auth, json=body(ids))
-    assert intake.status_code == 201, intake.text
-    assert intake.json()["status"] == "quarantined"
+    assert intake.status_code == 403, intake.text
+    assert db.scalar(text("SELECT count(*) FROM sales.sales_return")) == returns_before
     for view in ("stock", "batches", "movements", "cover", "expiry-warnings"):
         assert client.get("/inventory/" + view, headers=auth).status_code == 403
     for kind in ("opening", "adjustment"):
@@ -59,7 +60,7 @@ def test_returns_without_branch_grants_do_not_grant_stock_access(invoice_env):
     )
 
 
-def test_global_returns_preserve_assigned_stock_and_foreign_stock_denial(invoice_env):
+def test_assigned_returns_preserve_stock_and_deny_foreign_returns(invoice_env):
     client, db, ids, _payload, headers = invoice_env
     foreign = other_warehouse(db)
     owner = headers()
@@ -78,7 +79,14 @@ def test_global_returns_preserve_assigned_stock_and_foreign_stock_denial(invoice
         "/returns", headers=owner, json=body(ids, warehouse_id=str(foreign))
     )
     assert recorded.status_code == 201, recorded.text
+    visible = client.post("/returns", headers=owner, json=body(ids))
+    assert visible.status_code == 201, visible.text
     set_role(db, ids, "warehouse_staff")
+    db.execute(
+        text("DELETE FROM platform.user_territory WHERE user_id=:u"),
+        {"u": ids["other"]},
+    )
+    db.commit()
     auth = headers("other")
     own = client.get("/inventory/stock", headers=auth)
     assert own.status_code == 200, own.text
@@ -91,7 +99,16 @@ def test_global_returns_preserve_assigned_stock_and_foreign_stock_denial(invoice
     assert denied.status_code == 404, denied.text
     listed = client.get("/returns", headers=auth)
     assert listed.status_code == 200, listed.text
-    assert {row["id"] for row in listed.json()} == {recorded.json()["id"]}
+    assert {row["id"] for row in listed.json()} == {visible.json()["id"]}
+    returns_before = db.scalar(text("SELECT count(*) FROM sales.sales_return"))
+    denied = client.post(
+        "/returns", headers=auth, json=body(ids, warehouse_id=str(foreign))
+    )
+    assert denied.status_code == 404, denied.text
+    assert db.scalar(text("SELECT count(*) FROM sales.sales_return")) == returns_before
+    accepted = client.post("/returns", headers=auth, json=body(ids))
+    assert accepted.status_code == 201, accepted.text
+    assert accepted.json()["status"] == "quarantined"
 
 
 @pytest.mark.parametrize("role", ["admin", "medical_rep"])
