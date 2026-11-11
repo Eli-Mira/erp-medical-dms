@@ -1670,22 +1670,33 @@
     });
   }
 
+  var inventorySeq = 0;
   function loadInventory() {
+    var token = state.token, generation = state.sessionGeneration;
+    var seq = ++inventorySeq;
     clearError(el.inventoryError);
-    var labels = { wh: t("warehouse"), prod: t("product"), qty: t("quantity"), up: t("updated_at") };
-    return api("/inventory/stock").then(function (rows) {
+    var labels = { wh: t("warehouse"), prod: t("product"), batch: t("batch_no"), expiry: t("expiry_date"), qty: t("quantity"), up: t("updated_at") };
+    return Promise.all([api("/inventory/stock"), api("/inventory/batches")]).then(function (results) {
+      if (state.token !== token || state.sessionGeneration !== generation || seq !== inventorySeq) return;
+      var rows = results[0], batches = {};
+      results[1].forEach(function (batch) { batches[batch.id] = batch; });
       renderRows(el.stockRows, rows, function (row) {
+        var batch = batches[row.batch_id];
+        if (batch && (batch.warehouse_id !== row.warehouse_id || batch.product_id !== row.product_id)) batch = null;
         var tr = document.createElement("tr");
         tr.appendChild(cell(labels.wh, row.warehouse_name || warehouseLabel(row.warehouse_id)));
         tr.appendChild(cell(labels.prod, row.product_name || productLineLabel(row.product_id)));
+        tr.appendChild(cell(labels.batch, batch ? batch.batch_no : "—"));
+        tr.appendChild(cell(labels.expiry, batch ? fmtDate(batch.expiry_date) : "—", true));
         tr.appendChild(cell(labels.qty, fmtQty(row.quantity), true));
         tr.appendChild(cell(labels.up, fmtDate(row.updated_at), true));
         return tr;
       });
-      if (!rows.length) emptyRow(el.stockRows, 4, "empty_rows");
+      if (!rows.length) emptyRow(el.stockRows, 6, "empty_rows");
     }).catch(function (error) {
+      if (state.token !== token || state.sessionGeneration !== generation || seq !== inventorySeq) return;
       renderRows(el.stockRows, [], function () { return null; });
-      emptyRow(el.stockRows, 4, "empty_rows");
+      emptyRow(el.stockRows, 6, "empty_rows");
       showError(el.inventoryError, messageFor(error));
     });
   }
