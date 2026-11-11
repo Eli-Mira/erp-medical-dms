@@ -549,6 +549,39 @@
           <button type="button" class="default" data-refresh="collections" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="collections-error" class="alert hidden" role="alert" data-kind="error"></div>
+        <form id="receipt-form" class="card stack hidden" data-roles="owner,finance">
+          <div class="grid-3">
+            <div class="field">
+              <label for="receipt-invoice" data-i18n="receipt_invoice">الفاتورة</label>
+              <select id="receipt-invoice" required></select>
+            </div>
+            <div class="field">
+              <label for="receipt-number" data-i18n="receipt_no">سند القبض</label>
+              <input id="receipt-number" required maxlength="30">
+            </div>
+            <div class="field">
+              <label for="receipt-date" data-i18n="receipt_date">التاريخ</label>
+              <input id="receipt-date" type="date" required>
+            </div>
+            <div class="field">
+              <label for="receipt-amount" data-i18n="amount">المبلغ</label>
+              <input id="receipt-amount" type="number" min="0.01" max="999999999999.99" step="0.01" inputmode="decimal" required>
+            </div>
+            <div class="field">
+              <label for="receipt-method" data-i18n="method">طريقة السداد</label>
+              <select id="receipt-method" required>
+                <option value="cash" data-i18n="method_cash">نقدًا</option>
+                <option value="check" data-i18n="method_check">شيك</option>
+                <option value="transfer" data-i18n="method_transfer">حوالة</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="receipt-note" data-i18n="notes">ملاحظات</label>
+              <textarea id="receipt-note" maxlength="4000"></textarea>
+            </div>
+          </div>
+          <button id="receipt-save" type="submit" class="primary" data-i18n="receipt_save">حفظ سند القبض</button>
+        </form>
         <div class="table-wrap">
           <table class="grid-table">
             <thead>
