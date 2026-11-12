@@ -38,10 +38,10 @@ def life(monkeypatch):
     monkeypatch.setattr(payments_router, "POSTING_ENABLED", True)
 
     def clear():
-        # This fixture owns synthetic state only in the freshly-created disposable DB.
+        # Keep append-only audit history and its actors until the runner drops this DB.
         sql(
-            "TRUNCATE platform.platform_user, master_data.master_branch, "
-            "master_data.master_product, master_data.master_territory, audit.reason_code CASCADE"
+            "TRUNCATE master_data.master_branch, master_data.master_product, "
+            "master_data.master_territory CASCADE"
         )
 
     clear()

@@ -1,7 +1,8 @@
 """Auth + session integration tests (P2.4 / P2.6).
 
-Runs against the dev DB (docker). Seeds + deletes a per-test user (uuid-scoped
-username) so the real DB is never polluted."""
+Runs only in the approved disposable database. UUID-scoped test users are
+deactivated; immutable audit rows and their actors live until database removal."""
+
 import uuid
 
 from fastapi.testclient import TestClient
@@ -30,15 +31,11 @@ def _seed(username: str, password: str = "p@ss123") -> None:
 
 def _cleanup(username: str) -> None:
     db = SessionLocal()
-    # Remove this test user's audit rows first: audit_log.actor_user_id →
-    # platform_user.id (FK, immutable per §10), so the user can't be hard-deleted
-    # while audit rows reference it. Test-only cleanup of test-generated rows.
+    # Keep audit history and its actor FK; the runner removes this entire database.
     db.execute(
-        text("DELETE FROM audit.audit_log WHERE actor_user_id IN "
-             "(SELECT id FROM platform.platform_user WHERE username = :u)"),
+        text("UPDATE platform.platform_user SET is_active=false WHERE username = :u"),
         {"u": username},
     )
-    db.execute(text("DELETE FROM platform.platform_user WHERE username = :u"), {"u": username})
     db.commit()
     db.close()
 
