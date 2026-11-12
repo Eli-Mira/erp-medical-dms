@@ -3011,10 +3011,76 @@
   }
 
   var collectionsSeq = 0;
+  var receiptSaving = false;
+  var receiptInvoicesSeq = 0;
+
+  function canCreateReceipt() {
+    return state.user && ((state.user.role === "owner" && state.user.is_owner) || state.user.role === "finance");
+  }
+
+  async function loadReceiptInvoices() {
+    var token = state.token, generation = state.sessionGeneration;
+    var seq = ++receiptInvoicesSeq;
+    var select = $("receipt-invoice"), selected = select.value;
+    if (!canCreateReceipt() || receiptSaving) return;
+    $("receipt-form").classList.remove("hidden");
+    if (!$("receipt-date").value) $("receipt-date").value = todayLocal();
+    var rows = [], page;
+    do {
+      page = await api("/invoices?status=Posted&limit=200&offset=" + rows.length);
+      if (state.token !== token || state.sessionGeneration !== generation || seq !== receiptInvoicesSeq) return;
+      rows = rows.concat(page.items);
+    } while (page.items.length && rows.length < page.total);
+    fillSelect(select, rows, function (row) { return row.invoice_no; }, "receipt_invoice_required");
+    if (rows.some(function (row) { return row.id === selected; })) select.value = selected;
+  }
+
+  async function saveReceipt(event) {
+    event.preventDefault();
+    if (receiptSaving || !canCreateReceipt() || !$("receipt-form").reportValidity()) return;
+    var token = state.token, generation = state.sessionGeneration;
+    var invoiceId = $("receipt-invoice").value;
+    var payload = {
+      invoice_id: invoiceId, receipt_no: $("receipt-number").value.trim(),
+      receipt_date: $("receipt-date").value, amount: $("receipt-amount").value,
+      method: $("receipt-method").value, note: $("receipt-note").value.trim() || null,
+    };
+    receiptSaving = true;
+    $("receipt-save").disabled = true;
+    clearError(el.collectionsError);
+    try {
+      var invoice = await api("/invoices/" + encodeURIComponent(invoiceId));
+      if (state.token !== token || state.sessionGeneration !== generation) return;
+      if (invoice.posting_status !== "Posted") {
+        showError(el.collectionsError, t("receipt_invoice_required"));
+        return;
+      }
+      payload.invoice_version = invoice.version;
+      await api("/collections", { method: "POST", body: payload });
+      if (state.token !== token || state.sessionGeneration !== generation) return;
+      $("receipt-form").reset();
+      $("receipt-date").value = todayLocal();
+      state.entries = null;
+      await loadCollections();
+      if (state.token !== token || state.sessionGeneration !== generation) return;
+      showNotice(el.collectionsError, t("receipt_saved"), "success");
+    } catch (error) {
+      if (state.token === token && state.sessionGeneration === generation) showError(el.collectionsError, messageFor(error));
+    } finally {
+      if (state.token === token && state.sessionGeneration === generation) {
+        receiptSaving = false;
+        $("receipt-save").disabled = false;
+      }
+    }
+  }
+
   async function loadCollections() {
     var token = state.token, generation = state.sessionGeneration;
     var seq = ++collectionsSeq;
     clearError(el.collectionsError);
+    if (canCreateReceipt()) loadReceiptInvoices().catch(function (error) {
+      if (state.token === token && state.sessionGeneration === generation && seq === collectionsSeq) showError(el.collectionsError, messageFor(error));
+    });
     var labels = {
       no: t("receipt_no"), date: t("receipt_date"), invoice: t("invoice_no"),
       customer: t("customer"), method: t("method"), amount: t("amount"), status: t("status"),
@@ -4211,6 +4277,12 @@
     ++balancesSeq;
     ++ledgerSeq;
     ++collectionsSeq;
+    ++receiptInvoicesSeq;
+    receiptSaving = false;
+    $("receipt-form").reset();
+    $("receipt-form").classList.add("hidden");
+    $("receipt-invoice").replaceChildren();
+    $("receipt-save").disabled = false;
     state.editingDraft = null;
     state.draft = null;
     if (el.draftNotes) el.draftNotes.textContent = "";
@@ -4477,6 +4549,7 @@
     el.exportBalances = $("export-balances");
     el.balanceRows = $("balance-rows");
     el.receiptRows = $("receipt-rows");
+    $("receipt-form").addEventListener("submit", saveReceipt);
 
     el.loginForm = $("login-form");
     el.loginUsername = $("login-username");
