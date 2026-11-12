@@ -47,10 +47,6 @@ def _host(request):
         return None
 
 
-def _scope(db, user):
-    warehouses = _scope_warehouses(db, user)
-    return None if warehouses is None else {str(w) for w in warehouses}
-
 
 def _warehouse_ok(db, wid):
     return db.execute(
@@ -78,9 +74,10 @@ def create_transfer(payload: dict, request: Request, db: Db, current: CurrentUse
         raise HTTPException(422, "quantity must be numeric")
     if not q.is_finite() or q <= 0:
         raise HTTPException(422, "quantity must be positive and finite")
-    scope = _scope(db, current)
+    scope = _scope_warehouses(db, current)
+    scope_str = None if scope is None else {str(w) for w in scope}
     for wid in (src, dst):
-        if scope is not None and wid not in scope:
+        if scope_str is not None and wid not in scope_str:
             raise HTTPException(403, "Warehouse outside your scope")
         if not _warehouse_ok(db, wid):
             raise HTTPException(422, "Warehouse not active")
@@ -214,9 +211,10 @@ def list_transfers(db: Db, current: CurrentUser, limit: int = 50, offset: int = 
         current,
         MANAGE_ROLES | {"sales_manager", "district_manager", "read_only_auditor"},
     )
-    scope = _scope(db, current)
+    scope = _scope_warehouses(db, current)
+    scope_str = None if scope is None else {str(w) for w in scope}
     conditions, params = [], {"limit": limit, "offset": offset}
-    if scope is not None:
+    if scope_str is not None:
         conditions.append(
             "m.warehouse_id = ANY(CAST(:whs AS uuid[])) AND m.source_type='transfer' "
             "AND EXISTS (SELECT 1 FROM inventory.stock_movement linked "
