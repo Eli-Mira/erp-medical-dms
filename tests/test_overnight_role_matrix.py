@@ -96,8 +96,8 @@ def test_every_runtime_role_and_endpoint_has_a_retained_observation(
 ):
     client, db, ids, _payload, headers = invoice_env
     discovery = client.get("/openapi.json")
-    assert discovery.status_code == 200
-    schema = discovery.json()
+    assert discovery.status_code == 404
+    schema = app.openapi()
     endpoints = []
     routes = list(runtime_routes())
     for route, path in routes:
