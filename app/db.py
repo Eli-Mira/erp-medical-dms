@@ -1,18 +1,15 @@
 """Shared database wiring for the Medical Company System API.
 
-Reads DATABASE_URL from the environment so the same code runs in Docker
-(services compose DB_HOST=db) and locally (localhost). Dev default kept
-in sync with docker-compose / .env.dev.
+Requires DATABASE_URL from the environment; no default database or credential.
 """
 import os
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    "postgresql+psycopg://USER:PASSWORD@localhost:5432/DBNAME",
-)
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is required")
 engine = create_engine(DATABASE_URL, future=True)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, future=True)
 

@@ -17,8 +17,7 @@ fresh database, and the integrity check flags any drift instead of hiding it.
 Credentials come from the environment only — never from this file:
 
     DATABASE_URL        required; must point at a local ``medical_demo_fresh``
-    SEED_USER_PASSWORD  optional; without it the demo users get an unusable
-                        random password, so the database has no known login
+    SEED_USER_PASSWORD  required; at least 16 characters, with no fallback
 
 Usage:
     DATABASE_URL=postgresql+psycopg://...@127.0.0.1:5432/medical_demo_fresh \\
@@ -28,7 +27,6 @@ from __future__ import annotations
 
 import hashlib
 import os
-import secrets
 import sys
 import uuid
 from collections import defaultdict
@@ -363,9 +361,16 @@ def _row_id(db, table: str, **natural_key: str) -> str:
     ).scalar_one()
 
 
+def _seed_password() -> str:
+    password = os.environ.get("SEED_USER_PASSWORD")
+    if password is None or len(password.strip()) < 16:
+        _fail("SEED_USER_PASSWORD is required and must contain at least 16 characters")
+    return password
+
+
 def seed(engine) -> None:
+    password = _seed_password()
     now = datetime.now(timezone.utc)
-    password = os.environ.get("SEED_USER_PASSWORD") or secrets.token_urlsafe(32)
 
     branch_ids: dict[str, str] = {}
     territory_ids: dict[str, str] = {}
@@ -703,6 +708,7 @@ def report(engine) -> None:
 
 
 def main() -> None:
+    _seed_password()  # Reject missing/short credentials before connecting to the DB.
     engine = _connect()
     seed(engine)
     report(engine)

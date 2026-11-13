@@ -4,12 +4,58 @@ Current scope: service scaffold + health probe. Auth/RBAC, audit logging,
 settings, posting states and PWA shell are added progressively in Phase 2.
 """
 
+import base64
+import hashlib
 import os
 
 from fastapi import FastAPI
 from fastapi.middleware.gzip import GZipMiddleware
+from starlette.datastructures import MutableHeaders
 
-app = FastAPI(title="Medical Company System", version="0.1.0")
+# Match the existing inline service-worker registration without allowing other scripts.
+_SERVICE_WORKER_SCRIPT = (
+    '\n    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");\n  '
+)
+_SCRIPT_HASH = base64.b64encode(
+    hashlib.sha256(_SERVICE_WORKER_SCRIPT.encode("utf-8")).digest()
+).decode("ascii")
+_SECURITY_HEADERS = {
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        f"script-src 'self' 'sha256-{_SCRIPT_HASH}'; "
+        # Existing markup and JS use inline styles; fonts use Google's stylesheet.
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self'; connect-src 'self'; worker-src 'self'; "
+        "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+    ),
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+}
+
+
+class HardenedFastAPI(FastAPI):
+    def build_middleware_stack(self):
+        # Wrap ServerErrorMiddleware too, so unhandled 500s get the same headers.
+        inner = super().build_middleware_stack()
+
+        async def secured(scope, receive, send):
+            async def send_with_headers(message):
+                if message["type"] == "http.response.start":
+                    headers = MutableHeaders(scope=message)
+                    for name, value in _SECURITY_HEADERS.items():
+                        headers[name] = value
+                await send(message)
+
+            await inner(scope, receive, send_with_headers)
+
+        return secured
+
+
+app = HardenedFastAPI(
+    title="Medical Company System", version="0.1.0", debug=False,
+    docs_url=None, redoc_url=None, openapi_url=None,
+)
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
 _CACHEABLE = {".js", ".css", ".svg", ".png", ".webp", ".woff2"}
@@ -102,4 +148,4 @@ def health() -> dict:
 
 @app.get("/")
 def root() -> dict:
-    return {"service": "Medical Company System", "docs": "/docs", "health": "/health"}
+    return {"service": "Medical Company System", "docs": None, "health": "/health"}
