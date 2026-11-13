@@ -4,15 +4,15 @@ services:
     container_name: med_dms_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: dms
-      POSTGRES_PASSWORD: dms-dev
-      POSTGRES_DB: medical_dms
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dms"]
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -22,6 +22,10 @@ services:
     container_name: med_dms_app
     restart: unless-stopped
     env_file: .env.dev
+    environment:
+      POSTING_ENABLED: "false"
+      DEBUG: "false"
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
     ports:
       - "8000:8000"
     depends_on:

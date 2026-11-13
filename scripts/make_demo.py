@@ -19,6 +19,7 @@ Usage:
 """
 from __future__ import annotations
 
+import os
 import sys
 from datetime import date
 from decimal import Decimal
@@ -39,12 +40,18 @@ from app.db import DATABASE_URL  # noqa: E402
 from app.sales.calc import line_calc, invoice_totals  # noqa: E402
 
 DEMO_DB = "medical_demo"
-DEMO_PASSWORD = "Demo-2026"
 TODAY = date(2026, 10, 18)  # demo clock — synthetic, deterministic
 
 
 def _fail(message: str) -> None:
     sys.exit("make_demo: " + message)
+
+
+def _seed_password() -> str:
+    password = os.environ.get("SEED_USER_PASSWORD", "")
+    if len(password.strip()) < 16:
+        _fail("SEED_USER_PASSWORD must contain at least 16 characters")
+    return password
 
 
 def build_demo_url():
@@ -191,6 +198,7 @@ RECEIPTS = [  # (receipt_no, invoice_no, receipt_date, amount, method, created_b
 
 
 def seed(engine: Engine) -> None:
+    password_hash = hash_password(_seed_password())
     ids = {key: uuid4() for key in (
         *[f"b{i}" for i in range(len(BRANCHES))],
         *[f"t{i}" for i in range(len(TERRITORIES))],
@@ -243,7 +251,6 @@ def seed(engine: Engine) -> None:
                 {"id": uuid4(), "code": code, "name": name, "spec": specialty, "b": ids[f"b{branch_idx}"]})
 
         # Demo accounts — passwords hashed with the app's own PBKDF2 helper.
-        password_hash = hash_password(DEMO_PASSWORD)
         for username, role, is_owner in USERS:
             db.execute(text(
                 "INSERT INTO platform.platform_user(id,username,password_hash,role,is_owner) "
@@ -420,23 +427,22 @@ def verify(engine: Engine) -> None:
     print("\nSynthetic customer balances (from finance.ar_entry):")
     for code, balance in balance_rows:
         print(f"  {code}: {balance}")
-    print(f"\nDemo credentials (all users): username/<{DEMO_PASSWORD}> "
-          "- owner: demo_owner, sales: demo_rep (branch demo-1), finance: demo_finance")
+    print("\nDemo users: demo_owner, demo_rep (branch demo-1), demo_finance. "
+          "Use the password supplied privately through SEED_USER_PASSWORD.")
 
 
 def main() -> None:
+    _seed_password()  # Reject missing/short credentials before any database action.
     engine = create_database()
     apply_migrations(engine)
     seed(engine)
     engine.dispose()
-    print(f'\nDemo database ready: {build_demo_url().set(database=DEMO_DB).render_as_string(hide_password=False)}')
+    print(f"\nDemo database ready: {DEMO_DB}")
     print(
-        "Start the prototype server with:\n"
-        '  $env:DATABASE_URL="'
-        + build_demo_url().set(database=DEMO_DB).render_as_string(hide_password=False)
-        + '"; $env:POSTING_ENABLED="false"; $env:DEMO_MODE="1"; '
+        "Set DATABASE_URL privately for this demo database, then start with:\n"
+        '$env:POSTING_ENABLED="false"; $env:DEMO_MODE="1"; '
         "uv run --with-requirements requirements.txt uvicorn app.main:app --host 127.0.0.1 --port 8018\n"
-        'Then open http://127.0.0.1:8018/app/ and sign in with demo_owner / Demo-2026.'
+        "Sign in as demo_owner using the privately supplied seed password."
     )
 
 
