@@ -201,7 +201,10 @@ def test_audit_insert_then_error_rolls_back_durable_draft(life, monkeypatch):
     def insert_then_fail(db, *args, **kwargs):
         original(db, *args, **kwargs)
         written.append(
-            db.execute(text("SELECT count(*) FROM audit.audit_log")).scalar_one()
+            db.execute(
+                text("SELECT count(*) FROM audit.audit_log WHERE entity_id=:entity_id"),
+                {"entity_id": str(args[3])},
+            ).scalar_one()
         )
         raise RuntimeError("synthetic failure after actual audit insert")
 
