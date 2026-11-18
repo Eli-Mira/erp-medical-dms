@@ -4466,6 +4466,7 @@
     el.returnRows = $("return-rows");
     el.marketingError = $("marketing-error");
     el.marketingRows = $("marketing-rows");
+    el.moduleTitle = $("module-title");
     el.moduleDesc = $("module-desc");
     el.moduleContent = $("module-content");
 
