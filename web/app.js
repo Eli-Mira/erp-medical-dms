@@ -360,9 +360,9 @@
     salesreport: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
     balances: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
     collections: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
-    customers: ["*"],
-    products: ["*"],
-    warehouses: ["*"],
+    customers: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
+    products: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
+    warehouses: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
     suppliers: ["owner", "finance", "read_only_auditor"],
     accounts: ["owner", "finance", "read_only_auditor"],
     doctors: ["owner", "finance", "medical_rep", "sales_manager", "read_only_auditor"],
@@ -395,14 +395,23 @@
 
   function applyRoleGating() {
     var role = state.user ? state.user.role : null;
-    document.querySelectorAll("[data-roles]").forEach(function (node) {
+    // Sidebar items may declare their own roles (data-roles); the rest fall
+    // back to ROLE_OK, which mirrors the server-side role checks. Without
+    // this, ungated entries were offered to every role and answered 403.
+    document.querySelectorAll("[data-roles], .nav-item[data-view]").forEach(function (node) {
+      var declared = node.dataset.roles !== undefined;
       // Hide screens that are still labelled prototypes (empty PROTO views)
       // so everyday users never land on an empty placeholder.
-      if (node.dataset.view && !REAL_VIEWS[node.dataset.view]) {
+      if (declared && node.dataset.view && !REAL_VIEWS[node.dataset.view]) {
         node.classList.add("hidden");
         return;
       }
-      var allowed = node.dataset.roles === "*" ? ["*"] : node.dataset.roles.split(",");
+      var allowed;
+      if (declared) {
+        allowed = node.dataset.roles === "*" ? ["*"] : node.dataset.roles.split(",");
+      } else {
+        allowed = ROLE_OK[node.dataset.view] || ["*"];
+      }
       var ok = allowed.indexOf("*") >= 0 || (role && allowed.indexOf(role) >= 0);
       if (node.dataset.view === "users") ok = roleAllowed("users");
       if (node.classList.contains("bnav-btn")) {
