@@ -365,7 +365,7 @@
     warehouses: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
     suppliers: ["owner", "finance", "read_only_auditor"],
     accounts: ["owner", "finance", "read_only_auditor"],
-    doctors: ["owner", "finance", "medical_rep", "sales_manager", "read_only_auditor"],
+    doctors: ["owner", "medical_rep", "sales_manager", "read_only_auditor"],
     visits: ["owner", "medical_rep", "sales_manager", "district_manager", "read_only_auditor"],
     settings: ["owner", "finance"], audit: ["owner", "finance"],
     alerts: ["*"], import: ["owner", "finance"], pwa: ["*"],
@@ -382,10 +382,44 @@
     cash: ["owner", "finance"], expenses: ["owner", "finance"], pnl: ["owner", "finance"],
     payroll: ["owner", "finance"], brandspend: ["owner", "finance"],
     privateaccounts: ["owner"],
+    marketing: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
+    users: ["owner"],
     objectives: ["owner", "finance", "sales_manager"], purchases: ["owner", "finance"],
     telegram: ["*"], analytics: ["*"],
   };
 
+  // ---------------------------------------------------------------------
+  // SERVER ROUTE -> ROLES (the authority ROLE_OK must match).
+  // Source: app/*/router.py, re-derived and runtime-verified by the UI-FIX lane
+  // (uifix/gen_route_roles.py + uifix/i1_role_boundary.py, 7 roles x every endpoint).
+  // Full table incl. all 85 routes: uifix/ROUTE_ROLES.md.
+  // Rule: the client may be STRICTER than the server, never wider.
+  // ---------------------------------------------------------------------
+  //   /ar/balances                                   district_manager, finance, owner, read_only_auditor, sales_manager
+  //   /audit                                         finance, owner, read_only_auditor
+  //   /auth/users                                    owner
+  //   /auth/users/options                            owner
+  //   /collections                                   district_manager, finance, medical_rep, owner, read_only_auditor, sales_manager
+  //   /inventory/batches                             district_manager, finance, owner, read_only_auditor, sales_manager, warehouse_staff
+  //   /inventory/cover                               district_manager, finance, owner, read_only_auditor, sales_manager, warehouse_staff
+  //   /inventory/expiry-warnings                     district_manager, finance, owner, read_only_auditor, sales_manager, warehouse_staff
+  //   /inventory/movements                           district_manager, finance, owner, read_only_auditor, sales_manager, warehouse_staff
+  //   /inventory/stock                               district_manager, finance, owner, read_only_auditor, sales_manager, warehouse_staff
+  //   /invoices                                      district_manager, finance, medical_rep, owner, read_only_auditor, sales_manager
+  //   /invoices/report                               district_manager, finance, medical_rep, owner, read_only_auditor, sales_manager
+  //   /marketing/spend                               district_manager, finance, medical_rep, owner, read_only_auditor, sales_manager
+  //   /master/accounts                               finance, owner, read_only_auditor
+  //   /master/branches                               district_manager, finance, medical_rep, owner, read_only_auditor, sales_manager
+  //   /master/customers                              district_manager, finance, medical_rep, owner, read_only_auditor, sales_manager
+  //   /master/doctors                                district_manager, medical_rep, owner, read_only_auditor, sales_manager
+  //   /master/products                               district_manager, finance, medical_rep, owner, read_only_auditor, sales_manager
+  //   /master/products-maintenance                   owner
+  //   /master/territories                            district_manager, finance, medical_rep, owner, read_only_auditor, sales_manager
+  //   /master/warehouses                             district_manager, finance, medical_rep, owner, read_only_auditor, sales_manager
+  //   /private-accounts                              owner
+  //   /reports/management-summary                    district_manager, finance, owner, read_only_auditor, sales_manager
+  //   /settings/inventory-policy                     district_manager, finance, owner, read_only_auditor, sales_manager
+  //   /targets                                       district_manager, finance, medical_rep, owner, read_only_auditor, sales_manager
   function roleAllowed(view) {
     if (view === "users") return !!(state.user && state.user.is_owner === true);
     var allowed = ROLE_OK[view] || ["*"];
