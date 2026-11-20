@@ -272,7 +272,7 @@
             <h2 data-i18n="home_recent_receipts">أحدث سندات القبض</h2>
             <button type="button" class="ghost" data-goto="collections" data-i18n="nav_collections">التحصيلات</button>
           </div>
-          <div class="table-wrap">
+          <div class="table-wrap" tabindex="0">
             <table class="grid-table">
               <thead>
                 <tr>
@@ -293,7 +293,7 @@
             <button type="button" class="primary" data-goto="invoice" data-i18n="home_start_action">فاتورة بيع جديدة</button>
           </div>
           <p class="muted small" data-i18n="home_drafts_hint">اختصار للجهاز الحالي فقط؛ كل سجل يُفتح من الخادم (GET /invoices/{id}) عند الضغط عليه.</p>
-          <div class="table-wrap">
+          <div class="table-wrap" tabindex="0">
             <table class="grid-table">
               <thead>
                 <tr>
@@ -397,7 +397,7 @@
             <div><dt data-i18n="invoice_date">تاريخ الفاتورة</dt><dd class="num" id="draft-date">—</dd></div>
             <div><dt data-i18n="notes">ملاحظات</dt><dd id="draft-notes">—</dd></div>
           </dl>
-          <div class="table-wrap">
+          <div class="table-wrap" tabindex="0">
             <table class="grid-table">
               <thead>
                 <tr>
@@ -440,7 +440,7 @@
           <button type="button" class="default" data-refresh="inventory" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="inventory-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead>
               <tr>
@@ -468,7 +468,7 @@
           <button type="button" class="default" data-refresh="ledger" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="ledger-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead>
               <tr>
@@ -498,7 +498,7 @@
         </div>
         <div id="balances-error" class="alert hidden" role="alert" data-kind="error"></div>
         <div class="card">
-          <div class="table-wrap">
+          <div class="table-wrap" tabindex="0">
             <table class="grid-table">
               <thead>
                 <tr>
@@ -521,7 +521,7 @@
             <select id="ledger-customer"></select>
           </div>
           <div id="ledger-summary" class="chip-row"></div>
-          <div class="table-wrap">
+          <div class="table-wrap" tabindex="0">
             <table class="grid-table">
               <thead>
                 <tr>
@@ -584,7 +584,7 @@
           </div>
           <button id="receipt-save" type="submit" class="primary" data-i18n="receipt_save">حفظ سند القبض</button>
         </form>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead>
               <tr>
@@ -646,7 +646,7 @@
             <button type="submit" id="private-save" class="default" data-i18n="private_save">حفظ الحركة</button>
           </form>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th data-i18n="date">التاريخ</th>
@@ -679,7 +679,7 @@
         </div>
         <div id="customers-notice" class="alert hidden" role="status" aria-live="polite"></div>
         <div id="customers-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead>
               <tr>
@@ -743,7 +743,7 @@
             </fieldset>
           </form>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead>
               <tr>
@@ -772,7 +772,7 @@
         </div>
         <div id="warehouses-error" class="alert hidden" role="alert" data-kind="error"></div>
         <div class="card">
-          <div class="table-wrap">
+          <div class="table-wrap" tabindex="0">
             <table class="grid-table">
               <thead>
                 <tr>
@@ -801,7 +801,7 @@
           <button type="button" id="supplier-add" class="primary hidden" data-i18n="supplier_add">إضافة مورّد</button></span>
         </div>
         <div id="suppliers-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead>
               <tr>
@@ -829,7 +829,7 @@
           <button type="button" class="default" data-refresh="accounts" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="accounts-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead>
               <tr>
@@ -854,7 +854,7 @@
           <button type="button" class="default" data-refresh="doctors" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="doctors-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead>
               <tr>
@@ -882,7 +882,7 @@
           <button type="button" class="default" data-refresh="targets" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="targets-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead>
               <tr>
@@ -919,7 +919,7 @@
             </select>
           </div>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th data-i18n="batch_no">رقم التشغيلة</th>
@@ -944,7 +944,7 @@
           <button type="button" class="default" data-refresh="cover" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="cover-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th data-i18n="warehouse">المستودع</th>
@@ -1004,7 +1004,7 @@
           </div>
         </div>
         <p id="mgmtsummary-asof" class="desc"></p>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th data-i18n="ms_indicator">المؤشر</th>
@@ -1051,7 +1051,7 @@
             <input type="search" id="invalerts-search" autocomplete="off" />
           </span>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th data-i18n="product">المنتج</th>
@@ -1091,7 +1091,7 @@
           <button type="button" class="default" data-refresh="audit" data-i18n="refresh">تحديث</button></span>
         </div>
         <div id="audit-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th data-i18n="date">التاريخ</th>
@@ -1137,7 +1137,7 @@
         <p id="transfer-status" role="status" aria-live="polite"></p>
         <h2 data-i18n="transfer_balances">أرصدة الصنف في المصدر والوجهة</h2>
         <div id="transfer-balance-error" class="alert hidden" role="alert" data-kind="error"></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th data-i18n="warehouse">المخزن</th>
@@ -1148,7 +1148,7 @@
           </table>
         </div>
         <h2 data-i18n="transfer_history">التحويلات المحفوظة — المصدر والصنف والكمية</h2>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th data-i18n="date">التاريخ</th>
@@ -1177,7 +1177,7 @@
         <p class="muted small" data-i18n="return_product_limit">تظهر أول 500 صنف من الكتالوج المصرح به.</p>
         <div id="return-editor"></div>
         <div id="return-detail" role="region" aria-label="تفاصيل المرتجع" data-i18n-aria-label="return_detail"></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th data-i18n="date">التاريخ</th>
@@ -1205,7 +1205,7 @@
         </div>
         <div id="marketing-error" class="alert hidden" role="alert" data-kind="error"></div>
         <div id="marketing-editor"></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th data-i18n="date">التاريخ</th>
@@ -1245,7 +1245,7 @@
             <input type="date" id="il-to" />
           </span>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead>
               <tr>
@@ -1283,7 +1283,7 @@
             <input type="date" id="sr-to" />
           </span>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th class="num" data-i18n="invoices_count">عدد الفواتير</th>
@@ -1295,7 +1295,7 @@
           </table>
         </div>
         <div class="section-head"><h2 data-i18n="sr_by_territory">حسب المنطقة</h2></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th data-i18n="territory">المنطقة</th>
@@ -1308,7 +1308,7 @@
           </table>
         </div>
         <div class="section-head"><h2 data-i18n="sr_by_rep">حسب المندوب</h2></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th data-i18n="rep">المندوب</th>
@@ -1321,7 +1321,7 @@
           </table>
         </div>
         <div class="section-head"><h2 data-i18n="sr_by_product">حسب الصنف</h2></div>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0">
           <table class="grid-table">
             <thead><tr>
               <th data-i18n="product">الصنف</th>
@@ -1376,7 +1376,7 @@
         </form>
         <div class="card" style="margin-top: var(--space-5);">
           <div class="section-head"><h2 data-i18n="visit_saved_title">زيارات مسجلة على الخادم</h2><button type="button" class="default" id="visits-refresh" data-i18n="visit_refresh">تحديث</button></div>
-          <div class="table-wrap"><table class="grid-table">
+          <div class="table-wrap" tabindex="0"><table class="grid-table">
             <thead><tr><th scope="col" data-i18n="visit_at">تاريخ الزيارة</th><th scope="col" data-i18n="customer">العميل</th><th scope="col" data-i18n="product">الصنف</th><th scope="col" class="num" data-i18n="visit_sellthrough">المسحوب</th><th scope="col" class="num" data-i18n="visit_amount">مبلغ مُبلّغ عنه</th><th scope="col" data-i18n="visit_actions">إجراءات</th></tr></thead>
             <tbody id="visit-rows"></tbody>
           </table></div>
