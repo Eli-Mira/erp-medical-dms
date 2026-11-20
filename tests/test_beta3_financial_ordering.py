@@ -86,7 +86,7 @@ def test_overlapping_same_customer_statements_do_not_append_duplicate_rows(
           picker.dispatchEvent(new Event('change', {bubbles: true}));
           await new Promise(resolve => setTimeout(resolve, 0));
         }""")
-        page.wait_for_function("window.__statementPendingBodies === 0")
+        page.wait_for_function("() => window.__statementPendingBodies === 0")
         expect(page.locator("#entry-rows tr")).to_have_count(expected_rows)
         expect(page.locator("#ledger-summary .badge")).to_have_count(5)
 
@@ -183,7 +183,7 @@ def test_older_balance_reply_cannot_overwrite_new_persisted_collection(
             )
         assert expected == old_balance[0] - Decimal("1.00")
         page.locator('[data-refresh="balances"]').click()
-        page.wait_for_function("window.__orderingBodiesConsumed === 1")
+        page.wait_for_function("() => window.__orderingBodiesConsumed === 1")
         row = page.locator("#balance-rows tr").filter(
             has=page.get_by_text(customer_name, exact=True)
         )
@@ -198,7 +198,7 @@ def test_older_balance_reply_cannot_overwrite_new_persisted_collection(
                     "Balance: " + format(expected, ".2f")
                 )
             route.fulfill(response=response)
-            page.wait_for_function("window.__orderingBodiesConsumed === 2")
+            page.wait_for_function("() => window.__orderingBodiesConsumed === 2")
             expect(row.locator("td").nth(2)).to_have_text(format(expected, ".2f"))
         finally:
             response.dispose()

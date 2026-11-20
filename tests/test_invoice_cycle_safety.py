@@ -107,7 +107,8 @@ def test_mixed_vat_discount_batch_cycle_persists_originals(life):
     assert audits[2]["new_values"]["posting_status"] == "Voided"
     assert (
         scalar(
-            "SELECT count(*) FROM audit.audit_log WHERE entity_type='payment_receipt'"
+            "SELECT count(*) FROM audit.audit_log WHERE entity_type='payment_receipt' AND entity_id = ANY(:rids)",
+            rids=[UUID(r["id"]) for r in receipts],
         )
         == 4
     )

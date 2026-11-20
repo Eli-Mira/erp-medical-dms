@@ -20,14 +20,16 @@ from test_supplier_pwa import live_app as live_app  # noqa: PLC0414
 
 @contextmanager
 def visit_user(live_app, lang="en", width=390, role="owner"):
-    base, _engine = live_app
-    with _browser_user(
-        live_app, role=role, owner=role == "owner", lang=lang, width=width
-    ) as (page, engine, actor):
-        branch, territory = references(engine)
-        ids = {name: uuid4() for name in ("customer", "product", "warehouse", "batch")}
-        ids.update(branch=branch, territory=territory)
-        try:
+    base, engine = live_app
+    branch, territory = references(engine)
+    ids = {name: uuid4() for name in ("customer", "product", "warehouse", "batch")}
+    ids.update(branch=branch, territory=territory)
+    actor = None
+    try:
+        with _browser_user(
+            live_app, role=role, owner=role == "owner", lang=lang, width=width
+        ) as (page, engine, actor_id):
+            actor = actor_id
             with engine.begin() as db:
                 db.execute(
                     text(
@@ -82,34 +84,35 @@ def visit_user(live_app, lang="en", width=390, role="owner"):
             page.reload(wait_until="domcontentloaded")
             expect(page.locator("#home-view")).to_be_visible()
             yield page, engine, actor, ids, base
-        finally:
-            with engine.begin() as db:
-                db.execute(
-                    text("DELETE FROM sales.customer_held_stock WHERE customer_id=:id"),
-                    {"id": ids["customer"]},
-                )
-                db.execute(
-                    text(
-                        "DELETE FROM sales.customer_stock_visit WHERE customer_id=:id"
-                    ),
-                    {"id": ids["customer"]},
-                )
-                db.execute(
-                    text("DELETE FROM inventory.batch_record WHERE id=:id"),
-                    {"id": ids["batch"]},
-                )
-                db.execute(
-                    text("DELETE FROM master_data.master_warehouse WHERE id=:id"),
-                    {"id": ids["warehouse"]},
-                )
-                db.execute(
-                    text("DELETE FROM master_data.master_customer WHERE id=:id"),
-                    {"id": ids["customer"]},
-                )
-                db.execute(
-                    text("DELETE FROM master_data.master_product WHERE id=:id"),
-                    {"id": ids["product"]},
-                )
+    finally:
+        with engine.begin() as db:
+            db.execute(
+                text("DELETE FROM sales.customer_held_stock WHERE customer_id=:id"),
+                {"id": ids["customer"]},
+            )
+            db.execute(
+                text(
+                    "DELETE FROM sales.customer_stock_visit WHERE customer_id=:id"
+                ),
+                {"id": ids["customer"]},
+            )
+            db.execute(
+                text("DELETE FROM inventory.batch_record WHERE id=:id"),
+                {"id": ids["batch"]},
+            )
+            db.execute(
+                text("DELETE FROM master_data.master_warehouse WHERE id=:id"),
+                {"id": ids["warehouse"]},
+            )
+            db.execute(
+                text("DELETE FROM master_data.master_customer WHERE id=:id"),
+                {"id": ids["customer"]},
+            )
+            db.execute(
+                text("DELETE FROM master_data.master_product WHERE id=:id"),
+                {"id": ids["product"]},
+            )
+            if actor is not None:
                 db.execute(
                     text(
                         "DELETE FROM platform.user_territory WHERE user_id=:u AND territory_id=:t"
@@ -122,14 +125,14 @@ def visit_user(live_app, lang="en", width=390, role="owner"):
                     ),
                     {"u": actor, "b": branch},
                 )
-                db.execute(
-                    text("DELETE FROM master_data.master_branch WHERE id=:id"),
-                    {"id": branch},
-                )
-                db.execute(
-                    text("DELETE FROM master_data.master_territory WHERE id=:id"),
-                    {"id": territory},
-                )
+            db.execute(
+                text("DELETE FROM master_data.master_branch WHERE id=:id"),
+                {"id": branch},
+            )
+            db.execute(
+                text("DELETE FROM master_data.master_territory WHERE id=:id"),
+                {"id": territory},
+            )
 
 
 def fill_visit(page, ids):
@@ -481,15 +484,16 @@ def test_old_visit_response_cannot_repopulate_a_restricted_session(live_app, kin
                 and route.request.headers.get("authorization") == "Bearer " + old_token
             ):
                 response = route.fetch()
-                assert response.status in {200, 201}
+                status, headers, body = response.status, response.headers, response.body()
+                assert status in {200, 201}
                 if kind not in {"stock", "stockError"}:
-                    data = response.json()
+                    data = json.loads(body)
                     assert (
                         data["id"]
                         if kind == "save"
                         else any(item["id"] == row["id"] for item in data["items"])
                     )
-                held.append((route, response))
+                held.append((route, status, headers, body))
                 page.evaluate("window.__s8OldHeld = true")
             else:
                 route.continue_()
@@ -518,7 +522,7 @@ def test_old_visit_response_cannot_repopulate_a_restricted_session(live_app, kin
                 ).status
                 == 403
             )
-            route, response = held.pop()
+            route, status, headers, body = held.pop()
             if kind in {"old401", "stockError"}:
                 route.fulfill(
                     status=401,
@@ -526,8 +530,8 @@ def test_old_visit_response_cannot_repopulate_a_restricted_session(live_app, kin
                     body=json.dumps({"detail": "S8 old-account failure"}),
                 )
             else:
-                route.fulfill(response=response)
-            page.wait_for_function("window.__s8Consumed === true")
+                route.fulfill(status=status, headers=headers, body=body)
+            page.wait_for_function("() => window.__s8Consumed === true")
             page.evaluate(
                 "() => new Promise(resolve => requestAnimationFrame(() => resolve(true)))"
             )
@@ -539,9 +543,10 @@ def test_old_visit_response_cannot_repopulate_a_restricted_session(live_app, kin
             expect(page.locator("#visit-warn")).to_be_empty()
             expect(page.locator("#visit-stock-hint")).to_be_empty()
         finally:
-            for route, response in held:
-                route.fulfill(response=response)
-            page.unroute("**/visits**", hold)
+            page.unroute_all(behavior="wait")
+            while held:
+                route, status, headers, body = held.pop()
+                route.fulfill(status=status, headers=headers, body=body)
 
 
 def test_expired_visit_session_clears_rows_and_form(live_app):
@@ -605,7 +610,7 @@ def test_visit_history_error_is_not_reported_as_empty_and_retry_recovers(live_ap
 
 
 def test_visit_history_pagination_and_last_page_delete_fallback(live_app):
-    with visit_user(live_app) as (page, _engine, _actor, ids, base):
+    with visit_user(live_app, role="medical_rep") as (page, _engine, _actor, ids, base):
         records = [
             seeded_visit(page, base, ids, current=str(i), day=15) for i in range(23)
         ]
@@ -700,7 +705,7 @@ def test_stale_previous_stock_cannot_refill_after_selection_cleared(live_app):
             expect(page.locator("#visit-prev")).to_have_value("")
             route, response = held.pop()
             route.fulfill(response=response)
-            page.wait_for_function("window.__s8StockConsumed === true")
+            page.wait_for_function("() => window.__s8StockConsumed === true")
             page.evaluate(
                 "() => new Promise(resolve => requestAnimationFrame(() => resolve(true)))"
             )

@@ -73,6 +73,9 @@ def test_transfer_locks_reused_destination_batch_until_commit(
     monkeypatch.setattr(
         transfer_router.inv_service, "record_movement", probe_before_movement
     )
+    before_audit = scalar(
+        "SELECT count(*) FROM audit.audit_log WHERE entity_type='stock_transfer'"
+    )
     response = life.client.post(
         "/transfers",
         headers=life.auth["owner"],
@@ -111,8 +114,16 @@ def test_transfer_locks_reused_destination_batch_until_commit(
     )
     assert (
         scalar(
+            "SELECT count(*) FROM audit.audit_log WHERE entity_type='stock_transfer' AND entity_id=:eid",
+            eid=response.json()["id"],
+        )
+        == 1
+    )
+    assert (
+        scalar(
             "SELECT count(*) FROM audit.audit_log WHERE entity_type='stock_transfer'"
         )
+        - before_audit
         == 1
     )
     for table in ("sales.sales_invoice", "finance.ar_entry", "finance.payment_receipt"):

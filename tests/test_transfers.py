@@ -130,6 +130,9 @@ def test_transfer_rejects_nonfinite_quantity_without_writes(invoice_env, quantit
     )
     db.commit()
     auth = headers("owner")
+    before_audit = db.execute(
+        text("SELECT count(*) FROM audit.audit_log WHERE entity_type='stock_transfer'")
+    ).scalar_one()
     with TestClient(app, raise_server_exceptions=False) as client:
         response = client.post(
             "/transfers",
@@ -150,7 +153,7 @@ def test_transfer_rejects_nonfinite_quantity_without_writes(invoice_env, quantit
                 "SELECT count(*) FROM audit.audit_log WHERE entity_type='stock_transfer'"
             )
         ).scalar_one()
-        == 0
+        == before_audit
     )
 
 
@@ -188,6 +191,9 @@ def test_transfer_rejects_destination_batch_with_conflicting_dates(invoice_env):
     )
     db.commit()
     auth = headers("owner")
+    before_audit = db.execute(
+        text("SELECT count(*) FROM audit.audit_log WHERE entity_type='stock_transfer'")
+    ).scalar_one()
     response = client.post(
         "/transfers",
         headers=auth,
@@ -217,7 +223,7 @@ def test_transfer_rejects_destination_batch_with_conflicting_dates(invoice_env):
                 "SELECT count(*) FROM audit.audit_log WHERE entity_type='stock_transfer'"
             )
         ).scalar_one()
-        == 0
+        == before_audit
     )
     persisted = (
         db.execute(

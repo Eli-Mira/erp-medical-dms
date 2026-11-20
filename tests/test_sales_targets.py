@@ -67,8 +67,13 @@ def test_owner_upsert_set_and_replace(invoice_env):
     assert second.status_code == 201, second.text
     body = client.get("/targets", headers=headers("owner")).json()
     assert len(body) == 1 and body[0]["target_quantity"] == "250.000"
-    events = db.execute(text("SELECT action, new_values::text FROM audit.audit_log "
-                             "WHERE entity_type='sales_target' ORDER BY created_at")).all()
+    events = db.execute(
+        text(
+            "SELECT action, new_values::text FROM audit.audit_log "
+            "WHERE entity_type='sales_target' AND entity_id=:eid ORDER BY created_at"
+        ),
+        {"eid": first.json()["id"]},
+    ).all()
     assert [e[0] for e in events] == ["upserted", "upserted"]
     assert "250" in events[1][1]
 
