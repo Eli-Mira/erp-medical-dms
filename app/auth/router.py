@@ -5,6 +5,7 @@ columns invented: the session PK carries the token. Logout deletes the row.
 """
 
 import datetime
+import ipaddress
 import uuid as uuidlib
 from typing import Annotated
 
@@ -13,11 +14,80 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from .. import config as app_config
 from ..db import get_db
 from . import repo
 from .rate_limit import FailedLoginLimiter
 
 login_limiter = FailedLoginLimiter()
+
+
+def _parse_ip(raw: str | None) -> ipaddress.IPv4Address | ipaddress.IPv6Address | None:
+    if not raw:
+        return None
+    val = raw.strip()
+    if not val:
+        return None
+    try:
+        ip_obj = ipaddress.ip_address(val)
+    except ValueError:
+        return None
+    if isinstance(ip_obj, ipaddress.IPv6Address) and ip_obj.ipv4_mapped is not None:
+        return ip_obj.ipv4_mapped
+    return ip_obj
+
+
+def _is_trusted_proxy(
+    ip_obj: ipaddress.IPv4Address | ipaddress.IPv6Address,
+    trusted_networks: tuple[ipaddress.IPv4Network | ipaddress.IPv6Network, ...],
+) -> bool:
+    for net in trusted_networks:
+        if ip_obj.version == net.version and ip_obj in net:
+            return True
+    return False
+
+
+def resolve_client_ip(
+    request: Request | None,
+    *,
+    trusted_networks: tuple[ipaddress.IPv4Network | ipaddress.IPv6Network, ...] | None = None,
+    preserve_non_ip: bool = False,
+) -> str | None:
+    """Resolve client IP using direct transport peer unless arriving from an explicit trusted proxy.
+
+    When the direct peer is in RATE_LIMIT_TRUSTED_PROXIES, parses X-Forwarded-For
+    right-to-left and returns the rightmost untrusted hop (failing closed to the
+    direct peer on malformed hops).
+    """
+    if request is None or not request.client or not request.client.host:
+        return None
+    direct_raw = request.client.host
+    peer_ip = _parse_ip(direct_raw)
+    if peer_ip is None:
+        return direct_raw if preserve_non_ip else None
+    networks = (
+        app_config.RATE_LIMIT_TRUSTED_PROXIES
+        if trusted_networks is None
+        else trusted_networks
+    )
+    if not networks or not _is_trusted_proxy(peer_ip, networks):
+        return str(peer_ip)
+    xff_values = (
+        request.headers.getlist("x-forwarded-for")
+        if hasattr(request.headers, "getlist")
+        else [request.headers.get("x-forwarded-for", "")]
+    )
+    xff_joined = ", ".join(v for v in xff_values if v)
+    if not xff_joined.strip():
+        return str(peer_ip)
+    hops = [part.strip() for part in xff_joined.split(",") if part.strip()]
+    for raw_hop in reversed(hops):
+        hop_ip = _parse_ip(raw_hop)
+        if hop_ip is None:
+            return str(peer_ip)
+        if not _is_trusted_proxy(hop_ip, networks):
+            return str(hop_ip)
+    return str(peer_ip)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 bearer_scheme = HTTPBearer()
@@ -40,10 +110,14 @@ class UserAdministrationOut(BaseModel):
     branch_ids: list[str]
 
 
-async def _administration_payload(request: Request):
+async def _administration_payload(
+    request: Request,
+    current: Annotated[dict, Depends(get_current_user)],
+):
     # Strict JSON mode accepts UUID strings, not coerced booleans or extra fields.
     from pydantic import ValidationError
 
+    _administration_owner(current)
     try:
         payload = UserAdministrationIn.model_validate_json(
             await request.body(), strict=True
@@ -119,12 +193,10 @@ AdministrationCredentials = Annotated[
 
 @router.post("/login", response_model=LoginOut)
 def login(request: Request, payload: LoginIn, db=Depends(get_db)):
-    import ipaddress
-
     from .security import verify_password
 
-    # Only the direct ASGI peer is used; forwarded headers are not identity.
-    host = request.client.host if request.client else None
+    # Direct transport peer by default; right-to-left XFF only when RATE_LIMIT_TRUSTED_PROXIES is set.
+    host = resolve_client_ip(request, preserve_non_ip=True)
     ticket, retry = login_limiter.reserve(payload.username, host)
     if ticket is None:
         raise HTTPException(
@@ -144,12 +216,7 @@ def login(request: Request, payload: LoginIn, db=Depends(get_db)):
         if not user or not user["is_active"] or not verified:
             failed = True
             raise HTTPException(status_code=401, detail="invalid credentials")
-        ip = host
-        if ip:
-            try:  # inet column rejects non-IP host strings (e.g. TestClient "testclient")
-                ipaddress.ip_address(ip)
-            except ValueError:
-                ip = None
+        ip = resolve_client_ip(request, preserve_non_ip=False)
         sid = repo.create_session(db, user["id"], ip)
         repo.log_audit(
             db, user["id"], "login", "platform_session", sid, None, {"ip": ip}
@@ -215,13 +282,17 @@ def administration_options(current: AdministrationUser, db: AdministrationDb):
     }
 
 
-@router.put("/users/{user_id}", response_model=UserAdministrationOut)
+@router.put(
+    "/users/{user_id}",
+    response_model=UserAdministrationOut,
+    dependencies=[Depends(get_current_user)],
+)
 def administer_user(
+    current: AdministrationUser,
+    creds: AdministrationCredentials,
     user_id: uuidlib.UUID,
     request: Request,
     payload: AdministrationPayload,
-    current: AdministrationUser,
-    creds: AdministrationCredentials,
     db: AdministrationDb,
 ):
     from sqlalchemy.exc import IntegrityError
