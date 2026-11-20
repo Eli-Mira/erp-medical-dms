@@ -201,6 +201,8 @@ def _prepare(db, user, payload):
             }
         )
     totals = invoice_totals(calculations)
+    if totals["grand_total"] <= 0:
+        raise HTTPException(422, "Invoice grand total must be greater than zero")
     if any(abs(value) >= 10**12 for value in totals.values()) or any(
         line["line_total"] >= 10**12 for line in lines
     ):

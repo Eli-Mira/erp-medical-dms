@@ -47,6 +47,26 @@ class HardenedFastAPI(FastAPI):
                         headers[name] = value
                 await send(message)
 
+            if scope["type"] == "http":
+                qs = scope.get("query_string") or b""
+                path = scope.get("path") or ""
+                if b"\x00" in qs or b"%00" in qs.lower() or "\x00" in path:
+                    body = b'{"detail":"Request parameters cannot contain null characters"}'
+                    await send_with_headers(
+                        {
+                            "type": "http.response.start",
+                            "status": 422,
+                            "headers": [
+                                (b"content-type", b"application/json"),
+                                (b"content-length", str(len(body)).encode("ascii")),
+                            ],
+                        }
+                    )
+                    await send_with_headers(
+                        {"type": "http.response.body", "body": body}
+                    )
+                    return
+
             await inner(scope, receive, send_with_headers)
 
         return secured

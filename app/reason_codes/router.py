@@ -3,6 +3,7 @@ import ipaddress
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -14,6 +15,22 @@ from app.db import get_db
 router = APIRouter(prefix="/reason-codes", tags=["reason-codes"])
 Db = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[dict, Depends(get_current_user)]
+
+
+class ReasonCodeIn(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    code: Annotated[str, Field(min_length=1, max_length=30)]
+    category: Annotated[str, Field(max_length=30)] | None = None
+    name_ar: Annotated[str, Field(max_length=100)] | None = None
+    name_en: Annotated[str, Field(max_length=100)] | None = None
+
+    @field_validator("code", "category", "name_ar", "name_en")
+    @classmethod
+    def reject_null_characters(cls, value):
+        if isinstance(value, str) and "\x00" in value:
+            raise ValueError("Reason-code fields cannot contain null characters")
+        return value
 
 READ_ROLES = {"owner", "admin", "finance", "sales_manager", "district_manager",
               "medical_rep", "warehouse_staff", "read_only_auditor"}
@@ -52,14 +69,14 @@ def list_reason_codes(db: Db, current: CurrentUser, category: str | None = None)
 
 
 @router.post("", status_code=201)
-def create_reason_code(payload: dict, request: Request, db: Db, current: CurrentUser):
+def create_reason_code(
+    payload: ReasonCodeIn, request: Request, db: Db, current: CurrentUser
+):
     _role(current, WRITE_ROLES)
-    code = (payload.get("code") or "").strip()
-    category = (payload.get("category") or "").strip() or None
-    name_ar = (payload.get("name_ar") or "").strip() or None
-    name_en = (payload.get("name_en") or "").strip() or None
-    if not code:
-        raise HTTPException(422, "code required")
+    code = payload.code
+    category = payload.category or None
+    name_ar = payload.name_ar or None
+    name_en = payload.name_en or None
     try:
         rid = db.execute(
             text("""INSERT INTO audit.reason_code (id, code, name_ar, name_en, category)

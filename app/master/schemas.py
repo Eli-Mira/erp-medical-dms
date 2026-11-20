@@ -227,6 +227,13 @@ class SupplierIn(BaseModel):
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
+    @field_validator("code", "name_ar", "name_en", "contact_phone", "address")
+    @classmethod
+    def reject_null_characters(cls, value):
+        if value is not None and "\x00" in value:
+            raise ValueError("Supplier fields cannot contain null characters")
+        return value
+
     code: str = Field(min_length=1, max_length=30)
     name_ar: str = Field(min_length=1, max_length=200)
     name_en: str | None = Field(default=None, max_length=200)
@@ -243,6 +250,13 @@ class SupplierPatch(BaseModel):
     """
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    @field_validator("code", "name_ar", "name_en", "contact_phone", "address")
+    @classmethod
+    def reject_null_characters(cls, value):
+        if value is not None and "\x00" in value:
+            raise ValueError("Supplier fields cannot contain null characters")
+        return value
 
     code: str | None = Field(default=None, min_length=1, max_length=30)
     name_ar: str | None = Field(default=None, min_length=1, max_length=200)
