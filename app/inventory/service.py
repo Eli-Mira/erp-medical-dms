@@ -12,6 +12,23 @@ class InsufficientStock(Exception):
     """A movement would drive a stock balance below zero."""
 
 
+def lock_transfer_balances(db, src_warehouse_id, dst_warehouse_id, product_id, src_batch_id, dst_batch_id):
+    """Pre-lock existing stock_balance rows for a transfer in canonical warehouse order."""
+    ordered = sorted(
+        [(src_warehouse_id, src_batch_id), (dst_warehouse_id, dst_batch_id)],
+        key=lambda pair: (str(pair[0]), str(pair[1] or "")),
+    )
+    for wid, bid in ordered:
+        db.execute(
+            text("""
+            SELECT quantity FROM inventory.stock_balance
+            WHERE warehouse_id=:w AND product_id=:p AND batch_id IS NOT DISTINCT FROM :b
+            FOR UPDATE
+        """),
+            {"w": wid, "p": product_id, "b": bid},
+        ).scalar_one_or_none()
+
+
 def _apply_balance(db, warehouse_id, product_id, batch_id, delta):
     """Add `delta` to one balance row atomically; return the new quantity."""
     keys = {"w": warehouse_id, "p": product_id, "b": batch_id}
