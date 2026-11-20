@@ -1,0 +1,92 @@
+# Production Docker Compose Profile (Phase 3 Hardened, 2026-11-20)
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+#
+# Remote access:
+#   Expose this loopback origin ONLY through an authenticated TLS reverse proxy +
+#   Cloudflare Access (Zero Trust Email OTP / IdP policy for named users).
+#   NEVER use Cloudflare Quick Tunnel (`cloudflared tunnel --url ...`).
+
+services:
+  db:
+    image: postgres:16-alpine3.21
+    container_name: ${DB_CONTAINER_NAME:-erp_prod_db}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB required}
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "erp-prod-db"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+        reservations:
+          memory: 512m
+          cpus: "0.5"
+
+  app:
+    image: ${ERP_APP_IMAGE:?ERP_APP_IMAGE required (pinned tag or digest)}
+    container_name: ${APP_CONTAINER_NAME:-erp_prod_app}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL required}
+      POSTING_ENABLED: "${POSTING_ENABLED:-false}"
+      DEMO_MODE: "${DEMO_MODE:-false}"
+      RATE_LIMIT_TRUSTED_PROXIES: "${RATE_LIMIT_TRUSTED_PROXIES:-}"
+      LOG_FORMAT: "${LOG_FORMAT:-json}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+    ports:
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import sys, urllib.request; r = urllib.request.build_opener(urllib.request.ProxyHandler({})).open('http://127.0.0.1:8000/health', timeout=3); code = r.status; r.close(); sys.exit(0 if code == 200 else 1)"
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+        tag: "erp-prod-app"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "2.0"
+        reservations:
+          memory: 256m
+          cpus: "0.5"
+
+volumes:
+  pgdata:
+    name: ${PGDATA_VOLUME_NAME:-erp_prod_pgdata}
