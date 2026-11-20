@@ -557,6 +557,7 @@
 
   function mkTable(cols, rows) {
     var wrap = node("div", "table-wrap");
+    wrap.setAttribute("tabindex", "0");
     var table = node("table", "grid-table");
     var thead = node("thead");
     var trh = node("tr");
