@@ -33,11 +33,17 @@ def list_invoices(db, *, customer_id, status, date_from, date_to, limit, offset,
     if posted_only:
         conditions.append("i.posted_at IS NOT NULL")
     clause = (" WHERE " + " AND ".join(conditions)) if conditions else ""
+    count_params = {k: v for k, v in params.items() if k not in ("limit", "offset")}
+    total = int(
+        db.execute(
+            text("SELECT count(*) FROM sales.sales_invoice i" + clause),
+            count_params,
+        ).scalar_one()
+    )
     rows = db.execute(text(
-        "SELECT i.*, count(*) OVER () AS total_count FROM sales.sales_invoice i" + clause +
+        "SELECT i.* FROM sales.sales_invoice i" + clause +
         " ORDER BY i.invoice_date DESC, i.created_at DESC LIMIT :limit OFFSET :offset"
     ), params).mappings().all()
-    total = int(rows[0]["total_count"]) if rows else 0
     # Rows are header snapshots only; lines stay empty — use GET /invoices/{id}.
     return [dict(r, lines=[]) for r in rows], total
 

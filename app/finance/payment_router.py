@@ -11,7 +11,7 @@ from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -102,25 +102,48 @@ def get_receipt(receipt_id: UUID, db: Db, current: CurrentUser) -> ReceiptOut:
     return ReceiptOut.model_validate(receipt)
 
 
-def _visible_receipts(db, current, invoice_id=None, customer_id=None,
-                      date_from=None, date_to=None):
-    rows = payments.list_receipts(
+def _visible_receipts(
+    db,
+    current,
+    invoice_id=None,
+    customer_id=None,
+    date_from=None,
+    date_to=None,
+    limit=None,
+    offset=0,
+):
+    role = current["role"]
+    branches = _scope_branches(db, current)
+    territories = None
+    rep_id = None
+    posted_only = False
+    if role != "owner":
+        territories = [
+            row[0]
+            for row in db.execute(
+                text(
+                    "SELECT territory_id FROM platform.user_territory WHERE user_id=:uid"
+                ),
+                {"uid": current["id"]},
+            ).fetchall()
+        ]
+        if role == "medical_rep":
+            rep_id = current["id"]
+        if role == "read_only_auditor":
+            posted_only = True
+    return payments.list_receipts(
         db,
         invoice_id=invoice_id,
         customer_id=customer_id,
         date_from=date_from,
         date_to=date_to,
+        branches=branches,
+        territories=territories,
+        rep_id=rep_id,
+        posted_only=posted_only,
+        limit=limit,
+        offset=offset,
     )
-    visible = []
-    for receipt in rows:
-        try:
-            _receipt_scope(db, current, receipt)
-        except HTTPException as error:
-            if error.status_code != 404:
-                raise
-            continue
-        visible.append(receipt)
-    return visible
 
 
 @router.get("")
@@ -131,11 +154,23 @@ def list_receipts(
     customer_id: UUID | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
+    limit: int = Query(200, ge=1, le=1000),
+    offset: int = Query(0, ge=0, le=10_000_000),
 ) -> list[ReceiptOut]:
     _role(current, READ_ROLES)
-    return [ReceiptOut.model_validate(receipt)
-            for receipt in _visible_receipts(
-                db, current, invoice_id, customer_id, date_from, date_to)]
+    return [
+        ReceiptOut.model_validate(receipt)
+        for receipt in _visible_receipts(
+            db,
+            current,
+            invoice_id,
+            customer_id,
+            date_from,
+            date_to,
+            limit=limit,
+            offset=offset,
+        )
+    ]
 
 
 def _receipt_scope(db, current, receipt):

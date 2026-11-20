@@ -131,6 +131,12 @@ def list_receipts(
     status=None,
     date_from=None,
     date_to=None,
+    branches=None,
+    territories=None,
+    rep_id=None,
+    posted_only=False,
+    limit=None,
+    offset=0,
 ):
     clauses, params = [], {}
     for col, val in (
@@ -140,20 +146,45 @@ def list_receipts(
         ("status", status),
     ):
         if val is not None:
-            clauses.append(f"{col} = :{col}")
+            clauses.append(f"r.{col} = :{col}")
             params[col] = val
     if date_from is not None:
-        clauses.append("receipt_date >= :date_from")
+        clauses.append("r.receipt_date >= :date_from")
         params["date_from"] = date_from
     if date_to is not None:
-        clauses.append("receipt_date < :date_to")
+        clauses.append("r.receipt_date < :date_to")
         params["date_to"] = date_to
+    if branches is not None:
+        if not branches:
+            return []
+        clauses.append("r.branch_id = ANY(CAST(:branches AS uuid[]))")
+        params["branches"] = [str(b) for b in branches]
+    join_invoice = ""
+    if territories is not None or rep_id is not None or posted_only:
+        join_invoice = " JOIN sales.sales_invoice i ON i.id = r.invoice_id"
+        if territories is not None:
+            if not territories:
+                return []
+            clauses.append("i.territory_id = ANY(CAST(:territories AS uuid[]))")
+            params["territories"] = [str(t) for t in territories]
+        if rep_id is not None:
+            clauses.append("i.created_by = :rep_id")
+            params["rep_id"] = rep_id
+        if posted_only:
+            clauses.append("i.posted_at IS NOT NULL")
     where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+    limit_sql = ""
+    if limit is not None:
+        limit_sql = " LIMIT :limit OFFSET :offset"
+        params["limit"] = limit
+        params["offset"] = offset
     rows = db.execute(
         text(
-            "SELECT * FROM finance.payment_receipt"
+            "SELECT r.* FROM finance.payment_receipt r"
+            + join_invoice
             + where
-            + " ORDER BY receipt_date DESC, id"
+            + " ORDER BY r.receipt_date DESC, r.id"
+            + limit_sql
         ),
         params,
     ).mappings()

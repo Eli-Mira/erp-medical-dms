@@ -302,6 +302,8 @@ def list_movements(
     date_to=None,
     warehouse_ids=None,
     scoped_user_id=None,
+    limit=None,
+    offset=0,
 ):
     where, params = _filters(
         warehouse_id,
@@ -329,11 +331,17 @@ def list_movements(
         )"""
         )
         params["scoped_user_id"] = scoped_user_id
+    limit_sql = ""
+    if limit is not None:
+        limit_sql = " LIMIT :limit OFFSET :offset"
+        params["limit"] = limit
+        params["offset"] = offset
     rows = db.execute(
         text(
             "SELECT * FROM inventory.stock_movement"
             + where
             + " ORDER BY created_at DESC, id"
+            + limit_sql
         ),
         params,
     ).mappings()

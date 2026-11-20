@@ -38,6 +38,14 @@ def aging(db, *, as_of, customer_id=None, branches=None, territory_id=None):
         clauses.append("e.customer_id = :customer_id")
         params["customer_id"] = str(customer_id)
     if branches is not None:
+        if not branches:
+            return {
+                "label": "ledger aging",
+                "note": "Due-date bucket rules pending accountant approval.",
+                "as_of": as_of,
+                "customers": [],
+                "total": {**{name: Decimal(0) for name in BUCKETS}, "total": Decimal(0)},
+            }
         clauses.append("c.branch_id = ANY(CAST(:branches AS uuid[]))")
         params["branches"] = [str(b) for b in branches]
     if territory_id is not None:
@@ -46,25 +54,29 @@ def aging(db, *, as_of, customer_id=None, branches=None, territory_id=None):
     where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
     rows = db.execute(
         text(
-            "SELECT e.customer_id, e.due_date, e.debit, e.credit "
+            "SELECT e.customer_id, "
+            "COALESCE(SUM(CASE WHEN e.due_date IS NOT NULL AND e.due_date >= :as_of THEN e.debit - e.credit ELSE 0 END), 0) AS current, "
+            "COALESCE(SUM(CASE WHEN e.due_date IS NOT NULL AND e.due_date < :as_of AND (CAST(:as_of AS date) - e.due_date) <= 30 THEN e.debit - e.credit ELSE 0 END), 0) AS d1_30, "
+            "COALESCE(SUM(CASE WHEN e.due_date IS NOT NULL AND (CAST(:as_of AS date) - e.due_date) > 30 AND (CAST(:as_of AS date) - e.due_date) <= 60 THEN e.debit - e.credit ELSE 0 END), 0) AS d31_60, "
+            "COALESCE(SUM(CASE WHEN e.due_date IS NOT NULL AND (CAST(:as_of AS date) - e.due_date) > 60 AND (CAST(:as_of AS date) - e.due_date) <= 90 THEN e.debit - e.credit ELSE 0 END), 0) AS d61_90, "
+            "COALESCE(SUM(CASE WHEN e.due_date IS NOT NULL AND (CAST(:as_of AS date) - e.due_date) > 90 THEN e.debit - e.credit ELSE 0 END), 0) AS over_90, "
+            "COALESCE(SUM(CASE WHEN e.due_date IS NULL THEN e.debit - e.credit ELSE 0 END), 0) AS undated "
             "FROM finance.ar_entry e "
             "JOIN master_data.master_customer c ON c.id = e.customer_id"
             + where
+            + " GROUP BY e.customer_id ORDER BY e.customer_id::text"
         ),
         params,
-    ).fetchall()
-    per_customer = {}
-    for customer, due_date, debit, credit in rows:
-        buckets = per_customer.setdefault(
-            str(customer), {name: Decimal(0) for name in BUCKETS})
-        buckets[bucket_for(due_date, as_of)] += Decimal(debit) - Decimal(credit)
+    ).mappings()
     customers = []
     totals = {name: Decimal(0) for name in BUCKETS}
-    for key in sorted(per_customer):
-        buckets = per_customer[key]
+    for row in rows:
+        buckets = {name: Decimal(row[name]) for name in BUCKETS}
         for name in BUCKETS:
             totals[name] += buckets[name]
-        customers.append({"customer_id": key, **buckets, "total": sum(buckets.values())})
+        customers.append(
+            {"customer_id": str(row["customer_id"]), **buckets, "total": sum(buckets.values())}
+        )
     return {
         "label": "ledger aging",
         "note": "Due-date bucket rules pending accountant approval.",

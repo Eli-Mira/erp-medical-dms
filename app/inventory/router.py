@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -124,14 +124,17 @@ def cover_report(db: Db, current: CurrentUser, warehouse_id: UUID | None = None,
 def list_movements(db: Db, current: CurrentUser, warehouse_id: UUID | None = None,
                    product_id: UUID | None = None, batch_id: UUID | None = None,
                    movement_type: str | None = None, date_from: datetime | None = None,
-                   date_to: datetime | None = None) -> list[MovementOut]:
+                   date_to: datetime | None = None,
+                   limit: int = Query(500, ge=1, le=2000),
+                   offset: int = Query(0, ge=0, le=10_000_000)) -> list[MovementOut]:
     _role(current, READ_ROLES)
     warehouse_ids = _read_scope(db, current, warehouse_id)
     rows = service.list_movements(db, warehouse_id=warehouse_id, product_id=product_id,
                                   batch_id=batch_id, movement_type=movement_type,
                                   date_from=date_from, date_to=date_to,
                                   warehouse_ids=warehouse_ids,
-                                  scoped_user_id=current["id"] if warehouse_ids is not None else None)
+                                  scoped_user_id=current["id"] if warehouse_ids is not None else None,
+                                  limit=limit, offset=offset)
     return [MovementOut.model_validate(row) for row in rows]
 
 

@@ -104,23 +104,48 @@ def balances(db, *, branches=None, customer_id=None, territory_id=None):
     return [{"customer_id": str(r["customer_id"]), "balance": str(r["balance"])} for r in rows]
 
 
-def list_entries(db, customer_id=None, entry_type=None, date_from=None, date_to=None):
+def list_entries(
+    db,
+    customer_id=None,
+    entry_type=None,
+    date_from=None,
+    date_to=None,
+    branches=None,
+    limit=None,
+    offset=0,
+):
     """Column names are fixed literals; values are bound parameters."""
     clauses, params = [], {}
     for column, value in (("customer_id", customer_id), ("entry_type", entry_type)):
         if value is not None:
-            clauses.append(f"{column} = :{column}")
+            clauses.append(f"e.{column} = :{column}")
             params[column] = str(value) if column == "customer_id" else value
     if date_from is not None:
-        clauses.append("entry_date >= :date_from")
+        clauses.append("e.entry_date >= :date_from")
         params["date_from"] = date_from
     if date_to is not None:
-        clauses.append("entry_date < :date_to")
+        clauses.append("e.entry_date < :date_to")
         params["date_to"] = date_to
+    join_customer = ""
+    if branches is not None:
+        if not branches:
+            return []
+        join_customer = " JOIN master_data.master_customer c ON c.id = e.customer_id"
+        clauses.append("c.branch_id = ANY(CAST(:branches AS uuid[]))")
+        params["branches"] = [str(b) for b in branches]
     where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+    limit_sql = ""
+    if limit is not None:
+        limit_sql = " LIMIT :limit OFFSET :offset"
+        params["limit"] = limit
+        params["offset"] = offset
     rows = db.execute(
         text(
-            "SELECT * FROM finance.ar_entry" + where + " ORDER BY entry_date DESC, id"
+            "SELECT e.* FROM finance.ar_entry e"
+            + join_customer
+            + where
+            + " ORDER BY e.entry_date DESC, e.id"
+            + limit_sql
         ),
         params,
     ).mappings()
