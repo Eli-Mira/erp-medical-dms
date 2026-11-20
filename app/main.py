@@ -8,9 +8,15 @@ import base64
 import hashlib
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status
 from fastapi.middleware.gzip import GZipMiddleware
+from sqlalchemy import text
 from starlette.datastructures import MutableHeaders
+
+from app.db import engine
+from app.observability import configure_logging, wrap_request_id_middleware
+
+http_logger = configure_logging()
 
 # Match the existing inline service-worker registration without allowing other scripts.
 _SERVICE_WORKER_SCRIPT = (
@@ -69,7 +75,7 @@ class HardenedFastAPI(FastAPI):
 
             await inner(scope, receive, send_with_headers)
 
-        return secured
+        return wrap_request_id_middleware(secured, logger=http_logger)
 
 
 app = HardenedFastAPI(
@@ -164,6 +170,35 @@ def meta() -> dict:
 def health() -> dict:
     """Readiness probe: used by Docker + CI to confirm the API boots."""
     return {"status": "ok", "service": "medical-dms", "phase": "platform-foundation"}
+
+
+@app.get("/livez")
+def livez() -> dict[str, str]:
+    """Liveness probe: process and event loop alive without touching PostgreSQL."""
+    return {"status": "alive"}
+
+
+@app.get("/readyz")
+def readyz(response: Response) -> dict[str, str]:
+    """Readiness probe: bounded DB connectivity + Alembic head check."""
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SET LOCAL statement_timeout = 2000"))
+            conn.execute(text("SELECT 1"))
+            ver = conn.execute(
+                text("SELECT version_num FROM public.alembic_version LIMIT 1")
+            ).scalar_one_or_none()
+            conn.commit()
+            if not ver:
+                response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+                return {"status": "not_ready", "db": "unmigrated"}
+        return {"status": "ready", "db": "ok"}
+    except Exception as exc:
+        http_logger.warning(
+            "readiness_check_failed", extra={"error_type": type(exc).__name__}
+        )
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {"status": "not_ready", "db": "unavailable"}
 
 
 @app.get("/")
