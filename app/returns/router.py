@@ -54,15 +54,29 @@ def create_return(payload: ReturnIn, request: Request, db: Db, current: CurrentU
         scope = _scope_warehouses(db, current)
     if scope is not None and (
         warehouse not in scope
-        or current["role"] != "warehouse_staff"
-        and not db.execute(
-            text(
-                "SELECT 1 FROM master_data.master_customer c "
-                "JOIN platform.user_territory ut ON ut.territory_id=c.territory_id "
-                "WHERE c.id=:c AND ut.user_id=:u"
-            ),
-            {"c": customer, "u": current["id"]},
-        ).scalar()
+        or (
+            current["role"] == "warehouse_staff"
+            and not db.execute(
+                text(
+                    "SELECT 1 FROM master_data.master_customer c "
+                    "JOIN master_data.master_warehouse w ON w.id=:w "
+                    "JOIN platform.user_branch ub ON ub.branch_id=c.branch_id "
+                    "WHERE c.id=:c AND c.branch_id=w.branch_id AND ub.user_id=:u"
+                ),
+                {"c": customer, "w": warehouse, "u": current["id"]},
+            ).scalar()
+        )
+        or (
+            current["role"] != "warehouse_staff"
+            and not db.execute(
+                text(
+                    "SELECT 1 FROM master_data.master_customer c "
+                    "JOIN platform.user_territory ut ON ut.territory_id=c.territory_id "
+                    "WHERE c.id=:c AND ut.user_id=:u"
+                ),
+                {"c": customer, "u": current["id"]},
+            ).scalar()
+        )
     ):
         raise HTTPException(404, "Return reference not found")
     for table, ident, label in (

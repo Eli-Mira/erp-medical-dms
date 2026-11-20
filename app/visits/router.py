@@ -41,7 +41,11 @@ def _role(user, allowed):
 
 
 def _scope_user(user):
-    return user["id"] if user["role"] in {"medical_rep", "district_manager"} else None
+    return (
+        user["id"]
+        if user["role"] in {"medical_rep", "district_manager", "sales_manager"}
+        else None
+    )
 
 
 def _host(request):
