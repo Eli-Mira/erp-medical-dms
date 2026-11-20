@@ -30,13 +30,13 @@ Other reference routes remain read-only; no schema changes.
 from typing import Annotated, Literal
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.auth.repo import log_audit
-from app.auth.router import get_current_user
+from app.auth.router import get_current_user, resolve_client_ip
 from app.db import get_db
 from app.master.schemas import (
     AccountOut,
@@ -150,6 +150,13 @@ def _warehouses(db, user):
 
 def _require_owner(current: CurrentUser) -> None:
     _require(current, {"owner"})
+
+
+def _audit_meta(request: Request) -> tuple[str | None, str | None]:
+    return (
+        resolve_client_ip(request),
+        (request.headers.get("user-agent") or "")[:1000] or None,
+    )
 
 
 def _supplier_row(db, supplier_id: UUID, *, lock=False):
@@ -330,7 +337,9 @@ def list_customers(
     response_model=CustomerOut,
     responses={409: {"description": "Unique customer code conflict"}},
 )
-def create_customer(db: Db, current: CurrentUser, payload: CustomerIn):
+def create_customer(
+    request: Request, db: Db, current: CurrentUser, payload: CustomerIn
+):
     """Create a customer as the confirmed active owner.
 
     One transaction owns the row + actor-bound audit; the response is validated
@@ -338,6 +347,7 @@ def create_customer(db: Db, current: CurrentUser, payload: CustomerIn):
     """
     _require_owner(current)
     values = _customer_values(payload)
+    ip, ua = _audit_meta(request)
     try:
         db.execute(
             text(
@@ -356,6 +366,8 @@ def create_customer(db: Db, current: CurrentUser, payload: CustomerIn):
             values["id"],
             None,
             response.model_dump(mode="json"),
+            ip_address=ip,
+            user_agent=ua,
         )
         db.commit()
     except IntegrityError as error:
@@ -388,10 +400,15 @@ def get_customer(customer_id: UUID, db: Db, current: CurrentUser):
 
 @router.patch("/customers/{customer_id}", response_model=CustomerOut)
 def update_customer(
-    customer_id: UUID, payload: CustomerPatch, db: Db, current: CurrentUser
+    customer_id: UUID,
+    payload: CustomerPatch,
+    request: Request,
+    db: Db,
+    current: CurrentUser,
 ):
     _require_owner(current)
     changes = payload.model_dump(exclude_unset=True)
+    ip, ua = _audit_meta(request)
     try:
         before = _customer_row(db, customer_id, lock=True)
         changes = {
@@ -424,6 +441,8 @@ def update_customer(
             customer_id,
             CustomerOut.model_validate(before).model_dump(mode="json"),
             response.model_dump(mode="json"),
+            ip_address=ip,
+            user_agent=ua,
         )
         db.commit()
     except Exception:
@@ -433,8 +452,11 @@ def update_customer(
 
 
 @router.delete("/customers/{customer_id}", status_code=204)
-def deactivate_customer(customer_id: UUID, db: Db, current: CurrentUser):
+def deactivate_customer(
+    customer_id: UUID, request: Request, db: Db, current: CurrentUser
+):
     _require_owner(current)
+    ip, ua = _audit_meta(request)
     try:
         before = _customer_row(db, customer_id, lock=True)
         if not before["is_active"]:
@@ -453,6 +475,8 @@ def deactivate_customer(customer_id: UUID, db: Db, current: CurrentUser):
             customer_id,
             old,
             {**old, "is_active": False},
+            ip_address=ip,
+            user_agent=ua,
         )
         db.commit()
     except Exception:
@@ -462,8 +486,11 @@ def deactivate_customer(customer_id: UUID, db: Db, current: CurrentUser):
 
 
 @router.patch("/customers/{customer_id}/activate", response_model=CustomerOut)
-def activate_customer(customer_id: UUID, db: Db, current: CurrentUser):
+def activate_customer(
+    customer_id: UUID, request: Request, db: Db, current: CurrentUser
+):
     _require_owner(current)
+    ip, ua = _audit_meta(request)
     try:
         before = _customer_row(db, customer_id, lock=True)
         if before["is_active"]:
@@ -483,6 +510,8 @@ def activate_customer(customer_id: UUID, db: Db, current: CurrentUser):
             customer_id,
             CustomerOut.model_validate(before).model_dump(mode="json"),
             response.model_dump(mode="json"),
+            ip_address=ip,
+            user_agent=ua,
         )
         db.commit()
     except Exception:
@@ -560,9 +589,12 @@ def list_products_for_maintenance(
     response_model=ProductMaintenanceOut,
     responses={409: {"description": "Duplicate SKU"}},
 )
-def create_product(payload: ProductIn, db: Db, current: CurrentUser):
+def create_product(
+    payload: ProductIn, request: Request, db: Db, current: CurrentUser
+):
     _require_owner(current)
     values = {"id": uuid4(), **payload.model_dump()}
+    ip, ua = _audit_meta(request)
     try:
         db.execute(
             text(
@@ -581,6 +613,8 @@ def create_product(payload: ProductIn, db: Db, current: CurrentUser):
             values["id"],
             None,
             response.model_dump(mode="json"),
+            ip_address=ip,
+            user_agent=ua,
         )
         db.commit()
     except IntegrityError as error:
@@ -606,10 +640,15 @@ def get_product(product_id: UUID, db: Db, current: CurrentUser):
 
 @router.patch("/products/{product_id}", response_model=ProductMaintenanceOut)
 def update_product(
-    product_id: UUID, payload: ProductPatch, db: Db, current: CurrentUser
+    product_id: UUID,
+    payload: ProductPatch,
+    request: Request,
+    db: Db,
+    current: CurrentUser,
 ):
     _require_owner(current)
     changes = payload.model_dump(exclude_unset=True)
+    ip, ua = _audit_meta(request)
     try:
         before = _product_row(db, product_id, lock=True)
         changes = {key: value for key, value in changes.items() if before[key] != value}
@@ -635,6 +674,8 @@ def update_product(
             product_id,
             ProductMaintenanceOut.model_validate(before).model_dump(mode="json"),
             response.model_dump(mode="json"),
+            ip_address=ip,
+            user_agent=ua,
         )
         db.commit()
     except Exception:
@@ -643,8 +684,9 @@ def update_product(
     return response
 
 
-def _set_product_activity(product_id, active, db, current):
+def _set_product_activity(product_id, active, request, db, current):
     _require_owner(current)
+    ip, ua = _audit_meta(request)
     try:
         before = _product_row(db, product_id, lock=True)
         if before["is_active"] == active:
@@ -666,6 +708,8 @@ def _set_product_activity(product_id, active, db, current):
             product_id,
             ProductMaintenanceOut.model_validate(before).model_dump(mode="json"),
             response.model_dump(mode="json"),
+            ip_address=ip,
+            user_agent=ua,
         )
         db.commit()
     except Exception:
@@ -675,14 +719,18 @@ def _set_product_activity(product_id, active, db, current):
 
 
 @router.delete("/products/{product_id}", status_code=204)
-def deactivate_product(product_id: UUID, db: Db, current: CurrentUser):
-    _set_product_activity(product_id, False, db, current)
+def deactivate_product(
+    product_id: UUID, request: Request, db: Db, current: CurrentUser
+):
+    _set_product_activity(product_id, False, request, db, current)
     return Response(status_code=204)
 
 
 @router.patch("/products/{product_id}/activate", response_model=ProductMaintenanceOut)
-def activate_product(product_id: UUID, db: Db, current: CurrentUser):
-    return _set_product_activity(product_id, True, db, current)
+def activate_product(
+    product_id: UUID, request: Request, db: Db, current: CurrentUser
+):
+    return _set_product_activity(product_id, True, request, db, current)
 
 
 @router.get("/suppliers")
@@ -782,7 +830,9 @@ def list_doctors(
     response_model=SupplierOut,
     responses={409: {"description": "Unique supplier code conflict"}},
 )
-def create_supplier(db: Db, current: CurrentUser, payload: SupplierIn):
+def create_supplier(
+    request: Request, db: Db, current: CurrentUser, payload: SupplierIn
+):
     """Create a supplier as the confirmed active owner.
 
     One transaction owns the row + actor-bound audit; the response is validated
@@ -790,6 +840,7 @@ def create_supplier(db: Db, current: CurrentUser, payload: SupplierIn):
     """
     _require_owner(current)
     values = _supplier_values(payload)
+    ip, ua = _audit_meta(request)
     try:
         db.execute(
             text(
@@ -808,6 +859,8 @@ def create_supplier(db: Db, current: CurrentUser, payload: SupplierIn):
             values["id"],
             None,
             response.model_dump(mode="json"),
+            ip_address=ip,
+            user_agent=ua,
         )
         db.commit()
     except IntegrityError:
@@ -833,10 +886,15 @@ def get_supplier(db: Db, current: CurrentUser, supplier_id: UUID):
 
 @router.patch("/suppliers/{supplier_id}", response_model=SupplierOut)
 def update_supplier(
-    supplier_id: UUID, payload: SupplierPatch, db: Db, current: CurrentUser
+    supplier_id: UUID,
+    payload: SupplierPatch,
+    request: Request,
+    db: Db,
+    current: CurrentUser,
 ):
     _require_owner(current)
     changes = payload.model_dump(exclude_unset=True)
+    ip, ua = _audit_meta(request)
     try:
         before = _supplier_row(db, supplier_id, lock=True)
         # Identifiers come only from this fixed whitelist; values remain parameters.
@@ -868,6 +926,8 @@ def update_supplier(
             supplier_id,
             SupplierOut.model_validate(before).model_dump(mode="json"),
             response.model_dump(mode="json"),
+            ip_address=ip,
+            user_agent=ua,
         )
         db.commit()
     except IntegrityError:
@@ -880,8 +940,11 @@ def update_supplier(
 
 
 @router.delete("/suppliers/{supplier_id}", status_code=204)
-def deactivate_supplier(supplier_id: UUID, db: Db, current: CurrentUser):
+def deactivate_supplier(
+    supplier_id: UUID, request: Request, db: Db, current: CurrentUser
+):
     _require_owner(current)
+    ip, ua = _audit_meta(request)
     try:
         before = _supplier_row(db, supplier_id, lock=True)
         if not before["is_active"]:
@@ -900,6 +963,8 @@ def deactivate_supplier(supplier_id: UUID, db: Db, current: CurrentUser):
             supplier_id,
             old,
             {**old, "is_active": False},
+            ip_address=ip,
+            user_agent=ua,
         )
         db.commit()
     except Exception:

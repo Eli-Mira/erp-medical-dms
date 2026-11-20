@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.auth.repo import log_audit
-from app.auth.router import get_current_user
+from app.auth.router import get_current_user, resolve_client_ip
 from app.config import POSTING_ENABLED
 from app.db import get_db
 from app.inventory.service import InsufficientStock
@@ -284,11 +284,7 @@ def _posting_references(db, user, invoice):
 
 
 def _audit(db, request, user, action, old, new):
-    host = request.client.host if request.client else None
-    try:
-        host = str(ipaddress.ip_address(host)) if host else None
-    except ValueError:
-        host = None
+    host = resolve_client_ip(request)
     log_audit(
         db,
         user["id"],
@@ -298,7 +294,7 @@ def _audit(db, request, user, action, old, new):
         InvoiceOut.model_validate(old).model_dump(mode="json") if old else None,
         new.model_dump(mode="json"),
         host,
-        request.headers.get("user-agent", "")[:1000],
+        (request.headers.get("user-agent") or "")[:1000],
     )
 
 
@@ -526,7 +522,8 @@ def verify_line_cost(
             line_id,
             old,
             result,
-            user_agent=request.headers.get("user-agent", "")[:1000],
+            ip_address=resolve_client_ip(request),
+            user_agent=(request.headers.get("user-agent") or "")[:1000],
         )
         db.commit()
         return result

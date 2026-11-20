@@ -215,11 +215,35 @@ def login(request: Request, payload: LoginIn, db=Depends(get_db)):
         )
         if not user or not user["is_active"] or not verified:
             failed = True
+            ip = resolve_client_ip(request, preserve_non_ip=False)
+            ua = (request.headers.get("user-agent") or "")[:1000] or None
+            safe_user = (payload.username or "").replace("\x00", "")[:80]
+            repo.log_audit(
+                db,
+                user["id"] if user else None,
+                "login_failed",
+                "platform_session",
+                None,
+                None,
+                {"username": safe_user, "ip": ip},
+                ip_address=ip,
+                user_agent=ua,
+            )
+            db.commit()
             raise HTTPException(status_code=401, detail="invalid credentials")
         ip = resolve_client_ip(request, preserve_non_ip=False)
+        ua = (request.headers.get("user-agent") or "")[:1000] or None
         sid = repo.create_session(db, user["id"], ip)
         repo.log_audit(
-            db, user["id"], "login", "platform_session", sid, None, {"ip": ip}
+            db,
+            user["id"],
+            "login",
+            "platform_session",
+            sid,
+            None,
+            {"ip": ip},
+            ip_address=ip,
+            user_agent=ua,
         )
         db.commit()
         return LoginOut(access_token=str(sid))
@@ -229,14 +253,24 @@ def login(request: Request, payload: LoginIn, db=Depends(get_db)):
 
 @router.post("/logout")
 def logout(
-    creds: HTTPAuthorizationCredentials = Depends(bearer_scheme), db=Depends(get_db)
+    request: Request,
+    creds: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db=Depends(get_db),
 ):
     sid = _parse_uuid(creds.credentials)
     if sid:
         session = repo.get_session(db, sid)
         if session:
             repo.log_audit(
-                db, session["user_id"], "logout", "platform_session", sid, None, None
+                db,
+                session["user_id"],
+                "logout",
+                "platform_session",
+                sid,
+                None,
+                None,
+                ip_address=resolve_client_ip(request, preserve_non_ip=False),
+                user_agent=(request.headers.get("user-agent") or "")[:1000] or None,
             )
             repo.delete_session(db, sid)
             db.commit()
@@ -350,6 +384,8 @@ def administer_user(
             user_id,
             before,
             response.model_dump(mode="json"),
+            ip_address=resolve_client_ip(request, preserve_non_ip=False),
+            user_agent=(request.headers.get("user-agent") or "")[:1000] or None,
         )
         db.commit()
         return response
