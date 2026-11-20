@@ -27,6 +27,7 @@
 
   /* Secondary accent (clinical teal) */
   --accent-600:  #0D9488;
+  --accent-700:  #0F766E;
   --accent-500:  #14B8A6;
   --accent-50:   #F0FDFA;
 
@@ -357,7 +358,7 @@ main {
   border-color: var(--proto-chip-border);
   letter-spacing: 0.03em;
 }
-.badge.real { background: var(--accent-50); color: var(--accent-600); border-color: #99F6E4; }
+.badge.real { background: var(--accent-50); color: var(--accent-700); border-color: #99F6E4; }
 
 .proto-chip-row { display: inline-flex; gap: var(--space-2); flex-wrap: wrap; }
 
