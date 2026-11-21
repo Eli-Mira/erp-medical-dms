@@ -154,6 +154,52 @@ def meta() -> dict:
     return {"demo_mode": DEMO_MODE}
 
 
+import json
+import logging
+import time
+import uuid
+import re
+from fastapi import Request, Response
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
+
+@app.middleware("http")
+async def request_id_and_json_log(request: Request, call_next):
+    req_id = request.headers.get("X-Request-ID")
+    if not req_id or not re.fullmatch(r"[A-Za-z0-9\-_]{1,64}", req_id):
+        req_id = uuid.uuid4().hex
+    start = time.perf_counter()
+    response: Response = await call_next(request)
+    duration_ms = round((time.perf_counter() - start) * 1000, 2)
+    response.headers["X-Request-ID"] = req_id
+    logging.getLogger("medical_dms.http").info(
+        json.dumps(
+            {
+                "request_id": req_id,
+                "method": request.method,
+                "path": request.url.path,
+                "status": response.status_code,
+                "duration_ms": duration_ms,
+            }
+        )
+    )
+    return response
+
+@app.get("/livez")
+def livez() -> dict:
+    return {"status": "alive", "service": "medical-dms"}
+
+@app.get("/readyz")
+def readyz() -> dict:
+    from app import db as app_db
+
+    try:
+        with app_db.engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"status": "ready", "db": "ok"}
+    except Exception:
+        return JSONResponse({"status": "degraded", "db": "unavailable"}, status_code=503)
+
 @app.get("/health")
 def health() -> dict:
     """Readiness probe: used by Docker + CI to confirm the API boots."""

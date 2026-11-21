@@ -1,0 +1,65 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "127.0.0.1:${POSTGRES_LOCAL_PORT:-5432}:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+      POSTGRES_USER: ${POSTGRES_USER:-dms}
+      POSTGRES_DB: ${POSTGRES_DB:-medical_dms}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER:-dms}", "-d", "${POSTGRES_DB:-medical_dms}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    security_opt:
+      - "no-new-privileges:true"
+    mem_limit: 1g
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${API_LOCAL_PORT:-8000}:8000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?required}
+      POSTING_ENABLED: ${POSTING_ENABLED:-false}
+      DEMO_MODE: "false"
+      RATE_LIMIT_TRUSTED_PROXIES: ${RATE_LIMIT_TRUSTED_PROXIES:-127.0.0.1}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
+      DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-20}
+      DB_STATEMENT_TIMEOUT_MS: ${DB_STATEMENT_TIMEOUT_MS:-30000}
+      DB_LOCK_TIMEOUT_MS: ${DB_LOCK_TIMEOUT_MS:-5000}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/readyz', timeout=3)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+#  cloudflared:
+#    profiles: ["tunnel"]
+#    image: cloudflare/cloudflared:latest
+#    command: tunnel --no-autoupdate run
+#    environment:
+#      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?required}
+#    read_only: true
+#    cap_drop:
+#      - ALL
+#    security_opt:
+#      - "no-new-privileges:true"
+#    restart: unless-stopped
+volumes:
+  pgdata:
