@@ -3,6 +3,7 @@ from decimal import Decimal
 from sqlalchemy import text
 
 from app import config as app_config  # adjust import path as needed
+from test_invoice_api import invoice_env  # noqa: F401
 
 
 def _headers_for_role(db, role: str) -> dict:

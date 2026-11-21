@@ -127,7 +127,8 @@ def test_manager_reads_all_rep_visits_district_only_assigned_territory(invoice_e
     db.commit()
     response = client.get("/visits", headers=manager_auth)
     assert response.status_code == 200, response.text
-    assert {r["id"] for r in response.json()["items"]} == {allowed["id"], denied["id"]}
+    # RC2-03 (P3C-01): sales_manager is territory-scoped on /visits
+    assert {r["id"] for r in response.json()["items"]} == {allowed["id"]}
 
 
 @pytest.mark.parametrize("role", ["admin", "finance", "warehouse_staff", "user"])

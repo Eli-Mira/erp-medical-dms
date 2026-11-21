@@ -77,6 +77,8 @@ def _warehouse_ok(db, wid):
 @router.post("", status_code=201)
 def create_transfer(payload: TransferIn, request: Request, db: Db, current: CurrentUser):
     _role(current, MANAGE_ROLES)
+    if isinstance(payload, dict):
+        payload = TransferIn.model_validate(payload)
     src = str(payload.source_warehouse_id)
     dst = str(payload.destination_warehouse_id)
     product = str(payload.product_id)

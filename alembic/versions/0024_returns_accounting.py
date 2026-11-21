@@ -4,7 +4,7 @@ from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 revision = "0024_returns_accounting"
-down_revision = "0023_audit_append_only"
+down_revision = "0024_perf_indexes"
 branch_labels = None
 depends_on = None
 
