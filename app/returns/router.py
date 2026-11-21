@@ -12,13 +12,18 @@ from app.auth.repo import log_audit
 from app.auth.router import get_current_user
 from app.db import get_db
 from app.inventory.router import _scope_warehouses
-from app.returns.schemas import ReturnIn
+from decimal import Decimal, ROUND_HALF_UP
+from app import config as app_config
+from app.finance import ar as finance_ar
+from app.inventory import service as inv_service
+from app.returns.schemas import ReturnDecisionIn, ReturnIn
 
 router = APIRouter(prefix="/returns", tags=["returns"])
 Db = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[dict, Depends(get_current_user)]
 
 MANAGE_ROLES = {"owner", "finance", "warehouse_staff", "sales_manager"}
+APPROVE_ROLES = {"owner", "finance"}
 # Quarantine returns do not grant access to sellable stock.
 GLOBAL_RETURN_ROLES = {"owner", "finance", "read_only_auditor"}
 
@@ -218,3 +223,159 @@ def list_returns(
         params,
     ).mappings()
     return [{**dict(r), "quantity": str(r["quantity"])} for r in rows]
+
+@router.post("/{return_id}/settle")
+def settle_return(
+    return_id: UUID,
+    payload: ReturnDecisionIn,
+    request: Request,
+    db: Db,
+    current: CurrentUser,
+):
+    # Role check
+    if not _role(current, APPROVE_ROLES):
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    # Posting enabled gate
+    if not app_config.POSTING_ENABLED:
+        raise HTTPException(status_code=409, detail="Return settlement disabled while POSTING_ENABLED is false")
+    # Lock return row
+    ret = db.execute(
+        text("SELECT * FROM sales.sales_return WHERE id = :id FOR UPDATE"),
+        {"id": return_id},
+    ).mappings().one_or_none()
+    if ret is None:
+        raise HTTPException(status_code=404, detail="Return not found")
+    # State machine guard
+    if ret["status"] != "quarantined" or ret["decided_at"] is not None or ret["restock_movement_id"] is not None or ret["credit_note_entry_id"] is not None:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Return already settled or not quarantined (status={ret['status']})",
+        )
+    # Determine pricing
+    unit_price = payload.unit_price
+    vat_rate = payload.vat_rate
+    if ret["invoice_id"] and unit_price is None:
+        line = db.execute(
+            text(
+                "SELECT unit_price, vat_rate FROM sales.sales_invoice_line "
+                "WHERE invoice_id = :inv AND product_id = :pid LIMIT 1"
+            ),
+            {"inv": ret["invoice_id"], "pid": ret["product_id"]},
+        ).mappings().one_or_none()
+        if line:
+            unit_price = Decimal(str(line["unit_price"]))
+            if vat_rate is None:
+                vat_rate = Decimal(str(line["vat_rate"]))
+    if unit_price is None or vat_rate is None:
+        prod = db.execute(
+            text(
+                "SELECT base_price, vat_rate FROM master_data.master_product WHERE id = :pid"
+            ),
+            {"pid": ret["product_id"]},
+        ).mappings().one_or_none()
+        if unit_price is None:
+            unit_price = Decimal(str(prod["base_price"]))
+        if vat_rate is None:
+            vat_rate = Decimal(str(prod["vat_rate"]))
+    # Override with payload if provided
+    if payload.unit_price is not None:
+        unit_price = payload.unit_price
+    if payload.vat_rate is not None:
+        vat_rate = payload.vat_rate
+    # Accounting calculations
+    CENT = Decimal("0.01")
+    qty = Decimal(str(ret["quantity"]))
+    unit_p = Decimal(str(unit_price)).quantize(CENT, rounding=ROUND_HALF_UP)
+    vat_r = Decimal(str(vat_rate)).quantize(CENT, rounding=ROUND_HALF_UP)
+    net_credit = (qty * unit_p).quantize(CENT, rounding=ROUND_HALF_UP)
+    vat_reversal = (net_credit * vat_r / Decimal("100")).quantize(CENT, rounding=ROUND_HALF_UP)
+    gross_credit = (net_credit + vat_reversal).quantize(CENT, rounding=ROUND_HALF_UP)
+
+    try:
+        restock_movement_id = None
+        credit_note_entry_id = None
+        if payload.decision == "approved_restock":
+            restock_movement_id, _ = inv_service.record_movement(
+                db,
+                warehouse_id=ret["warehouse_id"],
+                product_id=ret["product_id"],
+                batch_id=ret["batch_id"],
+                movement_type="return",
+                quantity=qty,
+                unit_cost=None,
+                source_type="sales_return",
+                source_id=ret["id"],
+                note=f"Return restock release {ret['id']}",
+                actor_id=current["id"],
+            )
+        # Credit note
+        if payload.issue_credit_note and gross_credit > Decimal("0"):
+            credit_note_entry_id = finance_ar.record_entry(
+                db,
+                customer_id=ret["customer_id"],
+                entry_type="credit_note",
+                debit=Decimal("0.00"),
+                credit=gross_credit,
+                on_date=ret["return_date"],
+                note=f"Return credit note {ret['id']} (net={net_credit}, vat={vat_reversal})",
+                actor_id=current["id"],
+                invoice_id=ret["invoice_id"],
+            )
+        # Update return
+        db.execute(
+            text(
+                "UPDATE sales.sales_return SET status=:st, unit_price=:up, vat_rate=:vr, "
+                "net_credit=:nc, vat_reversal=:vat, gross_credit=:gc, restock_movement_id=:mv, "
+                "credit_note_entry_id=:ar, decided_by=:actor, decided_at=now(), decision_note=:note "
+                "WHERE id=:id"
+            ),
+            {
+                "st": payload.decision,
+                "up": unit_price,
+                "vr": vat_rate,
+                "nc": net_credit,
+                "vat": vat_reversal,
+                "gc": gross_credit,
+                "mv": restock_movement_id,
+                "ar": credit_note_entry_id,
+                "actor": current["id"],
+                "note": payload.decision_note,
+                "id": return_id,
+            },
+        )
+        log_audit(
+            db,
+            current["id"],
+            f"return_{payload.decision}",
+            "sales_return",
+            ret["id"],
+            {"status": ret["status"]},
+            {
+                "status": payload.decision,
+                "restock_movement_id": str(restock_movement_id) if restock_movement_id else None,
+                "credit_note_entry_id": str(credit_note_entry_id) if credit_note_entry_id else None,
+                "net_credit": str(net_credit),
+                "vat_reversal": str(vat_reversal),
+                "gross_credit": str(gross_credit),
+            },
+            ip_address=_host(request),
+            user_agent=request.headers.get("user-agent"),
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    return {
+        "id": str(ret["id"]),
+        "status": payload.decision,
+        "quantity": str(qty),
+        "unit_price": str(unit_p),
+        "vat_rate": str(vat_r),
+        "net_credit": str(net_credit),
+        "vat_reversal": str(vat_reversal),
+        "gross_credit": str(gross_credit),
+        "restock_movement_id": str(restock_movement_id) if restock_movement_id else None,
+        "credit_note_entry_id": str(credit_note_entry_id) if credit_note_entry_id else None,
+        "decided_by": current["id"],
+    }
