@@ -13,7 +13,7 @@ from datetime import UTC, date, datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -85,22 +85,52 @@ def list_balances(db: Db, current: CurrentUser, customer_id: UUID | None = None,
 
 
 @router.get("/entries")
-def list_entries(db: Db, current: CurrentUser, customer_id: UUID | None = None,
-                 entry_type: str | None = None, date_from: date | None = None,
-                 date_to: date | None = None) -> list[EntryOut]:
+def list_entries(
+    db: Db,
+    current: CurrentUser,
+    customer_id: UUID | None = None,
+    entry_type: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    limit: int | None = Query(None, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+) -> list[EntryOut]:
     _role(current, READ_ROLES)
-    return [EntryOut.model_validate(row)
-            for row in _visible_entries(db, current, customer_id, entry_type, date_from, date_to)]
+    return [
+        EntryOut.model_validate(row)
+        for row in _visible_entries(
+            db,
+            current,
+            customer_id,
+            entry_type,
+            date_from,
+            date_to,
+            limit=limit,
+            offset=offset,
+        )
+    ]
 
 
-def _visible_entries(db, current, customer_id=None, entry_type=None, date_from=None, date_to=None):
-    rows = ar.list_entries(db, str(customer_id) if customer_id else None,
-                           entry_type, date_from, date_to)
-    branches = _scope_branches(db, current)
-    if branches is not None:
-        allowed = _branch_customers(db, branches)
-        rows = [r for r in rows if r["customer_id"] in allowed]
-    return rows
+def _visible_entries(
+    db,
+    current,
+    customer_id=None,
+    entry_type=None,
+    date_from=None,
+    date_to=None,
+    limit=None,
+    offset=0,
+):
+    return ar.list_entries(
+        db,
+        str(customer_id) if customer_id else None,
+        entry_type,
+        date_from,
+        date_to,
+        branches=_scope_branches(db, current),
+        limit=limit,
+        offset=offset,
+    )
 
 
 def _branch_customers(db, branches):

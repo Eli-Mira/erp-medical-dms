@@ -160,6 +160,47 @@ def list_receipts(
     return [dict(row) for row in rows]
 
 
+def list_visible_receipts(db, *, role, user_id, branches=None, invoice_id=None, customer_id=None, date_from=None, date_to=None, limit=None, offset=0):
+    if branches is not None and not branches:
+        return []
+    clauses = []
+    params = {}
+    base_query = "SELECT r.* FROM finance.payment_receipt r JOIN sales.sales_invoice i ON i.id = r.invoice_id"
+    if branches is not None:
+        clauses.append("r.branch_id = ANY(CAST(:branches AS uuid[]))")
+        params["branches"] = [str(b) for b in branches]
+    if role != "owner":
+        clauses.append("EXISTS (SELECT 1 FROM platform.user_territory ut WHERE ut.user_id = :uid AND ut.territory_id = i.territory_id)")
+        params["uid"] = str(user_id)
+    if role == "medical_rep":
+        clauses.append("i.created_by = :uid")
+        params["uid"] = str(user_id)
+    if role == "read_only_auditor":
+        clauses.append("i.posted_at IS NOT NULL")
+    if invoice_id is not None:
+        clauses.append("r.invoice_id = :invoice_id")
+        params["invoice_id"] = str(invoice_id)
+    if customer_id is not None:
+        clauses.append("r.customer_id = :customer_id")
+        params["customer_id"] = str(customer_id)
+    if date_from is not None:
+        clauses.append("r.receipt_date >= :date_from")
+        params["date_from"] = date_from
+    if date_to is not None:
+        clauses.append("r.receipt_date < :date_to")
+        params["date_to"] = date_to
+    where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+    order = " ORDER BY r.receipt_date DESC, r.id"
+    limit_offset = ""
+    if limit is not None:
+        limit_offset = " LIMIT :limit OFFSET :offset"
+        params["limit"] = int(limit)
+        params["offset"] = int(offset)
+    sql = base_query + where + order + limit_offset
+    rows = db.execute(text(sql), params).mappings()
+    return [dict(row) for row in rows]
+
+
 def void_receipt(db, receipt_id, actor_id, reason_id):
     """Void a receipt: append AR adjustment debit, flip status to Voided."""
     existing = fetch_receipt(db, receipt_id)
