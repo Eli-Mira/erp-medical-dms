@@ -13,6 +13,9 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from starlette.datastructures import MutableHeaders
 
+# Request body size cap (1 MiB)
+MAX_REQUEST_BODY_BYTES = 1_048_576
+
 # Match the existing inline service-worker registration without allowing other scripts.
 _SERVICE_WORKER_SCRIPT = (
     '\n    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");\n  '
@@ -65,16 +68,41 @@ _PAGES = {"", ".html"}
 
 @app.middleware("http")
 async def reject_nul_bytes(request, call_next):
-    """Reject raw or percent-encoded NUL bytes in query/path/JSON bodies with 422."""
+    """Reject raw or percent-encoded NUL bytes in query/path/JSON bodies with 422,
+    enforce request body size limits, and reject NUL bytes in headers."""
+    # 1️⃣ Header NUL‑byte check
+    for raw_k, raw_v in request.scope.get("headers", []):
+        if b"\x00" in raw_k or b"\x00" in raw_v:
+            return JSONResponse({"detail": "Null bytes are not allowed"}, status_code=422)
+
+    # 2️⃣ Query‑string / path NUL‑byte check (unchanged)
     raw_qs = request.scope.get("query_string", b"")
     if b"\x00" in raw_qs or b"%00" in raw_qs.lower() or "\x00" in request.url.path:
         return JSONResponse({"detail": "Null bytes are not allowed"}, status_code=422)
+
+    # 3️⃣ Content‑Length size cap
+    content_length = request.headers.get("content-length")
+    if content_length is not None:
+        try:
+            if int(content_length) > MAX_REQUEST_BODY_BYTES:
+                return JSONResponse({"detail": "Request body too large"}, status_code=413)
+        except ValueError:
+            pass  # ignore malformed header; further checks will catch oversized bodies
+
     ct = (request.headers.get("content-type") or "").lower()
-    if request.method in {"POST", "PUT", "PATCH"} and "application/json" in ct:
+
+    # 4️⃣ Body size & JSON NUL‑byte checks for mutable methods
+    if request.method in {"POST", "PUT", "PATCH"}:
         body = await request.body()
-        if b"\x00" in body or b"\\u0000" in body.lower():
-            return JSONResponse({"detail": "Null bytes are not allowed"}, status_code=422)
+        if len(body) > MAX_REQUEST_BODY_BYTES:
+            return JSONResponse({"detail": "Request body too large"}, status_code=413)
+        if "application/json" in ct:
+            if b"\x00" in body or b"\\u0000" in body.lower():
+                return JSONResponse({"detail": "Null bytes are not allowed"}, status_code=422)
+
+    # All checks passed – forward the request.
     return await call_next(request)
+
 
 @app.middleware("http")
 async def static_cache_headers(request, call_next):

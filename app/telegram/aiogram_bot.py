@@ -1,6 +1,7 @@
 import os
 import time
 import asyncio
+import re
 from dataclasses import dataclass, field
 from typing import (
     FrozenSet,
@@ -75,6 +76,19 @@ class BotSettings:
 
 
 # --------------------------------------------------------------------------- #
+# Helpers for bot mention handling
+# --------------------------------------------------------------------------- #
+def _has_bot_mention(text_msg: str, bot_username: str) -> bool:
+    """Return True if the message contains a mention of the bot (exact match)."""
+    return bool(re.search(rf"(?i)(?:^|\s)@{re.escape(bot_username)}(?=$|\s|[,:;!?])", text_msg))
+
+
+def _strip_bot_mention(text_msg: str, bot_username: str) -> str:
+    """Remove the bot mention from the text, preserving surrounding whitespace."""
+    return re.sub(rf"(?i)(?:^|\s)@{re.escape(bot_username)}(?=$|\s|[,:;!?])", " ", text_msg).strip()
+
+
+# --------------------------------------------------------------------------- #
 # Middleware
 # --------------------------------------------------------------------------- #
 class AllowlistAndRateLimitMiddleware(BaseMiddleware):
@@ -107,7 +121,7 @@ class AllowlistAndRateLimitMiddleware(BaseMiddleware):
                 return None
             if not self.settings.group_mode_enabled:
                 return None
-            if f"@{self.settings.bot_username}".lower() not in text_msg.lower():
+            if not _has_bot_mention(text_msg, self.settings.bot_username):
                 return None
 
         # Private allowlist
@@ -204,6 +218,10 @@ ROLE_ALLOWED: Dict[str, Set[str]] = {
 
 GROUP_SAFE = frozenset({"expiry", "stock_cover", "sales_today", "targets"})
 
+# Scoped role sets for fail‑closed checks
+TERRITORY_SCOPED_ROLES = frozenset({"medical_rep", "district_manager", "sales_manager"})
+BRANCH_SCOPED_ROLES = frozenset({"warehouse_staff"})
+
 
 def _is_uuid(val: str) -> bool:
     try:
@@ -262,24 +280,38 @@ async def query_balance(
 
 
 async def query_stock(
-    engine: Engine, ref: str, branch_id: Optional[str], lang: str
+    engine: Engine,
+    ref: str,
+    branch_id: Optional[str],
+    lang: str,
+    territory_id: Optional[str] = None,
 ) -> str:
     if _is_uuid(ref):
         prod_cond = "p.id = CAST(:ref AS uuid)"
     else:
         prod_cond = "LOWER(p.sku) = LOWER(:ref)"
-    join_branch = ""
+    join_clause = ""
     if branch_id:
-        join_branch = "JOIN master_data.master_warehouse w ON w.id = s.warehouse_id AND w.branch_id = CAST(:bid AS uuid)"
+        join_clause = (
+            "JOIN master_data.master_warehouse w ON w.id = s.warehouse_id "
+            "AND w.branch_id = CAST(:bid AS uuid)"
+        )
+    elif territory_id:
+        join_clause = (
+            "JOIN master_data.master_warehouse w ON w.id = s.warehouse_id "
+            "AND w.branch_id IN (SELECT DISTINCT c.branch_id FROM master_data.master_customer c "
+            "WHERE c.territory_id = CAST(:tid AS uuid) AND c.branch_id IS NOT NULL)"
+        )
     stmt = f"""
         SELECT COALESCE(SUM(s.quantity), 0) AS qty
         FROM master_data.master_product p
         JOIN inventory.stock_balance s ON s.product_id = p.id
-        {join_branch}
+        {join_clause}
         WHERE {prod_cond}
         GROUP BY p.id
     """
-    rows = await _run_query(engine, stmt, {"ref": ref, "bid": branch_id})
+    params = {"ref": ref, "bid": branch_id, "tid": territory_id}
+    rows = await _run_query(engine, stmt, params)
     qty = rows[0]["qty"] if rows else 0
     return f"{Decimal(str(qty)):.3f}"
 
@@ -303,12 +335,21 @@ async def query_sales_today(
 
 
 async def query_expiry(
-    engine: Engine, days: int, branch_id: Optional[str], lang: str
+    engine: Engine,
+    days: int,
+    branch_id: Optional[str],
+    lang: str,
+    territory_id: Optional[str] = None,
 ) -> str:
     days = max(1, min(days, 365))
     branch_filter = ""
     if branch_id:
         branch_filter = "AND w.branch_id = CAST(:bid AS uuid)"
+    elif territory_id:
+        branch_filter = (
+            "AND w.branch_id IN (SELECT DISTINCT c.branch_id FROM master_data.master_customer c "
+            "WHERE c.territory_id = CAST(:tid AS uuid) AND c.branch_id IS NOT NULL)"
+        )
     stmt = f"""
         SELECT b.batch_no, p.sku, b.expiry_date, s.quantity, w.code AS wh_code
         FROM inventory.batch_record b
@@ -323,7 +364,11 @@ async def query_expiry(
         ORDER BY b.expiry_date ASC
         LIMIT 20
     """
-    rows = await _run_query(engine, stmt, {"days": days, "bid": branch_id})
+    rows = await _run_query(
+        engine,
+        stmt,
+        {"days": days, "bid": branch_id, "tid": territory_id},
+    )
     lines = []
     for r in rows:
         qty = Decimal(str(r["quantity"])).quantize(Decimal("0.001"))
@@ -367,18 +412,37 @@ async def query_targets(
 
 
 async def query_stock_cover(
-    engine: Engine, ref: str, lang: str
+    engine: Engine,
+    ref: str,
+    lang: str,
+    branch_id: Optional[str] = None,
+    territory_id: Optional[str] = None,
 ) -> str:
     if _is_uuid(ref):
         prod_cond = "p.id = CAST(:ref AS uuid)"
     else:
         prod_cond = "LOWER(p.sku) = LOWER(:ref)"
+    # Join for quantity (branch or territory filter)
+    join_qty = ""
+    if branch_id:
+        join_qty = (
+            "JOIN master_data.master_warehouse w ON w.id = s.warehouse_id "
+            "AND w.branch_id = CAST(:bid AS uuid)"
+        )
+    elif territory_id:
+        join_qty = (
+            "JOIN master_data.master_warehouse w ON w.id = s.warehouse_id "
+            "AND w.branch_id IN (SELECT DISTINCT c.branch_id FROM master_data.master_customer c "
+            "WHERE c.territory_id = CAST(:tid AS uuid) AND c.branch_id IS NOT NULL)"
+        )
     stmt_qty = f"""
         SELECT COALESCE(SUM(s.quantity), 0) AS stock_qty
         FROM master_data.master_product p
         JOIN inventory.stock_balance s ON s.product_id = p.id
+        {join_qty}
         WHERE {prod_cond}
     """
+    # Average daily sales, with optional territory filter on invoice
     stmt_avg = f"""
         SELECT COALESCE(SUM(l.quantity), 0) / 30.0 AS avg_daily
         FROM master_data.master_product p
@@ -388,8 +452,10 @@ async def query_stock_cover(
           AND i.invoice_date >= CURRENT_DATE - INTERVAL '30 days'
         WHERE {prod_cond}
     """
-    stock_row = await _run_query(engine, stmt_qty, {"ref": ref})
-    avg_row = await _run_query(engine, stmt_avg, {"ref": ref})
+    if territory_id:
+        stmt_avg += " AND i.territory_id = CAST(:tid AS uuid)"
+    stock_row = await _run_query(engine, stmt_qty, {"ref": ref, "bid": branch_id, "tid": territory_id})
+    avg_row = await _run_query(engine, stmt_avg, {"ref": ref, "tid": territory_id})
     stock_qty = Decimal(str(stock_row[0]["stock_qty"])) if stock_row else Decimal("0")
     avg_daily = Decimal(str(avg_row[0]["avg_daily"])) if avg_row else Decimal("0")
     cover = stock_qty / avg_daily if avg_daily != 0 else Decimal("0")
@@ -414,8 +480,8 @@ async def build_daily_digest(engine: Engine, lang: str = "ar", warn_days: int = 
         expiry_stmt,
         {"today": today, "warn_days": warn_days},
     )
-    # Low stock
-    low_stock_stmt = """
+    # Reorder alerts (formerly low stock)
+    reorder_alert_stmt = """
         SELECT p.sku, COALESCE(SUM(s.quantity),0) AS qty
         FROM master_data.master_product p
         JOIN inventory.stock_balance s ON s.product_id = p.id
@@ -424,7 +490,7 @@ async def build_daily_digest(engine: Engine, lang: str = "ar", warn_days: int = 
         ORDER BY qty ASC
         LIMIT 10
     """
-    low_stock_rows = await _run_query(engine, low_stock_stmt, {})
+    reorder_alert_rows = await _run_query(engine, reorder_alert_stmt, {})
     # Outstanding AR
     ar_stmt = """
         SELECT c.code, COALESCE(SUM(e.debit - e.credit),0) AS bal
@@ -442,9 +508,9 @@ async def build_daily_digest(engine: Engine, lang: str = "ar", warn_days: int = 
         parts.append("\n⚠️ Near Expiry:")
         for r in expiry_rows:
             parts.append(f"{r['sku']} {r['batch_no']} {r['expiry_date']} qty:{r['quantity']}")
-    if low_stock_rows:
+    if reorder_alert_rows:
         parts.append("\n📦 Low Stock:")
-        for r in low_stock_rows:
+        for r in reorder_alert_rows:
             parts.append(f"{r['sku']} qty:{r['qty']}")
     if ar_rows:
         parts.append("\n💰 Outstanding AR:")
@@ -468,7 +534,11 @@ def build_bot(settings: BotSettings) -> Bot:
 def build_dispatcher(settings: BotSettings, engine: Optional[Engine] = None) -> Dispatcher:
     dp = Dispatcher()
     router = Router()
-    router.message.middleware(AllowlistAndRateLimitMiddleware(settings, engine or create_engine(settings.readonly_db_url, future=True, pool_pre_ping=True)))
+    router.message.middleware(
+        AllowlistAndRateLimitMiddleware(
+            settings, engine or create_engine(settings.readonly_db_url, future=True, pool_pre_ping=True)
+        )
+    )
     dp.include_router(router)
 
     # ------------------------------------------------------------------- #
@@ -508,10 +578,10 @@ def build_dispatcher(settings: BotSettings, engine: Optional[Engine] = None) -> 
         lang_store: Dict[int, str],
     ):
         raw = (message.text or "").strip()
-        # Remove bot mention if present
-        mention = f"@{settings.bot_username.lower()}"
-        if mention in raw.lower():
-            raw = raw.lower().replace(mention, "").strip()
+        # Remove bot mention if present using the precise regex helpers
+        if _has_bot_mention(raw, settings.bot_username):
+            raw = _strip_bot_mention(raw, settings.bot_username)
+
         # Split and get command/template
         parts = raw.split()
         if not parts:
@@ -520,9 +590,13 @@ def build_dispatcher(settings: BotSettings, engine: Optional[Engine] = None) -> 
         lang = lang_store.get(message.from_user.id if message.from_user else 0, "ar")
         if cmd in ("start", "help"):
             if lang == "en":
-                await message.answer("ElsebaeyPharma ERP Bot (read-only). Commands: /balance, /stock, /sales, /expiry, /targets, /cover, /alerts, /lang en|ar")
+                await message.answer(
+                    "ElsebaeyPharma ERP Bot (read-only). Commands: /balance, /stock, /sales, /expiry, /targets, /cover, /alerts, /lang en|ar"
+                )
             else:
-                await message.answer("بوت شركة السباعي فارما (للقراءة فقط). الأوامر: /balance /stock /sales /expiry /targets /cover /alerts /lang ar|en")
+                await message.answer(
+                    "بوت شركة السباعي فارما (للقراءة فقط). الأوامر: /balance /stock /sales /expiry /targets /cover /alerts /lang ar|en"
+                )
             return
         aliases = {"sales": "sales_today", "cover": "stock_cover"}
         template = aliases.get(cmd, cmd)
@@ -530,12 +604,32 @@ def build_dispatcher(settings: BotSettings, engine: Optional[Engine] = None) -> 
             from .queries import match_template  # type: ignore
         except Exception:
             match_template = lambda x: None
-        matched = template if template in {"balance", "stock", "sales_today", "expiry", "targets", "stock_cover", "alerts"} else (match_template(raw) or template)
+        matched = template if template in {
+            "balance",
+            "stock",
+            "sales_today",
+            "expiry",
+            "targets",
+            "stock_cover",
+            "alerts",
+        } else (match_template(raw) or template)
 
         if not await _check_permission(matched, erp_role, message, message.chat.type):
             return
 
-        territory_scope = erp_scope_id if erp_role in ("medical_rep", "district_manager", "sales_manager") else None
+        # Fail‑closed scope validation for scoped roles
+        if erp_role in TERRITORY_SCOPED_ROLES or erp_role in BRANCH_SCOPED_ROLES:
+            if not erp_scope_id or not _is_uuid(erp_scope_id):
+                await message.answer(
+                    "Access scope is not configured for your role. Access denied."
+                )
+                return
+
+        territory_scope = (
+            erp_scope_id
+            if erp_role in ("medical_rep", "district_manager", "sales_manager")
+            else None
+        )
         branch_scope = erp_scope_id if erp_role == "warehouse_staff" else None
         try:
             if matched == "balance":
@@ -548,14 +642,26 @@ def build_dispatcher(settings: BotSettings, engine: Optional[Engine] = None) -> 
                 if len(parts) < 2:
                     await message.answer("Provide product reference.")
                     return
-                res = await query_stock(db_engine, parts[1], branch_scope, lang)
+                res = await query_stock(
+                    db_engine,
+                    parts[1],
+                    branch_scope,
+                    lang,
+                    territory_id=territory_scope,
+                )
                 await message.answer(f"Stock: {res}")
             elif matched == "sales_today":
                 res = await query_sales_today(db_engine, territory_scope, lang)
                 await message.answer(f"Today's sales total: {res}")
             elif matched == "expiry":
                 days = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 30
-                res = await query_expiry(db_engine, days, branch_scope, lang)
+                res = await query_expiry(
+                    db_engine,
+                    days,
+                    branch_scope,
+                    lang,
+                    territory_id=territory_scope,
+                )
                 await message.answer(res)
             elif matched == "targets":
                 if len(parts) < 2:
@@ -567,21 +673,28 @@ def build_dispatcher(settings: BotSettings, engine: Optional[Engine] = None) -> 
                 if len(parts) < 2:
                     await message.answer("Provide product reference.")
                     return
-                res = await query_stock_cover(db_engine, parts[1], lang)
+                res = await query_stock_cover(
+                    db_engine,
+                    parts[1],
+                    lang,
+                    branch_id=branch_scope,
+                    territory_id=territory_scope,
+                )
                 await message.answer(res)
             elif matched == "alerts":
                 if not settings.alerts_enabled:
-                    await message.answer("Daily alerts are disabled (TELEGRAM_ALERTS_ENABLED=false).")
+                    await message.answer(
+                        "Daily alerts are disabled (TELEGRAM_ALERTS_ENABLED=false)."
+                    )
                     return
                 digest = await build_daily_digest(db_engine, lang)
                 await message.answer(digest)
             else:
                 await message.answer("Unknown command or not permitted.")
-        except Exception as e:
-            await message.answer(f"Error: {e}")
-        except Exception as exc:
-            await message.answer("An error occurred while processing your request.")
-            # Log exception in real deployment
+        except Exception:
+            await message.answer(
+                "تعذر تنفيذ الاستعلام مؤقتاً. / Query temporarily unavailable."
+            )
 
     return dp
 

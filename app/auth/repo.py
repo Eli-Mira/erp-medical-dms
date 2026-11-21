@@ -10,8 +10,9 @@ from sqlalchemy import text
 
 from .security import hash_password  # re-exported for convenience
 from ..db import SessionLocal
+from .. import config as app_config  # P1-M05 configuration import
 
-SESSION_TTL = datetime.timedelta(hours=24)
+SESSION_TTL = datetime.timedelta(hours=24)  # Backwards‑compatible constant
 
 
 def lock_user_administration(db, actor_id, target_id):
@@ -140,6 +141,7 @@ def create_user(db, username, password, role="user", is_owner=False):
 
 def create_session(db, user_id, ip_address=None):
     now = datetime.datetime.now(datetime.timezone.utc)
+    exp = now + datetime.timedelta(hours=app_config.SESSION_IDLE_HOURS)
     row = db.execute(
         text(
             "INSERT INTO platform.platform_session "
@@ -151,7 +153,7 @@ def create_session(db, user_id, ip_address=None):
             "dev": "api",
             "ip": ip_address,
             "now": now,
-            "exp": now + SESSION_TTL,
+            "exp": exp,
         },
     ).fetchone()
     return row[0]
@@ -160,7 +162,7 @@ def create_session(db, user_id, ip_address=None):
 def get_session(db, sid):
     row = db.execute(
         text(
-            "SELECT id, user_id, ip_address, created_at, expires_at "
+            "SELECT id, user_id, device_info, ip_address, created_at, expires_at "
             "FROM platform.platform_session WHERE id = :s"
         ),
         {"s": str(sid)},
@@ -173,6 +175,30 @@ def delete_session(db, sid):
         text("DELETE FROM platform.platform_session WHERE id = :s"),
         {"s": str(sid)},
     )
+
+
+def touch_session_bg(sid, new_expires_at, now_ts: int) -> None:
+    """
+    Update a session's expiration and device_info in a short‑lived background DB
+    connection.  This never touches the caller's request‑scoped session.
+    """
+    bg_db = SessionLocal()
+    try:
+        bg_db.execute(
+            text(
+                "UPDATE platform.platform_session "
+                "SET expires_at = :exp, device_info = :dev "
+                "WHERE id = :s"
+            ),
+            {
+                "exp": new_expires_at,
+                "dev": f"api:seen:{now_ts}",
+                "s": str(sid),
+            },
+        )
+        bg_db.commit()
+    finally:
+        bg_db.close()
 
 
 def log_audit(db, actor_user_id, action, entity_type, entity_id,

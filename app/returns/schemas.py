@@ -3,7 +3,7 @@
 from datetime import date
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.sales.schemas import Quantity
 
@@ -18,7 +18,7 @@ class ReturnIn(BaseModel):
     batch_id: UUID | None = None
     quantity: Quantity
     return_date: date
-    reason: str | None = None
+    reason: str | None = Field(default=None, max_length=500)
     invoice_id: UUID | None = None
 
     @field_validator("reason")
@@ -28,8 +28,10 @@ class ReturnIn(BaseModel):
             raise ValueError("reason cannot contain NUL")
         return value
 
+
 from decimal import Decimal
 from typing import Literal
+
 
 class ReturnDecisionIn(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)

@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..db import get_db
+from .. import config as app_config  # New import for session config
 from . import repo
 from .rate_limit import FailedLoginLimiter
 
@@ -95,14 +96,63 @@ def get_current_user(
     creds: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db=Depends(get_db),
 ):
+    """
+    Retrieves the user tied to the provided session token, enforcing:
+      • absolute session cap (SESSION_ABSOLUTE_HOURS)
+      • sliding idle timeout (SESSION_IDLE_HOURS)
+      • background touch of the session when needed.
+    """
     sid = _parse_uuid(creds.credentials)
     if sid is None:
         raise HTTPException(status_code=401, detail="invalid session token")
+
     session = repo.get_session(db, sid)
-    if not session or session["expires_at"] < datetime.datetime.now(
-        datetime.timezone.utc
-    ):
+    now = datetime.datetime.now(datetime.timezone.utc)
+    idle_delta = datetime.timedelta(hours=app_config.SESSION_IDLE_HOURS)
+    abs_delta = datetime.timedelta(hours=app_config.SESSION_ABSOLUTE_HOURS)
+
+    # Basic existence / hard expiry checks
+    if not session:
         raise HTTPException(status_code=401, detail="session expired")
+    if session["expires_at"] < now:
+        raise HTTPException(status_code=401, detail="session expired")
+    if session["created_at"] + abs_delta < now:
+        raise HTTPException(status_code=401, detail="session expired")
+
+    # Idle timeout check, using device_info if it carries a recent activity marker.
+    device_info = session.get("device_info") or ""
+    last_activity = session["created_at"]
+    if isinstance(device_info, str) and device_info.startswith("api:seen:"):
+        try:
+            epoch_str = device_info.split(":")[-1]
+            epoch_int = int(epoch_str)
+            last_activity = datetime.datetime.fromtimestamp(
+                epoch_int, datetime.timezone.utc
+            )
+        except Exception:
+            # If parsing fails, fall back to creation time.
+            last_activity = session["created_at"]
+
+    if last_activity + idle_delta < now:
+        raise HTTPException(status_code=401, detail="session expired")
+
+    # Compute new expiration (sliding window, capped by absolute max)
+    new_exp = min(now + idle_delta, session["created_at"] + abs_delta)
+
+    # Refresh the session in the background if we extended it by ≥5 min
+    # or if the session hasn't yet been marked with an activity timestamp.
+    need_touch = (
+        new_exp - session["expires_at"] >= datetime.timedelta(minutes=5)
+        or not str(device_info).startswith("api:seen:")
+    )
+    if need_touch:
+        try:
+            repo.touch_session_bg(sid, new_exp, int(now.timestamp()))
+        except Exception:
+            # Touch may be a no‑op in read‑only or test environments.
+            pass
+
+    # Load and verify the user.
     user = repo.get_user_by_id(db, session["user_id"])
     if not user or not user["is_active"]:
         raise HTTPException(status_code=401, detail="user inactive or not found")
@@ -167,6 +217,7 @@ def _resolve_client_ip(request: Request) -> tuple[str | None, str | None]:
     else:
         ip_str = str(direct_ip_obj) if direct_ip_obj else None
         return (direct, ip_str)
+
 
 @router.post("/login", response_model=LoginOut)
 def login(request: Request, payload: LoginIn, db=Depends(get_db)):

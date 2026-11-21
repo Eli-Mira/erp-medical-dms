@@ -67,7 +67,7 @@ class CustomerPatch(BaseModel):
     name_ar: str | None = Field(default=None, min_length=1, max_length=200)
     name_en: str | None = Field(default=None, max_length=200)
     contact_phone: str | None = Field(default=None, max_length=30)
-    address: str | None = None
+    address: str | None = Field(default=None, max_length=500)
 
     @field_validator("contact_phone", "address")
     @classmethod
@@ -108,7 +108,7 @@ class CustomerIn(BaseModel):
     branch_id: UUID
     territory_id: UUID
     contact_phone: str | None = Field(default=None, max_length=30)
-    address: str | None = None
+    address: str | None = Field(default=None, max_length=500)
 
     @field_validator("contact_phone", "address")
     @classmethod
@@ -231,7 +231,7 @@ class SupplierIn(BaseModel):
     name_ar: str = Field(min_length=1, max_length=200)
     name_en: str | None = Field(default=None, max_length=200)
     contact_phone: str | None = Field(default=None, max_length=30)
-    address: str | None = Field(default=None)
+    address: str | None = Field(default=None, max_length=500)
 
 
 class SupplierPatch(BaseModel):
@@ -248,7 +248,7 @@ class SupplierPatch(BaseModel):
     name_ar: str | None = Field(default=None, min_length=1, max_length=200)
     name_en: str | None = Field(default=None, max_length=200)
     contact_phone: str | None = Field(default=None, max_length=30)
-    address: str | None = Field(default=None)
+    address: str | None = Field(default=None, max_length=500)
     is_active: StrictBool | None = None
 
     @model_validator(mode="after")

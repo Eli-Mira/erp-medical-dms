@@ -25,11 +25,22 @@ def _role(user, allowed):
 
 
 @router.get("")
-def list_audit(db: Db, current: CurrentUser, entity_type: str | None = None,
-               actor_id: UUID | None = None, action: str | None = None,
-               date_from: date | None = None, date_to: date | None = None,
-               limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0)):
+def list_audit(
+    db: Db,
+    current: CurrentUser,
+    entity_type: str | None = None,
+    actor_id: UUID | None = None,
+    action: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+):
     _role(current, READ_ROLES)
+
+    # Determine if the caller is an active owner (the only role that may see private accounts)
+    is_active_owner = current["role"] == "owner" and current["is_owner"]
+
     conditions, params = [], {"limit": limit, "offset": offset}
     if entity_type is not None:
         conditions.append("a.entity_type = :entity_type")
@@ -46,12 +57,21 @@ def list_audit(db: Db, current: CurrentUser, entity_type: str | None = None,
     if date_to is not None:
         conditions.append("a.created_at < :date_to")
         params["date_to"] = date_to
+
+    # Enforce private‑account exclusion for any non‑owner caller
+    if not is_active_owner:
+        conditions.append("a.entity_type NOT LIKE 'private_account%'")
+        conditions.append("a.action NOT LIKE 'private_account%'")
+
     where = " WHERE " + " AND ".join(conditions) if conditions else ""
     rows = db.execute(
-        text("""SELECT a.id, a.actor_user_id, a.action, a.entity_type,
+        text(
+            """SELECT a.id, a.actor_user_id, a.action, a.entity_type,
                        a.entity_id, a.old_values, a.new_values, a.created_at
-                FROM audit.audit_log a""" + where +
-             " ORDER BY a.created_at DESC LIMIT :limit OFFSET :offset"),
+                FROM audit.audit_log a"""
+            + where
+            + " ORDER BY a.created_at DESC LIMIT :limit OFFSET :offset"
+        ),
         params,
     ).mappings()
     return [dict(row) for row in rows]

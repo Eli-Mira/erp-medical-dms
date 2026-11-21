@@ -111,14 +111,34 @@ def create_return(payload: ReturnIn, request: Request, db: Db, current: CurrentU
         ):
             raise HTTPException(422, "Batch does not match product and warehouse")
     if invoice is not None:
+        # Lock the invoice row to prevent concurrent over-return
         inv = db.execute(
             text(
-                "SELECT 1 FROM sales.sales_invoice WHERE id=:id AND customer_id=:c FOR SHARE"
+                "SELECT 1 FROM sales.sales_invoice WHERE id=:id AND customer_id=:c FOR UPDATE"
             ),
             {"id": invoice, "c": customer},
         ).scalar()
         if not inv:
             raise HTTPException(422, "Invoice reference is not valid for this customer")
+        # Query total invoiced quantity for (invoice_id, product_id)
+        invoiced_qty_result = db.execute(
+            text(
+                "SELECT COALESCE(SUM(quantity), 0) FROM sales.sales_invoice_line WHERE invoice_id=:inv AND product_id=:pid"
+            ),
+            {"inv": invoice, "pid": product},
+        ).scalar()
+        invoiced_qty = Decimal(str(invoiced_qty_result))
+        # Query already returned quantity for (invoice_id, product_id) across all non-rejected returns
+        already_returned_result = db.execute(
+            text(
+                "SELECT COALESCE(SUM(quantity), 0) FROM sales.sales_return WHERE invoice_id=:inv AND product_id=:pid AND status <> 'rejected'"
+            ),
+            {"inv": invoice, "pid": product},
+        ).scalar()
+        already_returned = Decimal(str(already_returned_result))
+        qty_decimal = Decimal(str(q))
+        if invoiced_qty <= Decimal("0") or already_returned + qty_decimal > invoiced_qty:
+            raise HTTPException(422, "Return quantity exceeds invoiced quantity for this product")
     try:
         rid = db.execute(
             text("""INSERT INTO sales.sales_return
@@ -252,6 +272,34 @@ def settle_return(
             status_code=409,
             detail=f"Return already settled or not quarantined (status={ret['status']})",
         )
+    # Re-verify invoice quantities if invoice_id present
+    if ret["invoice_id"] is not None:
+        # Lock the invoice row so concurrent settlements against the same invoice serialize cleanly
+        inv_lock = db.execute(
+            text("SELECT 1 FROM sales.sales_invoice WHERE id = :id FOR UPDATE"),
+            {"id": ret["invoice_id"]},
+        ).scalar()
+        if not inv_lock:
+            raise HTTPException(409, "Invoice no longer exists")
+        # Re-verify invoiced_qty from sales_invoice_line
+        invoiced_qty_result = db.execute(
+            text(
+                "SELECT COALESCE(SUM(quantity), 0) FROM sales.sales_invoice_line WHERE invoice_id=:inv AND product_id=:pid"
+            ),
+            {"inv": ret["invoice_id"], "pid": ret["product_id"]},
+        ).scalar()
+        invoiced_qty = Decimal(str(invoiced_qty_result))
+        # Query already_settled from sales_return WHERE invoice_id=:inv AND product_id=:pid AND id <> :rid AND status IN ('approved_restock', 'scrapped')
+        already_settled_result = db.execute(
+            text(
+                "SELECT COALESCE(SUM(quantity), 0) FROM sales.sales_return WHERE invoice_id=:inv AND product_id=:pid AND id <> :rid AND status IN ('approved_restock', 'scrapped')"
+            ),
+            {"inv": ret["invoice_id"], "pid": ret["product_id"], "rid": return_id},
+        ).scalar()
+        already_settled = Decimal(str(already_settled_result))
+        qty = Decimal(str(ret["quantity"]))
+        if invoiced_qty <= Decimal("0") or already_settled + qty > invoiced_qty:
+            raise HTTPException(409, "Return quantity exceeds invoiced quantity for this product")
     # Determine pricing
     unit_price = payload.unit_price
     vat_rate = payload.vat_rate
