@@ -778,8 +778,13 @@ def test_i1_role_boundaries_in_browser_and_http(live_app, i1_dataset, role, lang
                     assert response.json()["totals"]["invoice_count"] == 0
             else:
                 expect(page.locator(f'#sidebar [data-view="{view}"]')).to_be_hidden()
-        nav(page, "customers", 390)
-        expect(page.locator("#customer-add")).to_be_hidden()
+        if role == "warehouse_staff":
+            expect(page.locator('#sidebar [data-view="customers"]')).to_be_hidden()
+            expect(page.locator('#sidebar [data-view="products"]')).to_be_hidden()
+            expect(page.locator('#sidebar [data-view="warehouses"]')).to_be_hidden()
+        else:
+            nav(page, "customers", 390)
+            expect(page.locator("#customer-add")).to_be_hidden()
         assert (
             page.request.patch(
                 live_app[0] + "/master/customers/" + str(data["customer"]),
