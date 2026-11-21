@@ -52,8 +52,6 @@
       else if (node.type === "submit" && node.form && node.form.id) node.dataset.testid = node.form.id + "-submit";
       if (node.closest("#sidebar") && node.dataset.view) {
         node.dataset.testid = "nav-" + node.dataset.view;
-        var label = node.querySelector("[data-i18n]");
-        if (label) node.dataset.i18nAriaLabel = label.dataset.i18n;
       }
       if (!node.dataset.testid) {
         var action = Array.prototype.find.call(node.attributes, function (attribute) {
