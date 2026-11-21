@@ -31,6 +31,15 @@ def sanitize_request_id(raw: str | None) -> str:
     return uuid.uuid4().hex
 
 
+class RequestIdFilter(logging.Filter):
+    """Ensure every log record exposes ``request_id`` for text formatters."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if not hasattr(record, "request_id"):
+            record.request_id = request_id_var.get()
+        return True
+
+
 class JsonLogFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         payload = {
@@ -66,6 +75,7 @@ def configure_logging() -> logging.Logger:
     logger.setLevel(getattr(logging, level_name))
     if not logger.handlers:
         handler = logging.StreamHandler()
+        handler.addFilter(RequestIdFilter())
         if fmt_mode == "json":
             handler.setFormatter(JsonLogFormatter())
         else:
@@ -82,11 +92,15 @@ def configure_logging() -> logging.Logger:
 def configure_handler_formatters(logger: logging.Logger) -> None:
     fmt_mode = (os.environ.get("LOG_FORMAT") or "text").strip().lower()
     for handler in logger.handlers:
+        if not any(isinstance(f, RequestIdFilter) for f in handler.filters):
+            handler.addFilter(RequestIdFilter())
         if fmt_mode == "json":
             handler.setFormatter(JsonLogFormatter())
         else:
             handler.setFormatter(
-                logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+                logging.Formatter(
+                    "%(asctime)s %(levelname)s [%(name)s] req=%(request_id)s %(message)s"
+                )
             )
 
 
@@ -132,6 +146,7 @@ def wrap_request_id_middleware(app_asgi, *, logger: logging.Logger | None = None
             http_logger.info(
                 "http_request",
                 extra={
+                    "request_id": req_id,
                     "method": scope.get("method", "-"),
                     "path": scope.get("path", "/"),
                     "status_code": status_code,

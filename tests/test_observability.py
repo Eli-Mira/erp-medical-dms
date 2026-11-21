@@ -3,11 +3,13 @@
 import io
 import json
 import logging
+from logging.config import fileConfig
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
 from app.main import app, http_logger
-from app.observability import JsonLogFormatter
+from app.observability import JsonLogFormatter, configure_handler_formatters
 
 
 def test_livez_returns_alive_and_security_headers():
@@ -78,3 +80,30 @@ def test_json_log_formatter_emits_single_line_and_redacts_auth():
     raw_log = buf.getvalue()
     assert "supersecret_token_value" not in raw_log
     assert "should_not_log" not in raw_log
+
+
+def test_text_log_formatter_supplies_request_id_and_survives_alembic_fileconfig(
+    monkeypatch,
+):
+    alembic_ini = Path(__file__).resolve().parents[1] / "alembic.ini"
+    fileConfig(str(alembic_ini), disable_existing_loggers=False)
+    assert http_logger.disabled is False
+
+    monkeypatch.setenv("LOG_FORMAT", "text")
+    buf = io.StringIO()
+    handler = logging.StreamHandler(buf)
+    http_logger.addHandler(handler)
+    configure_handler_formatters(http_logger)
+    try:
+        http_logger.info("startup_check")
+        with TestClient(app) as client:
+            resp = client.get("/livez", headers={"X-Request-ID": "trace-text-42"})
+            assert resp.status_code == 200
+    finally:
+        http_logger.removeHandler(handler)
+        monkeypatch.delenv("LOG_FORMAT", raising=False)
+        configure_handler_formatters(http_logger)
+
+    output = buf.getvalue()
+    assert "req=- startup_check" in output
+    assert "req=trace-text-42 http_request" in output
