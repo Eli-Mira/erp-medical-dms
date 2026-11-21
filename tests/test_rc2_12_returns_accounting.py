@@ -144,7 +144,7 @@ def test_return_approved_restock_conserves_stock_credits_ar_and_reverses_14pct_v
             "UPDATE master_data.master_product SET base_price = :price, vat_rate = :vat "
             "WHERE id = :pid"
         ),
-        {"price": Decimal("100.00"), "vat": Decimal("14.00"), "pid": ids["product"]},
+        {"price": Decimal("114.00"), "vat": Decimal("14.00"), "pid": ids["product"]},
     )
     # seed opening AR debit
     db.execute(
@@ -211,6 +211,68 @@ def test_return_approved_restock_conserves_stock_credits_ar_and_reverses_14pct_v
     # ensure no further changes
     assert get_stock(db, ids["warehouse"], ids["product"]) == stock_after
     assert get_ar_balance(db, ids["customer"]) == ar_after
+
+
+def test_full_invoice_sell_then_return_zeros_ar_and_restores_stock(
+    invoice_env, monkeypatch
+):
+    client, db, ids, inv_payload, headers = invoice_env
+    monkeypatch.setattr(app_config, "POSTING_ENABLED", True)
+
+    # Seed 10.000 batched opening stock
+    db.execute(
+        text(
+            "INSERT INTO inventory.stock_balance (warehouse_id, product_id, batch_id, quantity) "
+            "VALUES (:wid, :pid, :bid, 10.000)"
+        ),
+        {"wid": ids["warehouse"], "pid": ids["product"], "bid": ids["batch"]},
+    )
+    db.commit()
+
+    # Create and post invoice (qty=2, VAT-inclusive base_price=114.00, vat_rate=14.00 -> grand_total=228.00)
+    inv_resp = client.post("/invoices", json=inv_payload, headers=headers("owner"))
+    assert inv_resp.status_code == 201, inv_resp.text
+    inv = inv_resp.json()
+    assert inv["grand_total"] == "228.00"
+    assert inv["vat_amount"] == "28.00"
+    assert inv["total_net"] == "200.00"
+
+    post_resp = client.post(f"/invoices/{inv['id']}/post", headers=headers("owner"))
+    assert post_resp.status_code == 200, post_resp.text
+    assert get_ar_balance(db, ids["customer"]) == Decimal("228.00")
+    assert get_stock(db, ids["warehouse"], ids["product"]) == Decimal("8.000")
+
+    # Full return linked to the posted invoice and settle as approved_restock
+    ret_resp = client.post(
+        "/returns",
+        json={
+            "customer_id": str(ids["customer"]),
+            "product_id": str(ids["product"]),
+            "warehouse_id": str(ids["warehouse"]),
+            "batch_id": str(ids["batch"]),
+            "invoice_id": inv["id"],
+            "quantity": "2.000",
+            "return_date": "2026-11-21",
+        },
+        headers=headers("owner"),
+    )
+    assert ret_resp.status_code == 201, ret_resp.text
+    rid = ret_resp.json()["id"]
+
+    settle_resp = client.post(
+        f"/returns/{rid}/settle",
+        json={"decision": "approved_restock", "issue_credit_note": True},
+        headers=headers("owner"),
+    )
+    assert settle_resp.status_code == 200, settle_resp.text
+    s = settle_resp.json()
+    assert s["gross_credit"] == "228.00"
+    assert s["vat_reversal"] == "28.00"
+    assert s["net_credit"] == "200.00"
+
+    # Exact round-trip conservation: AR balance == 0.00, stock == 10.000
+    assert get_ar_balance(db, ids["customer"]) == Decimal("0.00")
+    assert get_stock(db, ids["warehouse"], ids["product"]) == Decimal("10.000")
 
 
 def test_return_scrapped_adds_zero_saleable_stock_and_0pct_vat_credit_note(

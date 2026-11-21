@@ -17,6 +17,7 @@ from app import config as app_config
 from app.finance import ar as finance_ar
 from app.inventory import service as inv_service
 from app.returns.schemas import ReturnDecisionIn, ReturnIn
+from app.sales.calc import vat_amount_for
 
 router = APIRouter(prefix="/returns", tags=["returns"])
 Db = Annotated[Session, Depends(get_db)]
@@ -257,7 +258,7 @@ def settle_return(
     if ret["invoice_id"] and unit_price is None:
         line = db.execute(
             text(
-                "SELECT unit_price, vat_rate FROM sales.sales_invoice_line "
+                "SELECT COALESCE(net_price, unit_price) AS unit_price, vat_rate FROM sales.sales_invoice_line "
                 "WHERE invoice_id = :inv AND product_id = :pid LIMIT 1"
             ),
             {"inv": ret["invoice_id"], "pid": ret["product_id"]},
@@ -282,14 +283,14 @@ def settle_return(
         unit_price = payload.unit_price
     if payload.vat_rate is not None:
         vat_rate = payload.vat_rate
-    # Accounting calculations
+    # Accounting calculations (matches app.sales.calc VAT-inclusive pricing)
     CENT = Decimal("0.01")
     qty = Decimal(str(ret["quantity"]))
     unit_p = Decimal(str(unit_price)).quantize(CENT, rounding=ROUND_HALF_UP)
     vat_r = Decimal(str(vat_rate)).quantize(CENT, rounding=ROUND_HALF_UP)
-    net_credit = (qty * unit_p).quantize(CENT, rounding=ROUND_HALF_UP)
-    vat_reversal = (net_credit * vat_r / Decimal("100")).quantize(CENT, rounding=ROUND_HALF_UP)
-    gross_credit = (net_credit + vat_reversal).quantize(CENT, rounding=ROUND_HALF_UP)
+    gross_credit = (qty * unit_p).quantize(CENT, rounding=ROUND_HALF_UP)
+    vat_reversal = vat_amount_for(gross_credit, vat_r)
+    net_credit = (gross_credit - vat_reversal).quantize(CENT, rounding=ROUND_HALF_UP)
 
     try:
         restock_movement_id = None
