@@ -16,7 +16,7 @@
   /* Text tokens */
   --text-primary: #0F172A;
   --text-secondary: #475569;
-  --text-muted: #64748B;
+  --text-muted: #526075;
   --text-inverse: #FFFFFF;
 
   /* Primary brand (clinical navy & sapphire) */
@@ -27,6 +27,7 @@
 
   /* Secondary accent (clinical teal) */
   --accent-600:  #0D9488;
+  --accent-700:  #0F766E;
   --accent-500:  #14B8A6;
   --accent-50:   #F0FDFA;
 
@@ -36,7 +37,7 @@
   --status-voided-bg: #FEE2E2; --status-voided-text: #991B1B; --status-voided-border: #FCA5A5;
   --status-info-bg: #DBEAFE;   --status-info-text: #1E40AF;   --status-info-border: #93C5FD;
 
-  --danger: #DC2626;
+  --danger: #B91C1C;
   --danger-bg: #FEF2F2;
   --danger-border: #FECACA;
 
@@ -357,7 +358,7 @@ main {
   border-color: var(--proto-chip-border);
   letter-spacing: 0.03em;
 }
-.badge.real { background: var(--accent-50); color: var(--accent-600); border-color: #99F6E4; }
+.badge.real { background: var(--accent-50); color: var(--accent-700); border-color: #99F6E4; }
 
 .proto-chip-row { display: inline-flex; gap: var(--space-2); flex-wrap: wrap; }
 
