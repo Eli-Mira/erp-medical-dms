@@ -2,13 +2,13 @@ import asyncio
 import os
 import time
 import uuid
-from aiohttp import web
 import pytest
 import sqlalchemy
 from sqlalchemy import text, create_engine
 from sqlalchemy.engine.url import make_url
 
 aiogram = pytest.importorskip("aiogram")
+from aiohttp import web
 from aiogram import types
 
 from app.telegram.aiogram_bot import BotSettings, build_bot, build_dispatcher
