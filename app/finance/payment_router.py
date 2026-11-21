@@ -11,7 +11,7 @@ from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -102,25 +102,28 @@ def get_receipt(receipt_id: UUID, db: Db, current: CurrentUser) -> ReceiptOut:
     return ReceiptOut.model_validate(receipt)
 
 
-def _visible_receipts(db, current, invoice_id=None, customer_id=None,
-                      date_from=None, date_to=None):
-    rows = payments.list_receipts(
+def _visible_receipts(
+    db,
+    current,
+    invoice_id=None,
+    customer_id=None,
+    date_from=None,
+    date_to=None,
+    limit=None,
+    offset=0,
+):
+    return payments.list_visible_receipts(
         db,
+        role=current["role"],
+        user_id=current["id"],
+        branches=_scope_branches(db, current),
         invoice_id=invoice_id,
         customer_id=customer_id,
         date_from=date_from,
         date_to=date_to,
+        limit=limit,
+        offset=offset,
     )
-    visible = []
-    for receipt in rows:
-        try:
-            _receipt_scope(db, current, receipt)
-        except HTTPException as error:
-            if error.status_code != 404:
-                raise
-            continue
-        visible.append(receipt)
-    return visible
 
 
 @router.get("")
@@ -131,11 +134,23 @@ def list_receipts(
     customer_id: UUID | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
+    limit: int | None = Query(None, ge=1, le=500),
+    offset: int = Query(0, ge=0),
 ) -> list[ReceiptOut]:
     _role(current, READ_ROLES)
-    return [ReceiptOut.model_validate(receipt)
-            for receipt in _visible_receipts(
-                db, current, invoice_id, customer_id, date_from, date_to)]
+    return [
+        ReceiptOut.model_validate(receipt)
+        for receipt in _visible_receipts(
+            db,
+            current,
+            invoice_id,
+            customer_id,
+            date_from,
+            date_to,
+            limit=limit,
+            offset=offset,
+        )
+    ]
 
 
 def _receipt_scope(db, current, receipt):
