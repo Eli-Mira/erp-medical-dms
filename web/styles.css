@@ -90,7 +90,7 @@ code, .codes { font-family: var(--font-mono); font-size: 0.95em; unicode-bidi: i
 
 .num {
   font-family: var(--font-num);
-  font-variant-numeric: tabular-num;
+  font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
   unicode-bidi: isolate;
 }
@@ -494,7 +494,7 @@ button.block { width: 100%; }
 .lines { display: flex; flex-direction: column; gap: var(--space-3); }
 .line {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: minmax(0, 2.5fr) minmax(0, 1.8fr) repeat(3, minmax(0, 1fr)) auto;
   gap: var(--space-3);
   align-items: end;
   padding: var(--space-3);
@@ -511,7 +511,7 @@ button.block { width: 100%; }
 }
 .line-head {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: minmax(0, 2.5fr) minmax(0, 1.8fr) repeat(3, minmax(0, 1fr)) auto;
   gap: var(--space-3);
   font-size: var(--fs-xs);
   color: var(--text-secondary);
@@ -688,8 +688,9 @@ dialog.palette::backdrop { background: rgba(15, 23, 42, 0.45); }
   .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .aging-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .searchbtn { min-width: 0; width: 44px; padding: 0; justify-content: center; }
+  .searchbtn { min-width: 0; width: 44px; min-height: 44px; height: 44px; padding: 0; justify-content: center; }
   .searchbtn .search-label, .searchbtn kbd { display: none; }
+  #logout { min-height: 44px; }
 }
 
 @media (max-width: 767px) {
@@ -742,6 +743,7 @@ dialog.palette::backdrop { background: rgba(15, 23, 42, 0.45); }
   .line-head { display: none; }
   .line { grid-template-columns: 1fr 1fr; }
   .line .field.product { grid-column: 1 / -1; }
+  .line .field.batch { grid-column: 1 / -1; }
   .invoice-tape { max-width: none; }
   .saved-grid { grid-template-columns: 1fr; }
   button.primary, button.default { min-height: 44px; }

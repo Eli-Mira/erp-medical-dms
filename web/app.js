@@ -365,9 +365,9 @@
     warehouses: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
     suppliers: ["owner", "finance", "read_only_auditor"],
     accounts: ["owner", "finance", "read_only_auditor"],
-    doctors: ["owner", "medical_rep", "sales_manager", "read_only_auditor"],
+    doctors: ["owner", "medical_rep", "sales_manager", "district_manager", "read_only_auditor"],
     visits: ["owner", "medical_rep", "sales_manager", "district_manager", "read_only_auditor"],
-    settings: ["owner", "finance"], audit: ["owner", "finance"],
+    settings: ["owner", "finance"], audit: ["owner", "finance", "read_only_auditor"],
     alerts: ["*"], import: ["owner", "finance"], pwa: ["*"],
     reference: ["owner", "finance"], batches: ["owner", "finance", "sales_manager", "district_manager", "read_only_auditor"],
     representatives: ["owner", "finance", "sales_manager", "district_manager", "medical_rep", "read_only_auditor"],
@@ -625,7 +625,7 @@
     setActiveNav(key);
     var pc = (PROTON[key] && PROTON[key][state.lang]) || (PROTON[key] && PROTON[key]["ar"]);
     if (!pc) { key = "analytics"; pc = PROTON[key][state.lang]; }
-    el.moduleTitle.textContent = pc.title;
+    if (el.moduleTitle) el.moduleTitle.textContent = pc.title;
     el.moduleDesc.textContent = pc.desc;
     var badges = $("module-badges"); badges.innerHTML = "";
     badges.appendChild(node("span", "badge " + (key === "pwa" ? "real" : "proto"), key === "pwa" ? t("badge_real_status") : t("badge_proto")));
@@ -1099,6 +1099,65 @@
   }
 
   // ----------------------------------------------------------- line editor
+  async function loadLineBatches(batchSelect, productId, selectedBatchId) {
+    var reqId = (batchSelect._batchReqId = (batchSelect._batchReqId || 0) + 1);
+    var reqToken = state.token;
+    batchSelect.innerHTML = "";
+    var defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.textContent = t("transfer_no_batch");
+    batchSelect.appendChild(defaultOption);
+    var wid = el.warehouse ? el.warehouse.value : "";
+    if (!wid || !productId) {
+      if (selectedBatchId) {
+        var fallbackOption = document.createElement("option");
+        fallbackOption.value = selectedBatchId;
+        fallbackOption.textContent = selectedBatchId;
+        batchSelect.appendChild(fallbackOption);
+        batchSelect.value = selectedBatchId;
+      }
+      return;
+    }
+    try {
+      var data = await api("/inventory/batches?warehouse_id=" + encodeURIComponent(wid) + "&product_id=" + encodeURIComponent(productId));
+      if (state.token !== reqToken || batchSelect._batchReqId !== reqId) return;
+      var rows = Array.isArray(data) ? data : ((data && data.batches) || []);
+      rows
+        .filter(function (b) { return Number(b.quantity) > 0 || (selectedBatchId && b.id === selectedBatchId); })
+        .sort(function (a, b) { return String(a.expiry_date || "").localeCompare(String(b.expiry_date || "")); })
+        .forEach(function (b) {
+          var option = document.createElement("option");
+          option.value = b.id;
+          option.textContent = b.batch_no + " (" + fmtDate(b.expiry_date) + " · " + fmtQty(b.quantity) + ")";
+          batchSelect.appendChild(option);
+        });
+      if (selectedBatchId && !Array.from(batchSelect.options).some(function (opt) { return opt.value === selectedBatchId; })) {
+        var fallbackOption = document.createElement("option");
+        fallbackOption.value = selectedBatchId;
+        fallbackOption.textContent = selectedBatchId;
+        batchSelect.appendChild(fallbackOption);
+      }
+      batchSelect.value = selectedBatchId || "";
+    } catch (_e) {
+      if (state.token === reqToken && batchSelect._batchReqId === reqId && selectedBatchId) {
+        var fallbackOption = document.createElement("option");
+        fallbackOption.value = selectedBatchId;
+        fallbackOption.textContent = selectedBatchId;
+        batchSelect.appendChild(fallbackOption);
+        batchSelect.value = selectedBatchId;
+      }
+    }
+  }
+  function refreshAllLineBatches() {
+    document.querySelectorAll(".line").forEach(function (row) {
+      var key = row.dataset.key;
+      var line = state.lines.find(function (l) { return l.key === Number(key); });
+      if (line) {
+        var batchSelect = row.querySelector("select[data-role='batch']");
+        if (batchSelect) loadLineBatches(batchSelect, line.productId, line.batchId || "");
+      }
+    });
+  }
   function addLine(existing) {
     var index = existing ? existing.key : state.seq++;
     var line = existing || { key: index, productId: "", quantity: "1", discount: "0" };
@@ -1118,6 +1177,16 @@
     productSelect.dataset.role = "product";
     productField.appendChild(productLabelEl);
     productField.appendChild(productSelect);
+    var batchField = document.createElement("div");
+    batchField.className = "field batch";
+    var batchLabelEl = document.createElement("label");
+    batchLabelEl.textContent = t("batch_no");
+    batchLabelEl.htmlFor = "line-batch-" + index;
+    var batchSelect = document.createElement("select");
+    batchSelect.id = "line-batch-" + index;
+    batchSelect.dataset.role = "batch";
+    batchField.appendChild(batchLabelEl);
+    batchField.appendChild(batchSelect);
 
     var qtyField = document.createElement("div");
     qtyField.className = "field";
@@ -1171,6 +1240,7 @@
     });
 
     row.appendChild(productField);
+    row.appendChild(batchField);
     row.appendChild(qtyField);
     row.appendChild(discField);
     row.appendChild(computed);
@@ -1186,7 +1256,15 @@
         delete current.unitPrice;
         delete current.batchId;
       }
+      loadLineBatches(batchSelect, productSelect.value, "");
       updateLine(index); recalcPreview();
+    });
+    batchSelect.addEventListener("change", function () {
+      var current = lineByKey(index);
+      if (current) {
+        if (batchSelect.value) current.batchId = batchSelect.value;
+        else delete current.batchId;
+      }
     });
     qtyInput.addEventListener("input", function () {
       var current = lineByKey(index); if (current) current.quantity = qtyInput.value;
@@ -1196,6 +1274,7 @@
       var current = lineByKey(index); if (current) current.discount = discInput.value;
       updateLine(index); recalcPreview();
     });
+    loadLineBatches(batchSelect, line.productId, line.batchId || "");
     updateLine(index);
   }
 
@@ -4739,6 +4818,12 @@
       } catch (_e) {
         // Role-scoped warehouses keep server-side defaults; ids render later.
       }
+      state.lines.forEach(function (l) { delete l.batchId; });
+      refreshAllLineBatches();
+    });
+    el.warehouse.addEventListener("change", function () {
+      state.lines.forEach(function (l) { delete l.batchId; });
+      refreshAllLineBatches();
     });
 
     el.lang.addEventListener("click", function () {
