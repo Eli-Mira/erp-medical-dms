@@ -91,9 +91,9 @@ def create_transfer(payload: dict, request: Request, db: Db, current: CurrentUse
         br = (
             db.execute(
                 text(
-                    "SELECT product_id, warehouse_id, batch_no, "
+                    "SELECT id, product_id, warehouse_id, batch_no, "
                     "manufacture_date, expiry_date FROM inventory.batch_record "
-                    "WHERE id=:id FOR SHARE"
+                    "WHERE id=:id"
                 ),
                 {"id": batch},
             )
@@ -108,12 +108,11 @@ def create_transfer(payload: dict, request: Request, db: Db, current: CurrentUse
             raise HTTPException(
                 422, "Batch does not match product and source warehouse"
             )
-        dst_batch = db.execute(
+        db.execute(
             text("""INSERT INTO inventory.batch_record
                 (product_id, warehouse_id, batch_no, manufacture_date, expiry_date)
                 VALUES (:p, :w, :bn, :md, :ed)
-                ON CONFLICT (product_id, warehouse_id, batch_no) DO NOTHING
-                RETURNING id"""),
+                ON CONFLICT (product_id, warehouse_id, batch_no) DO NOTHING"""),
             {
                 "p": product,
                 "w": dst,
@@ -121,31 +120,39 @@ def create_transfer(payload: dict, request: Request, db: Db, current: CurrentUse
                 "md": br["manufacture_date"],
                 "ed": br["expiry_date"],
             },
-        ).scalar()
-        if dst_batch is None:
-            existing = (
-                db.execute(
-                    text(
-                        "SELECT id, manufacture_date, expiry_date FROM inventory.batch_record "
-                        "WHERE product_id=:p AND warehouse_id=:w AND batch_no=:bn FOR UPDATE"
-                    ),
-                    {"p": product, "w": dst, "bn": br["batch_no"]},
-                )
-                .mappings()
-                .one()
+        )
+        w1, w2 = sorted([str(src), str(dst)])
+        locked = (
+            db.execute(
+                text(
+                    "SELECT id, warehouse_id, manufacture_date, expiry_date FROM inventory.batch_record "
+                    "WHERE product_id=:p AND batch_no=:bn AND warehouse_id IN (:w1, :w2) "
+                    "ORDER BY warehouse_id ASC FOR UPDATE"
+                               ),
+                {"p": product, "bn": br["batch_no"], "w1": w1, "w2": w2},
             )
-            if (
-                existing["manufacture_date"] != br["manufacture_date"]
-                or existing["expiry_date"] != br["expiry_date"]
-            ):
-                raise HTTPException(
-                    422,
-                    "Destination batch already exists with different manufacture/expiry "
-                    "dates",
-                )
-            dst_batch = existing["id"]
+            .mappings()
+            .all()
+        )
+        by_wh = {str(r["warehouse_id"]): r for r in locked}
+        if str(src) not in by_wh or str(by_wh[str(src)]["id"]) != str(batch):
+            db.rollback()
+            raise HTTPException(422, "Source batch record mismatch")
+        if (
+            by_wh[str(dst)]["manufacture_date"] != by_wh[str(src)]["manufacture_date"]
+            or by_wh[str(dst)]["expiry_date"] != by_wh[str(src)]["expiry_date"]
+        ):
+            db.rollback()
+            raise HTTPException(
+                422,
+                "Destination batch already exists with different manufacture/expiry dates",
+            )
+        dst_batch = by_wh[str(dst)]["id"]
     transfer_id = uuid4()
     try:
+        inv_service.lock_balance_rows(
+            db, [(src, product, batch, False), (dst, product, dst_batch, True)]
+        )
         inv_service.record_movement(
             db,
             actor_id=current["id"],
