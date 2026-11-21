@@ -7,13 +7,32 @@ transfer reference id; the audit log records the operation.
 """
 
 import ipaddress
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 from typing import Annotated
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+
+class TransferIn(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    source_warehouse_id: UUID
+    destination_warehouse_id: UUID
+    product_id: UUID
+    batch_id: UUID | None = None
+    quantity: Annotated[Decimal, Field(gt=0, max_digits=12, decimal_places=3, allow_inf_nan=False)]
+    note: Annotated[str, Field(max_length=2000)] | None = None
+
+    @model_validator(mode="after")
+    def _validate_transfer(self):
+        if self.source_warehouse_id == self.destination_warehouse_id:
+            raise ValueError("source and destination must differ")
+        if self.note is not None and "\x00" in self.note:
+            raise ValueError("Null characters are not allowed")
+        return self
 
 from app.auth.repo import log_audit
 from app.auth.router import get_current_user
@@ -56,24 +75,16 @@ def _warehouse_ok(db, wid):
 
 
 @router.post("", status_code=201)
-def create_transfer(payload: dict, request: Request, db: Db, current: CurrentUser):
+def create_transfer(payload: TransferIn, request: Request, db: Db, current: CurrentUser):
     _role(current, MANAGE_ROLES)
-    src = payload.get("source_warehouse_id")
-    dst = payload.get("destination_warehouse_id")
-    product = payload.get("product_id")
-    batch = payload.get("batch_id")
-    qty = payload.get("quantity")
-    note = payload.get("note")
-    if not src or not dst or not product or qty is None:
-        raise HTTPException(422, "source, destination, product and quantity required")
+    src = str(payload.source_warehouse_id)
+    dst = str(payload.destination_warehouse_id)
+    product = str(payload.product_id)
+    batch = str(payload.batch_id) if payload.batch_id is not None else None
+    q = payload.quantity
+    note = payload.note
     if src == dst:
         raise HTTPException(422, "source and destination must differ")
-    try:
-        q = Decimal(str(qty))
-    except (ValueError, TypeError, InvalidOperation, ArithmeticError):
-        raise HTTPException(422, "quantity must be numeric")
-    if not q.is_finite() or q <= 0:
-        raise HTTPException(422, "quantity must be positive and finite")
     scope = _scope_warehouses(db, current)
     scope_str = None if scope is None else {str(w) for w in scope}
     for wid in (src, dst):
