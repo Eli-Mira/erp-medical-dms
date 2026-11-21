@@ -108,7 +108,6 @@ class TelegramBot:
             return
 
         if text_input.startswith("/help"):
-            templates = list(get_template.__wrapped__ if hasattr(get_template, "__wrapped__") else None) or []
             from app.telegram.queries import list_templates
             self._send_message(
                 chat_id,
