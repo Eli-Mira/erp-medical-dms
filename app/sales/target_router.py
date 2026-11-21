@@ -65,6 +65,7 @@ def list_targets(
     role = _role(current, SEE_TARGETS_ROLES | {"medical_rep"})
     if role == "medical_rep":
         rep_id = current["id"]
+    scoped_user_id = current["id"] if role in {"sales_manager", "district_manager"} else None
     return [
         TargetOut.model_validate(row)
         for row in target_repo.list_targets(
@@ -73,6 +74,7 @@ def list_targets(
             product_id=product_id,
             month=month,
             territory_id=territory_id,
+            scoped_user_id=scoped_user_id,
         )
     ]
 
@@ -81,7 +83,7 @@ def list_targets(
 def upsert_target(
     payload: TargetIn, request: Request, db: Db, current: CurrentUser
 ) -> TargetOut:
-    _role(current, MANAGE_TARGETS_ROLES)
+    role = _role(current, MANAGE_TARGETS_ROLES)
     period_month = payload.period_month.replace(day=1)
     if payload.rep_id is not None:
         valid = db.execute(
@@ -93,6 +95,17 @@ def upsert_target(
         ).scalar()
         if not valid:
             raise HTTPException(422, "rep_id must reference an active medical rep")
+        if role == "sales_manager":
+            scope_check = db.execute(
+                text(
+                    "SELECT 1 FROM platform.user_territory ut_rep "
+                    "JOIN platform.user_territory ut_mgr ON ut_mgr.territory_id = ut_rep.territory_id "
+                    "WHERE ut_rep.user_id = :rep AND ut_mgr.user_id = :mgr"
+                ),
+                {"rep": payload.rep_id, "mgr": current["id"]},
+            ).scalar()
+            if not scope_check:
+                raise HTTPException(403, "Target rep outside your territory scope")
     else:
         valid = db.execute(
             text("SELECT 1 FROM master_data.master_territory WHERE id=:id"),
@@ -102,6 +115,15 @@ def upsert_target(
             raise HTTPException(
                 422, "territory_id must reference an existing territory"
             )
+        if role == "sales_manager":
+            scope_check = db.execute(
+                text(
+                    "SELECT 1 FROM platform.user_territory WHERE user_id = :mgr AND territory_id = :tid"
+                ),
+                {"mgr": current["id"], "tid": payload.territory_id},
+            ).scalar()
+            if not scope_check:
+                raise HTTPException(403, "Territory outside your scope")
     if payload.product_id is not None:
         product = db.execute(
             text("SELECT 1 FROM master_data.master_product WHERE id=:id AND is_active"),
