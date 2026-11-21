@@ -5,6 +5,8 @@ columns invented: the session PK carries the token. Logout deletes the row.
 """
 
 import datetime
+import ipaddress
+import os
 import uuid as uuidlib
 from typing import Annotated
 
@@ -117,16 +119,75 @@ AdministrationCredentials = Annotated[
 ]
 
 
+def _trusted_proxy_networks() -> list[ipaddress.IPv4Network | ipaddress.IPv6Network]:
+    env = os.getenv("RATE_LIMIT_TRUSTED_PROXIES")
+    if env is None:
+        from ..config import RATE_LIMIT_TRUSTED_PROXIES
+        entries = RATE_LIMIT_TRUSTED_PROXIES
+    else:
+        entries = tuple(part.strip() for part in env.split(",") if part.strip())
+    nets: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = []
+    for entry in entries:
+        try:
+            net = ipaddress.ip_network(entry, strict=False)
+            nets.append(net)
+        except ValueError:
+            continue
+    return nets
+
+
+def _resolve_client_ip(request: Request) -> tuple[str | None, str | None]:
+    direct = request.client.host if request.client else None
+    direct_ip_obj = None
+    if direct:
+        try:
+            direct_ip_obj = ipaddress.ip_address(direct)
+        except ValueError:
+            direct_ip_obj = None
+    nets = _trusted_proxy_networks()
+    if direct_ip_obj and any(direct_ip_obj in net for net in nets):
+        cf = (request.headers.get("cf-connecting-ip") or "").strip()
+        if cf:
+            try:
+                cf_ip = ipaddress.ip_address(cf)
+                return (str(cf_ip), str(cf_ip))
+            except ValueError:
+                pass
+        xff = request.headers.get("x-forwarded-for") or ""
+        parts = [p.strip() for p in xff.split(",") if p.strip()]
+        for part in reversed(parts):
+            try:
+                ip_obj = ipaddress.ip_address(part)
+                if any(ip_obj in net for net in nets):
+                    continue
+                return (str(ip_obj), str(ip_obj))
+            except ValueError:
+                continue
+        return (str(direct_ip_obj), str(direct_ip_obj))
+    else:
+        ip_str = str(direct_ip_obj) if direct_ip_obj else None
+        return (direct, ip_str)
+
 @router.post("/login", response_model=LoginOut)
 def login(request: Request, payload: LoginIn, db=Depends(get_db)):
-    import ipaddress
-
     from .security import verify_password
 
-    # Only the direct ASGI peer is used; forwarded headers are not identity.
-    host = request.client.host if request.client else None
+    host, ip = _resolve_client_ip(request)
+    ua = (request.headers.get("user-agent") or "")[:1000] or None
     ticket, retry = login_limiter.reserve(payload.username, host)
     if ticket is None:
+        repo.log_audit(
+            db,
+            None,
+            "login_rate_limited",
+            "platform_session",
+            None,
+            None,
+            {"username": payload.username[:100], "ip": ip, "retry_after": retry},
+            ip_address=ip,
+            user_agent=ua,
+        )
+        db.commit()
         raise HTTPException(
             status_code=429,
             detail="Too many login attempts",
@@ -134,25 +195,37 @@ def login(request: Request, payload: LoginIn, db=Depends(get_db)):
         )
     failed = False
     try:
-        # Serialize session issuance with administration and session revocation.
         user = repo.get_user_by_username(db, payload.username, lock=True)
-        # Unknown accounts still perform the existing 200k-iteration verifier.
         dummy_hash = "pbkdf2_sha256$200000$" + "00" * 16 + "$" + "00" * 32
         verified = verify_password(
             payload.password, user["password_hash"] if user else dummy_hash
         )
         if not user or not user["is_active"] or not verified:
             failed = True
+            repo.log_audit(
+                db,
+                user["id"] if user else None,
+                "login_failed",
+                "platform_session",
+                None,
+                None,
+                {"username": payload.username[:100], "ip": ip},
+                ip_address=ip,
+                user_agent=ua,
+            )
+            db.commit()
             raise HTTPException(status_code=401, detail="invalid credentials")
-        ip = host
-        if ip:
-            try:  # inet column rejects non-IP host strings (e.g. TestClient "testclient")
-                ipaddress.ip_address(ip)
-            except ValueError:
-                ip = None
         sid = repo.create_session(db, user["id"], ip)
         repo.log_audit(
-            db, user["id"], "login", "platform_session", sid, None, {"ip": ip}
+            db,
+            user["id"],
+            "login",
+            "platform_session",
+            sid,
+            None,
+            {"ip": ip},
+            ip_address=ip,
+            user_agent=ua,
         )
         db.commit()
         return LoginOut(access_token=str(sid))
@@ -162,14 +235,26 @@ def login(request: Request, payload: LoginIn, db=Depends(get_db)):
 
 @router.post("/logout")
 def logout(
-    creds: HTTPAuthorizationCredentials = Depends(bearer_scheme), db=Depends(get_db)
+    request: Request,
+    creds: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db=Depends(get_db),
 ):
     sid = _parse_uuid(creds.credentials)
     if sid:
         session = repo.get_session(db, sid)
         if session:
+            _, ip = _resolve_client_ip(request)
+            ua = (request.headers.get("user-agent") or "")[:1000] or None
             repo.log_audit(
-                db, session["user_id"], "logout", "platform_session", sid, None, None
+                db,
+                session["user_id"],
+                "logout",
+                "platform_session",
+                sid,
+                None,
+                {"ip": ip},
+                ip_address=ip,
+                user_agent=ua,
             )
             repo.delete_session(db, sid)
             db.commit()
@@ -219,10 +304,10 @@ def administration_options(current: AdministrationUser, db: AdministrationDb):
 def administer_user(
     user_id: uuidlib.UUID,
     request: Request,
-    payload: AdministrationPayload,
     current: AdministrationUser,
     creds: AdministrationCredentials,
     db: AdministrationDb,
+    payload: AdministrationPayload,
 ):
     from sqlalchemy.exc import IntegrityError
 
@@ -271,6 +356,8 @@ def administer_user(
         repo.write_user_administration(
             db, user_id, payload.role, payload.is_active, branches
         )
+        _, ip = _resolve_client_ip(request)
+        ua = (request.headers.get("user-agent") or "")[:1000] or None
         repo.log_audit(
             db,
             actor["id"],
@@ -279,6 +366,8 @@ def administer_user(
             user_id,
             before,
             response.model_dump(mode="json"),
+            ip_address=ip,
+            user_agent=ua,
         )
         db.commit()
         return response
