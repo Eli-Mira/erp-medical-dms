@@ -4,12 +4,31 @@ Same PostgreSQL DB, separate schema, separate permissions/audit. No company
 AR/stock code paths are shared. Lightweight ledger entries only.
 """
 import ipaddress
-from decimal import Decimal, InvalidOperation
+from datetime import date
+from decimal import Decimal
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+
+class PrivateAccountEntryIn(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    account_label: Annotated[str, Field(min_length=1, max_length=120)]
+    entry_date: date
+    debit: Annotated[Decimal, Field(ge=0, max_digits=14, decimal_places=2, allow_inf_nan=False)] = Decimal("0")
+    credit: Annotated[Decimal, Field(ge=0, max_digits=14, decimal_places=2, allow_inf_nan=False)] = Decimal("0")
+    note: Annotated[str, Field(max_length=2000)] | None = None
+
+    @model_validator(mode="after")
+    def _validate_entry(self):
+        if "\x00" in self.account_label or (self.note is not None and "\x00" in self.note):
+            raise ValueError("Null characters are not allowed")
+        if self.debit == 0 and self.credit == 0:
+            raise ValueError("one of debit/credit must be > 0")
+        return self
 
 from app.auth.repo import log_audit
 from app.auth.router import get_current_user
@@ -50,7 +69,25 @@ def list_entries(db: Db, current: CurrentUser, limit: int = 50, offset: int = 0)
 
 
 @router.post("", status_code=201)
-def create_entry(payload: dict, request: Request, db: Db, current: CurrentUser):
+def create_entry(payload: PrivateAccountEntryIn, request: Request, db: Db, current: CurrentUser):
+    _owner(current)
+    label = payload.account_label
+    edate = payload.entry_date.isoformat()
+    d = payload.debit
+    c = payload.credit
+    note = payload.note
+    rid = db.execute(
+        text("""INSERT INTO private.account_entry
+            (account_label, entry_date, debit, credit, note, created_by)
+            VALUES (:l, :d, :db, :cr, :n, :actor) RETURNING id"""),
+        {"l": label, "d": edate, "db": d, "cr": c, "n": note, "actor": current["id"]},
+    ).scalar()
+    log_audit(db, current["id"], "created", "private_account_entry", rid, None,
+              {"account_label": label, "debit": str(d), "credit": str(c)},
+              ip_address=_host(request), user_agent=request.headers.get("user-agent"))
+    db.commit()
+    return {"id": str(rid), "account_label": label, "entry_date": edate,
+            "debit": str(d), "credit": str(c), "note": note}
     _owner(current)
     label = (payload.get("account_label") or "").strip()
     edate = payload.get("entry_date")

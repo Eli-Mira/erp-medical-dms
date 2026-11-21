@@ -10,6 +10,7 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
 from starlette.datastructures import MutableHeaders
 
 # Match the existing inline service-worker registration without allowing other scripts.
@@ -61,6 +62,19 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 _CACHEABLE = {".js", ".css", ".svg", ".png", ".webp", ".woff2"}
 _PAGES = {"", ".html"}
 
+
+@app.middleware("http")
+async def reject_nul_bytes(request, call_next):
+    """Reject raw or percent-encoded NUL bytes in query/path/JSON bodies with 422."""
+    raw_qs = request.scope.get("query_string", b"")
+    if b"\x00" in raw_qs or b"%00" in raw_qs.lower() or "\x00" in request.url.path:
+        return JSONResponse({"detail": "Null bytes are not allowed"}, status_code=422)
+    ct = (request.headers.get("content-type") or "").lower()
+    if request.method in {"POST", "PUT", "PATCH"} and "application/json" in ct:
+        body = await request.body()
+        if b"\x00" in body or b"\\u0000" in body.lower():
+            return JSONResponse({"detail": "Null bytes are not allowed"}, status_code=422)
+    return await call_next(request)
 
 @app.middleware("http")
 async def static_cache_headers(request, call_next):

@@ -3,7 +3,7 @@ from datetime import date
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -28,7 +28,7 @@ def _role(user, allowed):
 def list_audit(db: Db, current: CurrentUser, entity_type: str | None = None,
                actor_id: UUID | None = None, action: str | None = None,
                date_from: date | None = None, date_to: date | None = None,
-               limit: int = 50, offset: int = 0):
+               limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0)):
     _role(current, READ_ROLES)
     conditions, params = [], {"limit": limit, "offset": offset}
     if entity_type is not None:
