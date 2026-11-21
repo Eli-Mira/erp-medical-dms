@@ -1,11 +1,11 @@
-fastapi>=0.115
-uvicorn[standard]>=0.30
-sqlalchemy>=2.0
-alembic>=1.13
-psycopg[binary]>=3.2
-pydantic-settings>=2.5
+fastapi==0.136.1
+uvicorn[standard]==0.46.0
+sqlalchemy==2.0.49
+alembic==1.20.1
+psycopg[binary]==3.3.8
+pydantic==2.13.4
 
-# test / tooling — reconciliation tests read the source .xlsx workbooks
-openpyxl>=3.1
-pytest>=8.0
-httpx>=0.28
+# test / tooling
+openpyxl==3.1.5
+pytest==8.4.2
+httpx==0.28.1
