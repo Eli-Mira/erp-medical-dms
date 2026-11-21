@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.auth.repo import log_audit
 from app.auth.router import get_current_user
 from app.db import get_db
+from app.finance import exports
 from app.inventory import service
 from app.inventory.schemas import (
     BalanceOut,
@@ -93,6 +94,14 @@ def list_stock(db: Db, current: CurrentUser, warehouse_id: UUID | None = None,
             for row in service.list_balances(db, warehouse_id=warehouse_id,
                                              product_id=product_id, batch_id=batch_id,
                                              warehouse_ids=warehouse_ids)]
+
+@router.get("/stock/export")
+def export_stock_csv(db: Db, current: CurrentUser, warehouse_id: UUID | None = None, product_id: UUID | None = None, batch_id: UUID | None = None):
+    _role(current, READ_ROLES)
+    warehouse_ids = _read_scope(db, current, warehouse_id)
+    rows = service.list_balances(db, warehouse_id=warehouse_id, product_id=product_id, batch_id=batch_id, warehouse_ids=warehouse_ids)
+    headers = ["warehouse_id", "warehouse_name", "product_id", "product_name", "batch_id", "quantity", "updated_at"]
+    return exports.csv_response("stock_balances.csv", headers, [[exports.cell(row.get(h)) for h in headers] for row in rows])
 
 
 @router.get("/batches")

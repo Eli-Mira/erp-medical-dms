@@ -14,6 +14,7 @@ from app.auth.repo import log_audit
 from app.auth.router import get_current_user
 from app.config import POSTING_ENABLED
 from app.db import get_db
+from app.finance import exports
 from app.inventory.service import InsufficientStock
 from app.sales import repo, service
 from app.sales.calc import invoice_totals, line_calc
@@ -412,6 +413,43 @@ def invoice_report_view(
         )
     )
 
+
+@router.get("/export")
+def export_invoices_csv(db: Db, current: CurrentUser, customer_id: UUID | None = None, status: Literal["Draft", "Posted", "Voided"] | None = None, date_from: date | None = None, date_to: date | None = None, limit: int = Query(5000, ge=1, le=50000), offset: int = Query(0, ge=0)):
+    role = _role(current)
+    territories = None
+    created_by = None
+    posted_only = False
+    if role != "owner":
+        territories = [row[0] for row in db.execute(text("SELECT territory_id FROM platform.user_territory WHERE user_id=:uid"), {"uid": current["id"]}).fetchall()]
+    if role == "medical_rep":
+        created_by = current["id"]
+    if role == "read_only_auditor":
+        posted_only = True
+    items, _ = repo.list_invoices(db, customer_id=customer_id, status=status, date_from=date_from, date_to=date_to, limit=limit, offset=offset, territories=territories, created_by=created_by, posted_only=posted_only)
+    headers = ["invoice_no", "invoice_date", "customer_id", "branch_id", "warehouse_id", "posting_status", "total_before_discount", "total_discount", "total_net", "vat_amount", "grand_total", "notes"]
+    return exports.csv_response("invoices.csv", headers, [[exports.cell(row.get(h)) for h in headers] for row in items])
+
+@router.get("/report/export")
+def export_invoice_report_csv(db: Db, current: CurrentUser, date_from: date | None = None, date_to: date | None = None):
+    role = _role(current)
+    territories = None
+    created_by = None
+    if role != "owner":
+        territories = [row[0] for row in db.execute(text("SELECT territory_id FROM platform.user_territory WHERE user_id=:uid"), {"uid": current["id"]}).fetchall()]
+    if role == "medical_rep":
+        created_by = current["id"]
+    report = repo.report_invoices(db, date_from=date_from, date_to=date_to, territories=territories, created_by=created_by)
+    headers = ["section", "label", "code", "invoice_count", "quantity", "net_total", "vat_total", "grand_total"]
+    rows = []
+    rows.append(["totals", "ALL_POSTED", "", report["totals"].get("invoice_count"), "", report["totals"].get("total_net"), report["totals"].get("vat_amount"), report["totals"].get("grand_total")])
+    for r in report.get("by_territory", []):
+        rows.append(["territory", r.get("name_ar") or r.get("name_en") or r.get("territory_id"), r.get("code") or "", r.get("invoice_count"), "", r.get("total_net"), r.get("vat_amount"), r.get("grand_total")])
+    for r in report.get("by_rep", []):
+        rows.append(["rep", r.get("username") or r.get("rep_id"), "", r.get("invoice_count"), "", r.get("total_net"), r.get("vat_amount"), r.get("grand_total")])
+    for r in report.get("by_product", []):
+        rows.append(["product", r.get("name_ar") or r.get("name_en") or r.get("product_id"), r.get("sku") or "", "", r.get("quantity"), r.get("net_total") or r.get("line_total"), "", r.get("line_total")])
+    return exports.csv_response("sales_report.csv", headers,[[exports.cell(v) for v in row] for row in rows])
 
 @router.get("/{invoice_id}")
 def view_invoice(invoice_id: UUID, db: Db, current: CurrentUser) -> InvoiceOut:
