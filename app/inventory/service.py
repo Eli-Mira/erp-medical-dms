@@ -51,6 +51,35 @@ def _apply_balance(db, warehouse_id, product_id, batch_id, delta):
     return new_quantity
 
 
+def lock_balance_rows(db, entries):
+    """Lock stock_balance rows in canonical ascending key order to prevent deadlocks."""
+    entries = list(entries)
+    for wid, pid, bid, create_zero in entries:
+        if create_zero:
+            db.execute(
+                text("""
+                INSERT INTO inventory.stock_balance
+                    (warehouse_id, product_id, batch_id, quantity, updated_at)
+                VALUES (:w, :p, :b, 0, now())
+                ON CONFLICT DO NOTHING
+                """),
+                {"w": wid, "p": pid, "b": bid},
+            )
+    unique_by_key = {}
+    for wid, pid, bid, _ in entries:
+        key = (str(wid), str(pid), "" if bid is None else str(bid))
+        unique_by_key[key] = (wid, pid, bid)
+    for key in sorted(unique_by_key):
+        wid, pid, bid = unique_by_key[key]
+        db.execute(
+            text("""
+            SELECT quantity FROM inventory.stock_balance
+            WHERE warehouse_id=:w AND product_id=:p AND batch_id IS NOT DISTINCT FROM :b
+            FOR UPDATE
+            """),
+            {"w": wid, "p": pid, "b": bid},
+        ).scalar_one_or_none()
+
 def record_movement(
     db,
     *,
