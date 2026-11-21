@@ -3,7 +3,7 @@
 from sqlalchemy import text
 
 
-def list_targets(db, *, rep_id, product_id, month, territory_id=None):
+def list_targets(db, *, rep_id, product_id, month, territory_id=None, scoped_user_id=None):
     """Compare each explicit target scope with posted invoice quantities only."""
     conditions, params = [], {}
     for column, value in (
@@ -15,6 +15,17 @@ def list_targets(db, *, rep_id, product_id, month, territory_id=None):
         if value is not None:
             conditions.append("t." + column + " = :" + column)
             params[column] = value
+    if scoped_user_id is not None:
+        conditions.append(
+            "((t.territory_id IS NOT NULL AND EXISTS ("
+            "SELECT 1 FROM platform.user_territory ut "
+            "WHERE ut.user_id = :scoped_uid AND ut.territory_id = t.territory_id)) "
+            "OR (t.rep_id IS NOT NULL AND EXISTS ("
+            "SELECT 1 FROM platform.user_territory ut_rep "
+            "JOIN platform.user_territory ut_mgr ON ut_mgr.territory_id = ut_rep.territory_id "
+            "WHERE ut_rep.user_id = t.rep_id AND ut_mgr.user_id = :scoped_uid)))"
+        )
+        params["scoped_uid"] = scoped_user_id
     where = (" WHERE " + " AND ".join(conditions)) if conditions else ""
     rows = db.execute(
         text(

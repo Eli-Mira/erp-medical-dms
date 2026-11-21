@@ -473,6 +473,8 @@ def update_invoice(
     db: Db,
     current: CurrentUser,
 ) -> InvoiceOut:
+    if _role(current) == "read_only_auditor":
+        raise HTTPException(403, "Read-only role cannot modify invoices")
     try:
         old = _invoice(db, current, invoice_id, lock=True)
         _editable(old, payload.version)

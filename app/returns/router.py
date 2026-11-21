@@ -52,19 +52,31 @@ def create_return(payload: ReturnIn, request: Request, db: Db, current: CurrentU
     scope = None
     if current["role"] not in GLOBAL_RETURN_ROLES:
         scope = _scope_warehouses(db, current)
-    if scope is not None and (
-        warehouse not in scope
-        or current["role"] != "warehouse_staff"
-        and not db.execute(
-            text(
-                "SELECT 1 FROM master_data.master_customer c "
-                "JOIN platform.user_territory ut ON ut.territory_id=c.territory_id "
-                "WHERE c.id=:c AND ut.user_id=:u"
-            ),
-            {"c": customer, "u": current["id"]},
-        ).scalar()
-    ):
-        raise HTTPException(404, "Return reference not found")
+    if scope is not None:
+        if warehouse not in scope:
+            raise HTTPException(404, "Return reference not found")
+        if current["role"] == "warehouse_staff":
+            scope_check = db.execute(
+                text(
+                    "SELECT 1 FROM master_data.master_customer c "
+                    "JOIN platform.user_branch ub ON ub.branch_id=c.branch_id "
+                    "WHERE c.id=:c AND ub.user_id=:u"
+                ),
+                {"c": customer, "u": current["id"]},
+            ).scalar()
+            if not scope_check:
+                raise HTTPException(404, "Return reference not found")
+        else:
+            scope_check = db.execute(
+                text(
+                    "SELECT 1 FROM master_data.master_customer c "
+                    "JOIN platform.user_territory ut ON ut.territory_id=c.territory_id "
+                    "WHERE c.id=:c AND ut.user_id=:u"
+                ),
+                {"c": customer, "u": current["id"]},
+            ).scalar()
+            if not scope_check:
+                raise HTTPException(404, "Return reference not found")
     for table, ident, label in (
         ("master_data.master_customer", customer, "customer"),
         ("master_data.master_product", product, "product"),
@@ -176,7 +188,14 @@ def list_returns(
         scope = _scope_warehouses(db, current)
         conditions.append("warehouse_id = ANY(CAST(:warehouses AS uuid[]))")
         params["warehouses"] = [str(w) for w in scope]
-        if current["role"] != "warehouse_staff":
+        if current["role"] == "warehouse_staff":
+            conditions.append(
+                "customer_id IN (SELECT c.id FROM master_data.master_customer c "
+                "JOIN platform.user_branch ub ON ub.branch_id=c.branch_id "
+                "WHERE ub.user_id=:uid)"
+            )
+            params["uid"] = current["id"]
+        else:
             conditions.append(
                 "customer_id IN (SELECT c.id FROM master_data.master_customer c "
                 "JOIN platform.user_territory ut ON ut.territory_id=c.territory_id "
