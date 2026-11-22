@@ -1,3 +1,4 @@
 # Optional Telegram Bot runtime dependencies (Eli Phase 0 T3: kept separate from core requirements.txt)
 # Reference: PHASE2_REFERENCES.md & REFERENCE_CHECK.md §5 (aiogram MIT license)
 aiogram==3.33.0
+aiohttp==3.14.5
