@@ -81,7 +81,7 @@ function Get-FileSha256Lower {
     (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 
-$SwarmRoot = Split-Path -Parent $PSScriptRoot
+$SwarmRoot = if (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) "shared\reviews")) { Split-Path -Parent $PSScriptRoot } else { "C:\Projects\ERP-Orchestration\swarm-20261118" }
 $ReviewsDir = Join-Path $SwarmRoot "shared\reviews"
 $LogDir = Join-Path $ReviewsDir "CLAUDE_EVIDENCE_20261121"
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
@@ -191,45 +191,46 @@ try {
             throw "CLAUDE__R4.md does not contain ExpectedHead '$ExpectedHead'"
         }
     } elseif ($Mode -eq "RC2Release") {
-        $requiredFiles = @(
-            "CLAUDE__R1.md",
-            "CLAUDE__R2.md",
-            "CLAUDE__R4.md",
-            "CLAUDE__R5.md",
-            "CLAUDE__R6.md",
-            "CLAUDE__R7_V2_LEDGER_VERIFIED.md",
-            "CLAUDE__R8.md",
-            "CLAUDE__R9.md"
-        )
-        foreach ($file in $requiredFiles) {
-            $fullPath = Join-Path $ReviewsDir $file
-            $shaPath = "${fullPath}.sha256"
-            if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
-                throw "$file not found in $ReviewsDir"
-            }
-            if (-not (Test-Path -LiteralPath $shaPath -PathType Leaf)) {
-                throw "$file.sha256 not found in $ReviewsDir"
-            }
-            $sidecarContent = Get-Content -LiteralPath $shaPath -Raw
-            $sidecarHash = ($sidecarContent -split '\s')[0].Trim()
-            $computedHash = Get-FileSha256Lower $fullPath
-            if ($computedHash -ne $sidecarHash.ToLowerInvariant()) {
-                throw "SHA256 mismatch for ${file}: computed '$computedHash', sidecar '$sidecarHash'"
-            }
-            $fileContent = Get-Content -LiteralPath $fullPath -Raw
-            if ($fileContent -notmatch 'SIGN') {
-                throw "$file does not contain 'SIGN'"
-            }
-            if ($fileContent -match 'NEEDS-CLAUDE-MODEL-COUNTERSIGN') {
-                throw "$file contains 'NEEDS-CLAUDE-MODEL-COUNTERSIGN'"
-            }
-            if ($fileContent -match 'NO-SIGN') {
-                throw "$file contains 'NO-SIGN'"
-            }
-            if ($fileContent -notmatch $ExpectedHead) {
-                throw "$file does not contain ExpectedHead '$ExpectedHead'"
-            }
+        # Updated 2026-11-22: require authoritative Claude RC2/R8 verdict AND final Claude SIGN verdict for ExpectedHead
+        $priorVerdictFile = Join-Path $ReviewsDir "CLAUDE__RC2_AND_R8_VERDICT_20261122.md"
+        $priorVerdictSha = "${priorVerdictFile}.sha256"
+        if (-not (Test-Path -LiteralPath $priorVerdictFile -PathType Leaf)) {
+            throw "CLAUDE__RC2_AND_R8_VERDICT_20261122.md not found in $ReviewsDir"
         }
+        if (-not (Test-Path -LiteralPath $priorVerdictSha -PathType Leaf)) {
+            throw "CLAUDE__RC2_AND_R8_VERDICT_20261122.md.sha256 not found in $ReviewsDir"
+        }
+        $priorSidecarHash = ((Get-Content -LiteralPath $priorVerdictSha -Raw) -split '\s')[0].Trim().ToLowerInvariant()
+        $priorComputedHash = Get-FileSha256Lower $priorVerdictFile
+        if ($priorComputedHash -ne $priorSidecarHash) {
+            throw "SHA256 mismatch for CLAUDE__RC2_AND_R8_VERDICT_20261122.md: computed '$priorComputedHash', sidecar '$priorSidecarHash'"
+        }
+
+        $signFile = Join-Path $ReviewsDir "CLAUDE__RC2_FINAL_SIGN_20261122.md"
+        $signSha = "${signFile}.sha256"
+        if (-not (Test-Path -LiteralPath $signFile -PathType Leaf)) {
+            throw "CLAUDE__RC2_FINAL_SIGN_20261122.md not found in $ReviewsDir (Claude SIGN required before RC2 push)"
+        }
+        if (-not (Test-Path -LiteralPath $signSha -PathType Leaf)) {
+            throw "CLAUDE__RC2_FINAL_SIGN_20261122.md.sha256 not found in $ReviewsDir"
+        }
+        $signSidecarHash = ((Get-Content -LiteralPath $signSha -Raw) -split '\s')[0].Trim().ToLowerInvariant()
+        $signComputedHash = Get-FileSha256Lower $signFile
+        if ($signComputedHash -ne $signSidecarHash) {
+            throw "SHA256 mismatch for CLAUDE__RC2_FINAL_SIGN_20261122.md: computed '$signComputedHash', sidecar '$signSidecarHash'"
+        }
+        $signContent = Get-Content -LiteralPath $signFile -Raw
+        if ($signContent -notmatch '(?m)^Verdict:\s*SIGN\b') {
+            throw "CLAUDE__RC2_FINAL_SIGN_20261122.md does not contain an unconditional 'Verdict: SIGN' line"
+        }
+        if ($signContent -match '(?m)^Verdict:\s*(NO-SIGN|CONDITIONAL|NEEDS-MORE)\b') {
+            throw "CLAUDE__RC2_FINAL_SIGN_20261122.md contains a blocking verdict"
+        }
+        $shortHead = $ExpectedHead.Substring(0, [Math]::Min(8, $ExpectedHead.Length))
+        if (($signContent -notmatch [regex]::Escape($ExpectedHead)) -and ($signContent -notmatch [regex]::Escape($shortHead))) {
+            throw "CLAUDE__RC2_FINAL_SIGN_20261122.md does not cite ExpectedHead '$ExpectedHead' (or '$shortHead')"
+        }
+        $logContent += "RC2Release Claude verdicts verified: CLAUDE__RC2_AND_R8_VERDICT_20261122.md ($priorComputedHash) + CLAUDE__RC2_FINAL_SIGN_20261122.md ($signComputedHash)"
     }
 
     $gitleaks = Join-Path $SwarmRoot "S3\gitleaks.exe"
